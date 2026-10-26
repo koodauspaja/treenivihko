@@ -19,11 +19,32 @@ plan.
 It arrives with the clone and enables only Sourcery's default rules. The
 project's own rules live in the dashboard, not in this file.
 
-## Step 3 — Add the review rules in the dashboard
+## Step 3 — Give the repository its own settings
 
-<https://app.sourcery.ai> → **Code reviews**. Set the repository not to use the
-organisation's settings, so it gets its own rules, then add each block below
-as a rule block: the path patterns, then the rule text.
+<https://app.sourcery.ai> → **Code reviews** → the repository. Turn **Use
+Organization Settings** off; the repository's settings then start as a copy of
+the organisation's. Turning it back on discards them, with no undo.
+
+| Setting | This project |
+|---|---|
+| AI review comments | On |
+| Review profile | Balanced, the default |
+| Pull request summary | On |
+| Review guide | On, with sequence diagrams |
+| Tips and commands | On |
+| Review draft pull requests | Off, the default |
+| Base branches | `^main$` |
+| Path filters | `package-lock.json` |
+| Language | English |
+
+The path filter keeps the lockfile out of the reviewed diff. Its changes are
+large, nothing in them is worth a review, and on the Open Source plan they
+would spend the size limits below.
+
+## Step 4 — Add the review rules
+
+Same page, **Review rules** tab. Add each block below as a rule block: the
+path patterns, then the rule text.
 
 **A block's paths must include every file its rule asks about.** Sourcery
 judges a rule from the matching files only, and a rule scoped away from its
@@ -49,7 +70,7 @@ why its paths are what they are.
 A decision record in decisions/ must faithfully interpret the spec that shares its number: decisions/042-weekly-program.md and specs/042-weekly-program.md. Flag any drift, for example the spec saying "the last 5 sessions" and the decision record saying "the last 3".
 ```
 
-## Step 4 — Test with a pull request
+## Step 5 — Test with a pull request
 
 Open a pull request. Within a few minutes Sourcery posts a review whose body
 starts `Hey - I've reviewed your changes` or `Hey - I've found N issues`. This
@@ -94,6 +115,7 @@ The merge gate in `.claude/skills/open-pr/SKILL.md` reads these.
 ## Done when
 
 - [ ] Sourcery is installed on the repository
+- [ ] The repository has its own settings, as in Step 3
 - [ ] The three blocks are in the dashboard, each with its paths
 - [ ] Sourcery posted a full review on a pull request
 
