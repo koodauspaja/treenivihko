@@ -1,0 +1,26 @@
+# Setup guides
+
+Standing the infrastructure up **from zero**, for someone who has cloned the
+repository into their own organisation. The code arrives with the clone; these
+steps create what the code runs on: accounts, apps, secrets, environments and
+rules.
+
+- **Names such as `koodauspaja` and `treenivihko` are this project's own.**
+  Substitute yours wherever a step shows them.
+
+## The order
+
+Follow the table from top to bottom; each document ends with a **Next**
+pointer to the one below it. **The numbers are names, not the order**: other
+documents cite them, so they stay as they are even when a step is inserted
+between two others.
+
+| Step | File | What it does |
+|---|---|---|
+| 1 | [001-github-repo-setup.md](001-github-repo-setup.md) | The public repository, and who may run its workflows |
+
+The steps after these are written as the infrastructure is stood up.
+
+## Keeping these true
+
+A step changes when a new developer would meet something it does not cover.
