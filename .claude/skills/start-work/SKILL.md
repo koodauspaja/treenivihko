@@ -25,14 +25,17 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
    ```
 
 4. The board's auto-add puts it in `Backlog` on its own. Check that it did,
-   from the issue's side:
+   from the issue's side and on this board by name:
 
    ```bash
-   gh issue view <N> --json projectItems -q '.projectItems[].status.name'
+   gh issue view <N> --json projectItems \
+     -q '.projectItems[] | select(.title == "Treenivihko") | .status.name'
    ```
 
-   `gh project item-list` can lag behind a new issue for minutes and answers
-   with nothing, which reads the same as "not on the board".
+   It prints `Backlog`. Auto-add takes a few seconds, so an empty answer right
+   after creating the issue is checked again before it counts as missing.
+   `gh project item-list` lags behind a new issue for minutes, and answers
+   with nothing, so it is not used for this.
 
 ## Before starting
 
@@ -55,6 +58,9 @@ permission to reshape the work, and silence are not a start.
    `feature/NNN-short-name`, `chore/NNN-short-name` or `bug/NNN-short-name`, with
    NNN the issue number.
 
+If a move fails, stop there: no branch until the card is in `In Progress`, so
+the board never shows less than what has started.
+
 Moving a card:
 
 ```bash
@@ -66,7 +72,8 @@ if [[ "$item" == PVTI_* ]]; then
   gh project item-edit --id "$item" --project-id PVT_kwDOB7brSc4Bo2vZ \
     --field-id PVTSSF_lADOB7brSc4Bo2vZzhnU5XA --single-select-option-id <option>
 else
-  echo "issue <N> is not on the board: $item"
+  echo "STOP: issue <N> is not on the board: $item" >&2
+  false
 fi
 ```
 
