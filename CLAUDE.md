@@ -118,8 +118,9 @@ any one of them leads to the others.
   `tests/unit`, and `tests/e2e` holds the Playwright tests.
 - **`npm run verify` before every push**: lint, type check, unit tests at 100%
   with `coverage-gaps`, the build and the end-to-end tests, stopping at the
-  first failure. A coverage exclusion goes in `scripts/coverage-plan.ts`, with
-  its reason.
+  first failure. CI runs the same on every pull request. A coverage exclusion
+  goes in `scripts/coverage-plan.ts`, with its reason, and in
+  `sonar-project.properties`; a unit test fails when the two disagree.
 - The board: <https://github.com/orgs/koodauspaja/projects/3>, set up per
   `docs/setup/002-github-project-board.md`.
 - Skills: `/write-spec`, `/start-work`, `/self-review`, `/open-pr` in

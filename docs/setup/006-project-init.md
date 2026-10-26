@@ -77,4 +77,4 @@ It stops at the first failure.
 
 ## Next
 
-→ `007`, CI and SonarCloud, once it is written.
+→ [007 — CI and SonarCloud](007-ci-and-sonarcloud.md)

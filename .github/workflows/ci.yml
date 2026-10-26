@@ -1,0 +1,100 @@
+# What npm run verify runs, on every pull request to main and every push to
+# it, and SonarCloud's analysis with the unit coverage.
+#
+# decisions/016-ci-and-sonarcloud.md
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+# A newer run of a pull request replaces the older one; every push to main runs.
+concurrency:
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  unit:
+    name: Lint, types and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Actions minutes and secrets are spent only on the people named in setup 001.
+    if: |
+      github.actor == vars.OWNER_USERNAME ||
+      github.actor == vars.COLLABORATOR_USERNAME ||
+      github.actor == 'renovate[bot]'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # Node 24 ships an older npm, which .npmrc's engine-strict refuses.
+      - run: npm install --global npm@12
+      # A dependency's install script is how a compromised package runs code on
+      # a runner holding the repository's tokens.
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unit-coverage
+          path: coverage/lcov.info
+          retention-days: 1
+          if-no-files-found: error
+
+  e2e:
+    name: Build and end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.actor == vars.OWNER_USERNAME ||
+      github.actor == vars.COLLABORATOR_USERNAME ||
+      github.actor == 'renovate[bot]'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm install --global npm@12
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results/
+          retention-days: 7
+
+  sonarcloud:
+    name: SonarCloud scan
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # SonarCloud reads the pull request to decorate it.
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Blame data for "new code" needs the whole history.
+          fetch-depth: 0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unit-coverage
+          path: coverage
+      - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
