@@ -27,9 +27,11 @@ description: Review your own diff, then open the pull request and hand it to a h
    ```
 
    A criterion that resists ticking usually means something was missed.
-4. **Check the size**: `git diff origin/main...HEAD | wc -c`. Sourcery skips a
-   pull request over 150,000 characters, so stay well under it, and otherwise
-   split the work into pull requests merged one after another.
+4. **Check the size** of the diff Sourcery reviews, without the filtered
+   lockfile: `git diff origin/main...HEAD -- . ':!package-lock.json' | wc -c`.
+   Sourcery skips a pull request over 150,000 characters, so stay well under
+   it, and otherwise split the work into pull requests merged one after
+   another.
 5. **Push and open the pull request** against `main`, filling in
    `.github/PULL_REQUEST_TEMPLATE.md`:
    - `Closes #N` on the first line. Only a closing keyword links the pull
@@ -49,7 +51,8 @@ description: Review your own diff, then open the pull request and hand it to a h
    finding of a round in one commit, never a push per finding. The gate is
    then passed again on the new head.
 8. **Hand it to the human.** Never merge on your own initiative. Merge when a
-   human says to, quoting what they said.
+   human says to, quoting what they said, and pass the gate once more on the
+   head first: a push after the handoff leaves an earlier pass behind.
 
 ## The Sourcery gate
 
@@ -64,13 +67,15 @@ head=$(gh pr view <PR> --json headRefOid -q .headRefOid)
 gh api repos/{owner}/{repo}/pulls/<PR>/reviews --paginate \
   --jq ".[] | select(.user.login == \"sourcery-ai[bot]\" and .user.type == \"Bot\")
         | select(.commit_id == \"$head\" and .state != \"DISMISSED\")
-        | {login: .user.login, state, first: (.body | split(\"\n\")[0])}"
+        | {login: .user.login, state, first: (.body | split(\"\n\")[0]),
+           quick_check: (.body | test(\"^\\\\s*### Sourcery assessment\\\\s*\\\\*\\\\*Approved\\\\.\\\\*\\\\*\\\\s*$\"))}"
 gh api repos/{owner}/{repo}/commits/$head/check-runs \
   --jq '.check_runs[] | select(.app.slug | test("sourcery"; "i")) | {app: .app.slug, conclusion, title: .output.title}'
 ```
 
 Only Sourcery's own app account counts, and a dismissed review is not a
-review.
+review. `quick_check` is `true` only when the whole body is the quick check's;
+a body that starts like one and says more is read in full.
 
 | The head has | It is | Then |
 |---|---|---|
@@ -119,7 +124,7 @@ gh api graphql -F owner="${repo%/*}" -F name="${repo#*/}" -F pr=<PR> -f query='
     repository(owner: $owner, name: $name) { pullRequest(number: $pr) {
       reviewThreads(first: 100, after: $after) {
         pageInfo { hasNextPage endCursor }
-        nodes { id isResolved comments(first: 50) { nodes { author { login } path body } } } } } } }' \
+        nodes { id isResolved comments(first: 50) { totalCount nodes { author { login } path body } } } } } } }' \
   --jq '.data.repository.pullRequest.reviewThreads
         | "hasNextPage=\(.pageInfo.hasNextPage) endCursor=\(.pageInfo.endCursor)",
           (.nodes[] | select(.isResolved | not))'
@@ -127,7 +132,8 @@ gh api graphql -F owner="${repo%/*}" -F name="${repo#*/}" -F pr=<PR> -f query='
 
 If `hasNextPage` is `true`, run it again with `-F after=<endCursor>`, because
 a truncated answer reads the same as a clean one. Each thread comes with its
-replies, so read the whole of it before acting on it. Nothing unresolved may
+replies, so read the whole of it before acting on it; one whose `totalCount` is
+over 50 is read on GitHub. Nothing unresolved may
 remain. Each finding is one of:
 
 - **Fixed**, in the round's commit.

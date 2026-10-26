@@ -58,7 +58,7 @@ why its paths are what they are.
 **Block 1**: `**`
 ```
 - No API key, secret, token or credential may be introduced or modified. Clearly marked placeholders are not secrets: .env.example names variables with empty or obviously fake values, and setup docs show example values. Real values come from environment variables.
-- No personal data about a real person may be introduced: a name, age, birth date, photo, school, team, club, address or location. The repository is public and the app's user is a child. Test data and examples use invented names. A log line carries ids, never personal data.
+- No personal data about a real person may be introduced or modified: a name, age, birth date, photo, school, team, club, address or location. The repository is public and the app's user is a child. Test data and examples use invented names. A log line carries ids, never personal data.
 ```
 
 **Block 2**: `src/**/*.ts,src/**/*.tsx`

@@ -8,7 +8,9 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
 ## Opening the issue
 
 1. Write the body from the matching template in `.github/ISSUE_TEMPLATE/`, and
-   keep its sections.
+   keep its sections. Read the title and body before creating it, and again
+   after any edit: an issue is public, and no review rule sees it, so it holds
+   no secret and no real person's data.
 2. Create it with its kind label and no assignee:
 
    ```bash
