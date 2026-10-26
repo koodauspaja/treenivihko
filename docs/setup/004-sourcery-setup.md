@@ -38,8 +38,10 @@ the organisation's. Turning it back on discards them, with no undo.
 | Language | English |
 
 The path filter keeps the lockfile out of the reviewed diff. Its changes are
-large, nothing in them is worth a review, and on the Open Source plan they
-would spend the size limits below.
+large, and on the Open Source plan they would spend the size limits below. A
+dependency change still shows in `package.json`, which is reviewed, and the
+project installs only from the public npm registry, so a lockfile carries no
+credentials.
 
 ## Step 4 — Add the review rules
 

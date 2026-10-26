@@ -32,15 +32,21 @@ library, or a value outside its limits, is rejected before anyone sees it.
 - **Only changed lines.** Block 3 compares a spec and its decision record when
   a pull request changes them together, which a feature's does. Whether
   Sourcery reads the unchanged counterpart on a one-sided edit is not
-  established, so that case counts as unchecked.
-- **Never the pull request description.** A rule reads files.
+  established, so the author's self-review in `/open-pr` compares the two
+  instead.
+- **Never the pull request title or description.** A rule reads files, so
+  `/open-pr` has the author read both for secrets and personal data before
+  sending them.
+- **The app's code under `src/`.** Block 2's paths assume the Next.js project
+  keeps its code there. If it ever does not, the block's paths change with it.
 
 ## Deliberately not Sourcery rules
 
 | Requirement | Carried by |
 |---|---|
-| Tests for every feature, edge cases included | The 100% unit coverage threshold, once CI runs it, and the spec's Tests section |
+| Tests for every feature, edge cases included | The spec's Tests section lists each case, the self-review in `/open-pr` checks that each has a test asserting its outcome, and the 100% coverage threshold, once CI runs it, catches code no test runs |
 | English for code, comments and documents | `CLAUDE.md`, as a convention |
 | A comment says what the code is for | `CLAUDE.md`, as a convention |
 | The spec and decision record named in the PR description | The PR template; a rule cannot see the description |
+| No secrets or personal data in a PR title or description | The author, per `/open-pr` |
 | English commit messages | Convention only: a rule reads files, never the commit log |
