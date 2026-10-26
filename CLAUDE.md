@@ -114,5 +114,6 @@ any one of them leads to the others.
   the work arrives.
 - The board: <https://github.com/orgs/koodauspaja/projects/3>, set up per
   `docs/setup/002-github-project-board.md`.
-- Skills: `/write-spec`, `/start-work`, `/open-pr` in `.claude/skills/`.
+- Skills: `/write-spec`, `/start-work`, `/self-review`, `/open-pr` in
+  `.claude/skills/`.
 - What Sourcery checks, and why: `REVIEW_RULES.md`.

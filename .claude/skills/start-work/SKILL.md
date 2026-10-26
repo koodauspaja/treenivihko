@@ -24,12 +24,15 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
    gh api repos/{owner}/{repo}/issues/<N> -X PATCH -f type=Task
    ```
 
-4. The board's auto-add puts it in `Backlog` on its own. Check that it did:
+4. The board's auto-add puts it in `Backlog` on its own. Check that it did,
+   from the issue's side:
 
    ```bash
-   gh project item-list 3 --owner koodauspaja --format json \
-     | jq -r '.items[] | select(.content.number == <N>) | .status'
+   gh issue view <N> --json projectItems -q '.projectItems[].status.name'
    ```
+
+   `gh project item-list` can lag behind a new issue for minutes and answers
+   with nothing, which reads the same as "not on the board".
 
 ## Before starting
 
@@ -55,10 +58,16 @@ permission to reshape the work, and silence are not a start.
 Moving a card:
 
 ```bash
-item=$(gh project item-list 3 --owner koodauspaja --format json \
-  | jq -r '.items[] | select(.content.number == <N>) | .id')
-gh project item-edit --id "$item" --project-id PVT_kwDOB7brSc4Bo2vZ \
-  --field-id PVTSSF_lADOB7brSc4Bo2vZzhnU5XA --single-select-option-id <option>
+item=$(gh api graphql -F n=<N> -f query='query($n: Int!) {
+  repository(owner: "koodauspaja", name: "treenivihko") { issue(number: $n) {
+    projectItems(first: 10) { nodes { id project { number } } } } } }' \
+  --jq '.data.repository.issue.projectItems.nodes[] | select(.project.number == 3) | .id')
+if [[ "$item" == PVTI_* ]]; then
+  gh project item-edit --id "$item" --project-id PVT_kwDOB7brSc4Bo2vZ \
+    --field-id PVTSSF_lADOB7brSc4Bo2vZzhnU5XA --single-select-option-id <option>
+else
+  echo "issue <N> is not on the board: $item"
+fi
 ```
 
 | Column | Option id |

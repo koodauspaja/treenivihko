@@ -11,7 +11,7 @@ it arrives with the clone.
 | The pull request template | `.github/PULL_REQUEST_TEMPLATE.md` |
 | The issue templates: feature, chore and bug | `.github/ISSUE_TEMPLATE/` |
 | The rules and the workflow | `CLAUDE.md` |
-| The skills `write-spec`, `start-work` and `open-pr` | `.claude/skills/` |
+| The skills `write-spec`, `start-work`, `self-review` and `open-pr` | `.claude/skills/` |
 
 ---
 
@@ -32,7 +32,7 @@ Open a pull request from any branch. Its description starts with `Closes #`.
 ## Step 3 — The skills
 
 In Claude Code, at the repository root, type `/`. The list includes
-`write-spec`, `start-work` and `open-pr`.
+`write-spec`, `start-work`, `self-review` and `open-pr`.
 
 ---
 
@@ -40,7 +40,7 @@ In Claude Code, at the repository root, type `/`. The list includes
 
 - [ ] **New issue** offers the three templates, and each sets its label and Issue Type
 - [ ] A new pull request opens with the template
-- [ ] Claude Code lists the three skills
+- [ ] Claude Code lists the four skills
 
 ## Next
 
