@@ -45,10 +45,12 @@ human:
    SonarCloud checks code quality, and Sourcery reviews the change. A human
    merges it.
 
-Implementation is mostly done by Claude Code. A choice that outlives a single
-feature, such as a library, a data shape or a rule, is written down as a
-decision record in `decisions/`. The detailed rules for Claude Code arrive as
-`CLAUDE.md` and `.claude/skills/` in a later setup step.
+Implementation is mostly done by Claude Code. Every feature, and every chore
+or bug that changes something meaningful, writes a decision record in
+`decisions/` saying what was chosen and why. A spec, its decision record and
+its branch all carry their issue's number. The detailed rules are in
+[`CLAUDE.md`](CLAUDE.md), and the skills that carry them out are in
+[`.claude/skills/`](.claude/skills/).
 
 ---
 
