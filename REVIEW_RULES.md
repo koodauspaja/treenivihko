@@ -30,7 +30,8 @@ library, or a value outside its limits, is rejected before anyone sees it.
 ## What a rule sees
 
 - **Only changed lines.** Block 3 compares a spec and its decision record when
-  a pull request changes them together, which a feature's does. Whether
+  a pull request changes them together, which a feature's does. A chore's or a
+  bug's record has no spec, and the block says not to flag that. Whether
   Sourcery reads the unchanged counterpart on a one-sided edit is not
   established, so the author's self-review in `/open-pr` compares the two
   instead.
@@ -48,5 +49,5 @@ library, or a value outside its limits, is rejected before anyone sees it.
 | English for code, comments and documents | `CLAUDE.md`, as a convention |
 | A comment says what the code is for | `CLAUDE.md`, as a convention |
 | The spec and decision record named in the PR description | The PR template; a rule cannot see the description |
-| No secrets or personal data in a PR title or description | The author, per `/open-pr` |
+| No secrets or personal data in a commit message, PR title or description | The author, per `/open-pr` |
 | English commit messages | Convention only: a rule reads files, never the commit log |

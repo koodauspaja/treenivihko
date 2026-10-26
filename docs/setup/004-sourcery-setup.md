@@ -69,7 +69,8 @@ why its paths are what they are.
 
 **Block 3**: `specs/**,decisions/**`
 ```
-A decision record in decisions/ must faithfully interpret the spec that shares its number: decisions/042-weekly-program.md and specs/042-weekly-program.md. Flag any drift, for example the spec saying "the last 5 sessions" and the decision record saying "the last 3".
+- When a pull request changes a spec and the decision record that shares its number, the record must faithfully interpret the spec: decisions/042-weekly-program.md and specs/042-weekly-program.md. Flag any drift, for example the spec saying "the last 5 sessions" and the decision record saying "the last 3".
+- Decision records are never edited. A chore's or a bug's record has no spec, and a spec corrected later is interpreted by the later issue's decision record, which names the record it overrides. Do not flag either as a missing or drifted counterpart.
 ```
 
 ## Step 5 — Test with a pull request

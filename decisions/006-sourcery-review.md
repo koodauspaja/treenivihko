@@ -27,7 +27,12 @@ but must not let a change merge on a review that never happened.
   In doubt, it is high.
 - **At most three full reviews per pull request.** Every finding of a round is
   fixed in one commit. After the third, what is left is answered in its
-  thread and the pull request goes to the human.
+  thread and the pull request goes to the human, with a note on any high-risk
+  fix that has had no full review.
+- **Block 3 compares documents a pull request changes together.** A chore's or
+  a bug's decision record has no spec, and a spec corrected later is
+  interpreted by the later issue's decision record, since records are never
+  edited.
 
 ## Why
 
@@ -46,3 +51,6 @@ but must not let a change merge on a review that never happened.
   the human can disagree with it.
 - Block 2's paths assume the app's code is under `src/`; the Next.js setup
   keeps it there.
+- Nothing yet stops a merge that skips the gate. Branch protection, a later
+  setup step, adds what GitHub can enforce; a skipped Sourcery check still
+  counts as passed there, so the gate stays the author's job.

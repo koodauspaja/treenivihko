@@ -39,9 +39,10 @@ description: Review your own diff, then open the pull request and hand it to a h
    - The Checklist's self-review box, with what step 1 changed or "nothing
      found". Leave a box unticked when it is not true.
 
-   **Read the title and the body before sending them.** They are public the
-   moment the pull request opens, and no review rule sees them: no secret, and
-   no real person's data.
+   **Read the commit messages, the title and the body before sending them**,
+   and the title and body again after any edit. They are public the moment
+   they are pushed or saved, and no review rule sees them: no secret, and no
+   real person's data.
 6. **Move the card to `In Review`.** Opening the pull request moves it to
    `In Progress` on its own, so this step moves it on.
 7. **Pass the Sourcery gate** (below) and fix what the review finds: every
@@ -101,7 +102,9 @@ A round is one full review: the one on opening is the first. Batching every
 finding of a round into one commit keeps the count down. If a third round
 still has findings, fix what is clear, answer the rest in their threads with
 the reason, and hand the pull request over with a comment saying so, rather
-than asking for a fourth.
+than asking for a fourth. If one of those fixes is high risk, the comment says
+that its commit has had no full review, and the human decides whether to ask
+for a fourth.
 
 ### Before handing off
 
@@ -116,14 +119,15 @@ gh api graphql -F owner="${repo%/*}" -F name="${repo#*/}" -F pr=<PR> -f query='
     repository(owner: $owner, name: $name) { pullRequest(number: $pr) {
       reviewThreads(first: 100, after: $after) {
         pageInfo { hasNextPage endCursor }
-        nodes { id isResolved comments(first: 1) { nodes { path body } } } } } } }' \
+        nodes { id isResolved comments(first: 50) { nodes { author { login } path body } } } } } } }' \
   --jq '.data.repository.pullRequest.reviewThreads
         | "hasNextPage=\(.pageInfo.hasNextPage) endCursor=\(.pageInfo.endCursor)",
           (.nodes[] | select(.isResolved | not))'
 ```
 
 If `hasNextPage` is `true`, run it again with `-F after=<endCursor>`, because
-a truncated answer reads the same as a clean one. Nothing unresolved may
+a truncated answer reads the same as a clean one. Each thread comes with its
+replies, so read the whole of it before acting on it. Nothing unresolved may
 remain. Each finding is one of:
 
 - **Fixed**, in the round's commit.
