@@ -101,8 +101,9 @@ line, and check the change is still on `main` rather than reverted there.
 ## The Sourcery gate
 
 **A green check is not a review.** When Sourcery skips, its check still goes
-green, and `main`'s ruleset counts a skipped check as passed too. What counts is the review Sourcery wrote of the commit that would be
-merged, and only the first line of its body says which kind it is.
+green, and `main`'s ruleset counts a skipped check as passed too. What counts
+is the review Sourcery wrote of the commit that would be merged, and only the
+first line of its body says which kind it is.
 
 Read what the head has:
 
@@ -115,6 +116,16 @@ gh api repos/{owner}/{repo}/pulls/<PR>/reviews --paginate \
            quick_check: (.body | test(\"^\\\\s*### Sourcery assessment\\\\s*\\\\*\\\\*Approved\\\\.\\\\*\\\\*\\\\s*$\"))}"
 gh api repos/{owner}/{repo}/commits/$head/check-runs \
   --jq '.check_runs[] | select(.app.slug | test("sourcery"; "i")) | {app: .app.slug, conclusion, title: .output.title}'
+```
+
+For the rows that ask about an earlier full review, list every review
+Sourcery wrote on the pull request, then the commits since the last full one:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/<PR>/reviews --paginate \
+  --jq '.[] | select(.user.login == "sourcery-ai[bot]" and .user.type == "Bot" and .state != "DISMISSED")
+        | {commit: .commit_id[0:7], submitted_at, first: (.body | split("\n")[0])}'
+git log --oneline <last-fully-reviewed-commit>..<head>
 ```
 
 Only Sourcery's own app account counts, and a dismissed review is not a
