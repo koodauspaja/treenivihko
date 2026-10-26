@@ -18,6 +18,7 @@ between two others.
 | Step | File | What it does |
 |---|---|---|
 | 1 | [001-github-repo-setup.md](001-github-repo-setup.md) | The public repository, and who may run its workflows |
+| 2 | [002-github-project-board.md](002-github-project-board.md) | The project board, its columns and workflows, and the kind labels |
 
 The steps after these are written as the infrastructure is stood up.
 
