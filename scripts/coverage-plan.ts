@@ -5,8 +5,10 @@
  * decisions/012-project-init.md
  */
 
+import path from "node:path";
+
 /** Where source lives. Everything matching is measured unless excluded below. */
-export const coverageInclude = ["src/**/*.{ts,tsx}", "scripts/**/*.ts"];
+export const coverageInclude = ["src/**/*.{ts,tsx,mts}", "scripts/**/*.{ts,mts}"];
 
 /**
  * Files no unit test can usefully run, each with its reason. Files only, never
@@ -17,11 +19,20 @@ export const coverageExclusions: Readonly<Record<string, string>> = {
     "Reads the report from disk and sets the exit code; what it decides is in coverage-plan.ts, which is tested.",
 };
 
-const sourceFile = /^(src\/.+\.tsx?|scripts\/.+\.ts)$/;
+const sourceFile = /^(src\/.+\.(ts|tsx|mts)|scripts\/.+\.(ts|mts))$/;
 
-/** Whether a repository-relative path is source that coverage must account for. */
+/** Whether a repository-relative path, with `/` separators, is source coverage must account for. */
 export function isSource(path: string): boolean {
-  return sourceFile.test(path) && !path.endsWith(".d.ts");
+  return sourceFile.test(path) && !/\.d\.m?ts$/.test(path);
+}
+
+/** `file` relative to `root`, with `/` separators whatever the platform's are. */
+export function toRepoPath(
+  root: string,
+  file: string,
+  paths: Pick<typeof path, "relative" | "sep"> = path
+): string {
+  return paths.relative(root, file).split(paths.sep).join("/");
 }
 
 export type CoverageGaps = {
