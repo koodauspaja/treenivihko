@@ -5,10 +5,10 @@ description: Review your own diff, then open the pull request and hand it to a h
 
 # Opening a pull request
 
-1. **Review your own diff before the first push.** Run the `code-review` skill
-   at low effort on it, and fix what it finds. Then:
-   - **The old words.** When behaviour changed, search `specs/`, `decisions/`,
-     comments and tests for the value, the name or the mechanism it replaced.
+1. **Review your own diff before the first push**, and fix what it finds:
+   - **`/self-review`**: the defect classes review keeps finding, each with
+     its counter.
+   - **The `code-review` skill** at low effort.
    - **The edge cases.** Each edge case the spec lists has a test that asserts
      its outcome. Coverage shows a line ran, not that its result was checked.
    - **The other half.** When a spec or a decision record changes without its
@@ -17,7 +17,8 @@ description: Review your own diff, then open the pull request and hand it to a h
 
    A later push repeats these checks on what it changed.
 2. **Commit** with a conventional message: `feat: …`, `fix: …`, `chore: …` or
-   `docs: …`.
+   `docs: …`. The subject says what changed, never which review round it
+   answers; that goes in a pull request comment.
 3. **Tick the issue's boxes** (Acceptance criteria always, and Scope where the
    template has it) before the pull request opens. A box is ticked when its
    outcome is verified. One that cannot be ticked honestly says so on the box:
