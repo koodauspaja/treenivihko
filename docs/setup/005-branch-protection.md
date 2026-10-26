@@ -99,11 +99,16 @@ Read back what applies to `main`. Not `branches/main/protection`, which covers
 only classic branch protection and answers 404 for a ruleset:
 
 ```bash
-gh api repos/<your-org>/<your-repo>/rules/branches/main --jq '.[].type'
+gh api repos/<your-org>/<your-repo>/rules/branches/main \
+  --jq '.[] | .type + " " + ((.parameters // {}) | tostring)'
+gh api repos/<your-org>/<your-repo>/rulesets \
+  --jq '.[] | select(.name == "main") | {enforcement, target}'
 ```
 
-It lists `deletion`, `non_fast_forward`, `required_linear_history`,
-`pull_request` and `required_status_checks`.
+The first lists `deletion`, `non_fast_forward`, `required_linear_history`,
+`pull_request` and `required_status_checks`, each with its settings: compare
+them with the table in Step 1, the check's name and app id included. The
+second says `active` on `branch`.
 
 **Only if that lists all five**, try a direct push. If the ruleset were not in
 force, this push would land on `main` and could only be taken back with a pull
@@ -112,13 +117,16 @@ request, so the read-back comes first. The commit sits on the remote's latest
 and on no branch, so nothing is left behind locally:
 
 ```bash
-git fetch origin main
-git switch --detach origin/main
-git commit --allow-empty -m "test: direct push to main should be rejected"
-git push origin HEAD:main
+git fetch origin main &&
+  git switch --detach origin/main &&
+  git commit --allow-empty -m "test: direct push to main should be rejected" &&
+  git push origin HEAD:main
 # remote: - Changes must be made through a pull request.
 git switch -
 ```
+
+The `&&` matter: if the fetch or the switch fails, nothing is committed on the
+current branch and nothing is pushed.
 
 ---
 
