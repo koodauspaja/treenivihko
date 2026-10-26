@@ -122,4 +122,4 @@ show what the parts are.
 
 ## Next
 
-→ `003`, the pull request and issue templates, once it is written.
+→ [003 — Templates and working agreements](003-templates-and-agent-rules.md)
