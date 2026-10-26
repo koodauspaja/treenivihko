@@ -9,7 +9,7 @@ with the clone; this step installs what it runs on.
 
 ## Step 1 — Node and npm
 
-Node 24 and npm 12 or later. With nvm:
+Node 24.15 or later, and npm 12 or later. With nvm:
 
 ```bash
 nvm install    # reads .nvmrc
@@ -17,12 +17,19 @@ nvm use
 npm install -g npm@12
 ```
 
+`.npmrc` sets `engine-strict`, so `npm ci` refuses a Node or npm older than
+`engines` in `package.json` asks for, rather than installing anyway. Node 24
+comes with an older npm, so the upgrade is needed once per Node install.
+
 ## Step 2 — Install
 
 ```bash
 npm ci
 npm run test:e2e:browser   # Chromium for Playwright
 ```
+
+On Linux, Chromium also needs system libraries: `npx playwright install-deps
+chromium`, which asks for `sudo`. macOS and Windows need nothing more.
 
 npm 12 runs a package's install scripts only when `allowScripts` in
 `package.json` approves it. `esbuild` and `fsevents` are approved. If
@@ -53,8 +60,7 @@ npm run verify
 | Lint and format | `npm run lint` | Biome finds a problem; `npm run lint:fix` applies the safe fixes |
 | Types | `npm run typecheck` | the strict type check fails |
 | Unit tests | `npm run test:unit` | a test fails, coverage is under 100% on any metric, or `coverage-gaps` finds a source file missing from the report |
-| Build | `npm run build` | the production build fails |
-| End-to-end | `npm run test:e2e` | the smoke test fails at phone or desktop width |
+| Build and end-to-end | `npm run test:e2e` | the production build fails, or the smoke test fails at phone or desktop width |
 
 It stops at the first failure.
 

@@ -36,11 +36,19 @@ coverage is held at 100%.
   `scripts/coverage-plan.ts`, each naming a file, never a directory, with its
   reason.
 - **Playwright against a production build**, at a phone's width and a
-  desktop's, in Chromium.
-- **`npm run verify`** runs lint, the type check, the unit tests, the build and
-  the end-to-end tests, stopping at the first failure.
-- **Node 24 and npm 12**, in `engines` and `.nvmrc`. npm 12 blocks install
-  scripts until approved; `esbuild` and `fsevents` are, in `allowScripts`.
+  desktop's, in Chromium. `npm run test:e2e` builds first and never reuses a
+  running server, so it always tests the code as it is.
+- **`npm run verify`** runs lint, the type check, the unit tests, then the build
+  and the end-to-end tests, stopping at the first failure.
+- **Node 24.15 or later and npm 12**, in `engines` and `.nvmrc`, enforced by
+  `engine-strict` in `.npmrc`. 24.15 is jsdom's minimum on the 24 line. npm 12
+  blocks install scripts until approved; `esbuild` and `fsevents` are, in
+  `allowScripts`.
+- **sharp's prebuilt libvips is LGPL-3.0.** Next.js depends on sharp, which
+  ships libvips as a separate shared library. The app uses it unmodified, on
+  the server, and distributes no binary of it, which LGPL-3.0 allows beside
+  this project's MIT licence. Sourcery's licence scan flags each libvips
+  package as blocking; they are accepted here and ignored in Sourcery.
 - **`AGENTS.md` holds the Next.js agent rules** that `next dev` writes and
   restores, and `CLAUDE.md` imports it, so there is one copy.
 

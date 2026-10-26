@@ -20,9 +20,9 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    // `npm run build` runs first, in `npm run verify` and in CI.
+    // `npm run test:e2e` builds first, so this serves the code as it is now.
     command: `npx next start --port ${port}`,
     url: `http://localhost:${port}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });

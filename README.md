@@ -19,7 +19,8 @@ home page; `docs/setup/` is written step by step as the infrastructure is
 stood up, and features follow as specs.
 
 ```bash
-nvm use            # Node 24, from .nvmrc
+nvm use                # Node 24, from .nvmrc
+npm install -g npm@12  # once; .npmrc refuses an older npm
 npm ci
 npm run test:e2e:browser
 npm run dev        # http://localhost:3000

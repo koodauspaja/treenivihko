@@ -6,19 +6,20 @@
  */
 
 import { readdirSync, readFileSync } from "node:fs";
-import { relative, resolve } from "node:path";
-import { findCoverageGaps } from "./coverage-plan.ts";
+import { resolve } from "node:path";
+import { findCoverageGaps, toRepoPath } from "./coverage-plan.ts";
 
 const root = process.cwd();
+const fromRoot = (file: string) => toRepoPath(root, file);
 const report = JSON.parse(
   readFileSync(resolve(root, "coverage/coverage-final.json"), "utf8")
 ) as Record<string, unknown>;
 
-const reported = Object.keys(report).map((file) => relative(root, file));
+const reported = Object.keys(report).map(fromRoot);
 const files = ["src", "scripts"].flatMap((dir) =>
   readdirSync(resolve(root, dir), { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) => relative(root, resolve(entry.parentPath, entry.name)))
+    .map((entry) => fromRoot(resolve(entry.parentPath, entry.name)))
 );
 
 const { missing, staleExclusions } = findCoverageGaps(files, reported);

@@ -1,17 +1,26 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { coverageExclusions, findCoverageGaps, isSource } from "../../../scripts/coverage-plan.ts";
+import {
+  coverageExclusions,
+  findCoverageGaps,
+  isSource,
+  toRepoPath,
+} from "../../../scripts/coverage-plan.ts";
 
 describe("isSource", () => {
-  it.each(["src/app/page.tsx", "src/lib/programs/plan.ts", "scripts/coverage-plan.ts"])(
-    "counts %s as source",
-    (path) => {
-      expect(isSource(path)).toBe(true);
-    }
-  );
+  it.each([
+    "src/app/page.tsx",
+    "src/lib/programs/plan.ts",
+    "scripts/coverage-plan.ts",
+    "src/lib/a.mts",
+  ])("counts %s as source", (path) => {
+    expect(isSource(path)).toBe(true);
+  });
 
   it.each([
     "src/app/globals.css",
     "src/types/env.d.ts",
+    "src/types/env.d.mts",
     "scripts/data.json",
     "tests/unit/app/page.test.tsx",
     "next.config.ts",
@@ -56,5 +65,17 @@ describe("coverageExclusions", () => {
       expect(reason.length).toBeGreaterThan(0);
       expect(isSource(file)).toBe(true);
     }
+  });
+});
+
+describe("toRepoPath", () => {
+  it("gives a path relative to the root", () => {
+    expect(toRepoPath("/repo", "/repo/src/app/page.tsx")).toBe("src/app/page.tsx");
+  });
+
+  it("uses forward slashes on Windows", () => {
+    expect(toRepoPath("C:\\repo", "C:\\repo\\src\\app\\page.tsx", path.win32)).toBe(
+      "src/app/page.tsx"
+    );
   });
 });
