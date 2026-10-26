@@ -21,8 +21,8 @@ what each later push changes. It takes minutes; a review round takes longer.
    counter. Not every class applies to every diff, but say to yourself which
    do not, rather than skipping the list.
 3. For every test added, run its mutation (class 4).
-4. Run what the toolchain has: once it exists, lint, the type check and the
-   unit tests at 100% coverage.
+4. Run `npm run verify`: lint, the type check, the unit tests at 100% coverage
+   with `coverage-gaps`, the build and the end-to-end tests.
 5. Write in the pull request what the pass changed, or that it found nothing.
 
 ## The classes

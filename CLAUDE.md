@@ -1,5 +1,7 @@
 # Project instructions
 
+@AGENTS.md
+
 ## What this is
 
 A training app for one child who trains on their own: football, and the
@@ -110,8 +112,14 @@ any one of them leads to the others.
 
 - Setting the infrastructure up from zero: `docs/setup/`, in the order its
   README gives. It is a procedure, not a description of the running system.
-- Specs: `specs/`. Decision records: `decisions/`. Both start empty and fill as
-  the work arrives.
+- Specs: `specs/`. Decision records: `decisions/`.
+- The code: `src/app` for routes, `src/components` for UI, `src/lib/<domain>`
+  for the rest (`decisions/012-project-init.md`). Tests mirror it under
+  `tests/unit`, and `tests/e2e` holds the Playwright tests.
+- **`npm run verify` before every push**: lint, type check, unit tests at 100%
+  with `coverage-gaps`, the build and the end-to-end tests, stopping at the
+  first failure. A coverage exclusion goes in `scripts/coverage-plan.ts`, with
+  its reason.
 - The board: <https://github.com/orgs/koodauspaja/projects/3>, set up per
   `docs/setup/002-github-project-board.md`.
 - Skills: `/write-spec`, `/start-work`, `/self-review`, `/open-pr` in

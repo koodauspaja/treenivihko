@@ -22,6 +22,7 @@ between two others.
 | 3 | [003-templates-and-agent-rules.md](003-templates-and-agent-rules.md) | The issue and pull request templates, `CLAUDE.md` and the skills |
 | 4 | [004-sourcery-setup.md](004-sourcery-setup.md) | Sourcery and the project's review rules |
 | 5 | [005-branch-protection.md](005-branch-protection.md) | The ruleset that protects `main`, and the merge settings |
+| 6 | [006-project-init.md](006-project-init.md) | Node, the install, and `npm run verify` |
 
 The steps after these are written as the infrastructure is stood up.
 
