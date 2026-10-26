@@ -20,6 +20,7 @@ between two others.
 | 1 | [001-github-repo-setup.md](001-github-repo-setup.md) | The public repository, and who may run its workflows |
 | 2 | [002-github-project-board.md](002-github-project-board.md) | The project board, its columns and workflows, and the kind labels |
 | 3 | [003-templates-and-agent-rules.md](003-templates-and-agent-rules.md) | The issue and pull request templates, `CLAUDE.md` and the skills |
+| 4 | [004-sourcery-setup.md](004-sourcery-setup.md) | Sourcery and the project's review rules |
 
 The steps after these are written as the infrastructure is stood up.
 

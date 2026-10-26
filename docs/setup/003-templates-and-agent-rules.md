@@ -44,4 +44,4 @@ In Claude Code, at the repository root, type `/`. The list includes
 
 ## Next
 
-→ `004`, the review tools, once it is written.
+→ [004 — Sourcery](004-sourcery-setup.md)
