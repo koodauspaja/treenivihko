@@ -21,6 +21,7 @@ between two others.
 | 2 | [002-github-project-board.md](002-github-project-board.md) | The project board, its columns and workflows, and the kind labels |
 | 3 | [003-templates-and-agent-rules.md](003-templates-and-agent-rules.md) | The issue and pull request templates, `CLAUDE.md` and the skills |
 | 4 | [004-sourcery-setup.md](004-sourcery-setup.md) | Sourcery and the project's review rules |
+| 5 | [005-branch-protection.md](005-branch-protection.md) | The ruleset that protects `main`, and the merge settings |
 
 The steps after these are written as the infrastructure is stood up.
 

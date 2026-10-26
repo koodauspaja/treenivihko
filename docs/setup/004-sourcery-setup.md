@@ -124,4 +124,4 @@ The merge gate in `.claude/skills/open-pr/SKILL.md` reads these.
 
 ## Next
 
-→ `005`, the Next.js project, once it is written.
+→ [005 — Branch protection](005-branch-protection.md)
