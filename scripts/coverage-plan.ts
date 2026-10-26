@@ -8,7 +8,7 @@
 import path from "node:path";
 
 /** Where source lives. Everything matching is measured unless excluded below. */
-export const coverageInclude = ["src/**/*.{ts,tsx,mts}", "scripts/**/*.{ts,mts}"];
+export const coverageInclude = ["src/**/*.{ts,tsx,mts,cts}", "scripts/**/*.{ts,mts,cts}"];
 
 /**
  * Files no unit test can usefully run, each with its reason. Files only, never
@@ -19,11 +19,11 @@ export const coverageExclusions: Readonly<Record<string, string>> = {
     "Reads the report from disk and sets the exit code; what it decides is in coverage-plan.ts, which is tested.",
 };
 
-const sourceFile = /^(src\/.+\.(ts|tsx|mts)|scripts\/.+\.(ts|mts))$/;
+const sourceFile = /^(src\/.+\.(ts|tsx|mts|cts)|scripts\/.+\.(ts|mts|cts))$/;
 
 /** Whether a repository-relative path, with `/` separators, is source coverage must account for. */
 export function isSource(path: string): boolean {
-  return sourceFile.test(path) && !/\.d\.m?ts$/.test(path);
+  return sourceFile.test(path) && !/\.d\.[mc]?ts$/.test(path);
 }
 
 /** `file` relative to `root`, with `/` separators whatever the platform's are. */

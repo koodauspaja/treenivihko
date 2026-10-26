@@ -13,6 +13,8 @@ describe("isSource", () => {
     "src/lib/programs/plan.ts",
     "scripts/coverage-plan.ts",
     "src/lib/a.mts",
+    "src/lib/b.cts",
+    "scripts/c.cts",
   ])("counts %s as source", (path) => {
     expect(isSource(path)).toBe(true);
   });
@@ -21,6 +23,7 @@ describe("isSource", () => {
     "src/app/globals.css",
     "src/types/env.d.ts",
     "src/types/env.d.mts",
+    "src/types/env.d.cts",
     "scripts/data.json",
     "tests/unit/app/page.test.tsx",
     "next.config.ts",

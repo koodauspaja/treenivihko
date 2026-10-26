@@ -9,7 +9,10 @@ with the clone; this step installs what it runs on.
 
 ## Step 1 — Node and npm
 
-Node 24.15 or later, and npm 12 or later. With nvm:
+Node 24.15 or later on the 24 line, or 26 and later, and npm 12 or later.
+Odd-numbered release lines such as 25 are not supported: jsdom, which the
+unit tests run in, does not accept them, and `engines` follows it. `.nvmrc`
+names an exact 24 release that satisfies `engines`. With nvm:
 
 ```bash
 nvm install    # reads .nvmrc
