@@ -25,19 +25,25 @@ jobs:
     name: Lint, types and unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Actions minutes and secrets are spent only on the people named in setup 001.
-    if: |
-      github.actor == vars.OWNER_USERNAME ||
-      github.actor == vars.COLLABORATOR_USERNAME ||
-      github.actor == 'renovate[bot]'
     steps:
+      # A skipped job counts as passed, so anyone else gets a failure, not a skip.
+      - name: Only the people named in setup 001
+        env:
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ vars.OWNER_USERNAME }}
+          COLLABORATOR: ${{ vars.COLLABORATOR_USERNAME }}
+        run: |
+          case "$ACTOR" in
+            "$OWNER" | "$COLLABORATOR" | "renovate[bot]") ;;
+            *) echo "::error::CI runs only for the actors named in setup 001, and $ACTOR is not one"; exit 1 ;;
+          esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       # Node 24 ships an older npm, which .npmrc's engine-strict refuses.
-      - run: npm install --global npm@12
+      - run: npm install --global --ignore-scripts npm@12.2.1
       # A dependency's install script is how a compromised package runs code on
       # a runner holding the repository's tokens.
       - run: npm ci --ignore-scripts
@@ -55,19 +61,26 @@ jobs:
     name: Build and end-to-end
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: |
-      github.actor == vars.OWNER_USERNAME ||
-      github.actor == vars.COLLABORATOR_USERNAME ||
-      github.actor == 'renovate[bot]'
     steps:
+      # A skipped job counts as passed, so anyone else gets a failure, not a skip.
+      - name: Only the people named in setup 001
+        env:
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ vars.OWNER_USERNAME }}
+          COLLABORATOR: ${{ vars.COLLABORATOR_USERNAME }}
+        run: |
+          case "$ACTOR" in
+            "$OWNER" | "$COLLABORATOR" | "renovate[bot]") ;;
+            *) echo "::error::CI runs only for the actors named in setup 001, and $ACTOR is not one"; exit 1 ;;
+          esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm install --global npm@12
+      - run: npm install --global --ignore-scripts npm@12.2.1
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:browser -- --with-deps
       - run: npm run test:e2e
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
@@ -99,14 +112,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       # The free plan's quality gate cannot be changed, so the limits this
-      # project holds to, nothing new and nothing open, are checked here.
+      # project holds to, nothing new and nothing open, are checked here. Node
+      # runs the TypeScript itself: no dependency is installed in a job that
+      # holds SONAR_TOKEN.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: npm
-      - run: npm install --global npm@12
-      - run: npm ci --ignore-scripts
-      - run: npx tsx scripts/sonar-gate.ts
+      - run: node scripts/sonar-gate.ts
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

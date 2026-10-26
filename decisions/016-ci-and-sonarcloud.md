@@ -14,25 +14,35 @@ mechanical held a pull request to the tests or to 100% coverage.
   - `Build and end-to-end`: the production build and the smoke test.
   - `SonarCloud scan`: the analysis with the unit job's coverage, waiting for
     the quality gate so a failed gate fails the check.
-- **Node from `.nvmrc`, then npm 12**, because Node 24's bundled npm is older
-  and `.npmrc`'s `engine-strict` refuses it.
+- **Node from `.nvmrc`, then npm 12.2.1**, exact and without install scripts,
+  because Node 24's bundled npm is older and `.npmrc`'s `engine-strict`
+  refuses it. No `npx`: a tool runs as an npm script, from the locked
+  dependencies, never fetched on demand.
 - **`npm ci --ignore-scripts` in CI.** An install script is how a compromised
   dependency runs code on a runner that holds the repository's tokens. Locally
   npm 12's `allowScripts` decides.
 - **Every action pinned to a commit SHA**, with its version in a comment. A tag
   can be moved to other code; a SHA cannot. Renovate will update the pins.
-- **Jobs run only for the actors in setup 001's variables and Renovate**, so a
-  stranger's pull request spends no Actions minutes or secrets.
+- **Jobs fail, rather than skip, for anyone but the actors in setup 001's
+  variables and Renovate.** GitHub counts a skipped required check as passed,
+  so a skip would let such a pull request merge; a failure stops it at once.
+- **No dependency is installed in the SonarCloud job**, which holds
+  `SONAR_TOKEN`. Node 24 runs `scripts/sonar-gate.ts` itself, stripping its
+  types, so only this repository's own code runs beside the token.
 - **Zero, not Sonar's defaults.** The free plan's only gate is the built-in
   **Sonar way**, which allows 80% coverage and 3% duplication on new code, and
   custom gates need a paid plan. `scripts/sonar-gate.ts` reads SonarCloud's
   measures after the scan and fails a pull request with any new issue,
   duplicated line or security hotspot, and a push to `main` with any open
-  issue or hotspot at all. A measure missing from the answer fails, except a
-  duplication density Sonar leaves out because there are no new lines.
+  issue or hotspot at all. Duplication is counted in lines, because Sonar
+  rounds the density to 0.0. A measure missing from the answer fails, except a
+  duplicated-line count Sonar leaves out when it has measured no new lines.
+  The parser is tested against an answer recorded from SonarCloud: new-code
+  values come in a `periods` list, which a guessed shape had missed.
   Coverage is held at 100% by the unit job.
-- **Sonar way comprehensive** for TypeScript, JavaScript and YAML, as in the
+- **Sonar way comprehensive** for every language the project has, as in the
   earlier project, for more rules than the default profile.
+- **Tests are analysed** with Sonar's test rules, not excluded.
 - **A false positive is ignored narrowly, with its reason in the repository**:
   that rule, in the files named, in `sonar-project.properties`. A security
   rule is never ignored by file; what it flags is removed instead.
@@ -59,5 +69,6 @@ mechanical held a pull request to the tests or to 100% coverage.
 - Renaming a job blocks every merge until the ruleset names the new check.
 - A rule Sonar adds can fail `main`'s push with no change of ours; it is fixed
   or ignored as above, in a chore of its own.
-- A pull request from anyone outside the variables shows its jobs skipped,
-  which GitHub counts as passed; such a pull request needs an owner to look.
+- A pull request from anyone outside the variables fails CI. Fork pull
+  requests need approval to run at all (setup 001), and get no secrets, so
+  this repository's own branches are the only way in.

@@ -1,0 +1,50 @@
+{
+  "component": {
+    "id": "AaF6n7RK8BmG5SUxMm2Y",
+    "key": "koodauspaja_treenivihko",
+    "name": "treenivihko",
+    "qualifier": "TRK",
+    "measures": [
+      {
+        "metric": "new_security_hotspots",
+        "periods": [
+          {
+            "index": 1,
+            "value": "0",
+            "bestValue": true
+          }
+        ]
+      },
+      {
+        "metric": "new_lines",
+        "periods": [
+          {
+            "index": 1,
+            "value": "479"
+          }
+        ]
+      },
+      {
+        "metric": "new_violations",
+        "periods": [
+          {
+            "index": 1,
+            "value": "10",
+            "bestValue": false
+          }
+        ]
+      },
+      {
+        "metric": "new_duplicated_lines",
+        "periods": [
+          {
+            "index": 1,
+            "value": "0",
+            "bestValue": true
+          }
+        ]
+      }
+    ],
+    "pullRequest": "17"
+  }
+}
