@@ -70,11 +70,15 @@ that has fallen behind by rebasing it, never by merging `main` into it, which
 `main`'s linear history would refuse anyway:
 
 ```bash
-branch=$(git branch --show-current)
-git fetch origin main &&
+branch=$(gh pr view <PR> --json headRefName -q .headRefName)
+[ "$branch" = "$(git branch --show-current)" ] &&
+  git fetch origin main &&
   git rebase origin/main &&
   git push --force-with-lease origin "HEAD:$branch"
 ```
+
+The push goes to the pull request's own branch, and only from a checkout of
+it. `git fetch origin main` updates `origin/main` as well as `FETCH_HEAD`.
 
 The `&&` matter: a rebase that stops on a conflict must not be pushed. Resolve
 it, `git rebase --continue`, and push only once the rebase has finished.
@@ -90,7 +94,9 @@ in the parts of the code the branch changes; otherwise it is rated by what
 `main` gained there, or by what the conflict's resolution changed.
 
 Branches here never contain merge commits, since `main` is never merged into
-them, so a plain rebase drops nothing.
+them, so a plain rebase has none to drop. It does skip a commit whose change is
+already on `main`, and says so (`skipped previously applied commit`); read that
+line, and check the change is still on `main` rather than reverted there.
 
 ## The Sourcery gate
 
@@ -135,8 +141,8 @@ the call is visible:
 
 | Level | The commit changes | Review |
 |---|---|---|
-| **Low** | Documentation, comments, formatting; a rename that changes no behaviour; a test-only change that does not weaken a test; a small copy fix; a small UI adjustment such as spacing or a label | The quick check is enough |
-| **High** | Business logic: building or adapting a program, the AI call and its library check, progress and marks. Anything that writes data. Sign-in and access, including the passcode. A migration. Secrets or personal data. A big UI change: a new screen or flow, a restructured layout, a changed navigation | Ask for a fresh full review |
+| **Low** | Documentation other than the rules below, comments, formatting; a rename that changes no behaviour; a test-only change that does not weaken a test; a small copy fix; a small UI adjustment such as spacing or a label | The quick check is enough |
+| **High** | Business logic: building or adapting a program, the AI call and its library check, progress and marks. Anything that writes data. Sign-in and access, including the passcode. A migration. Secrets or personal data. A big UI change: a new screen or flow, a restructured layout, a changed navigation. The rules that decide what may merge, even as Markdown: this gate, the review rules, branch protection, and the privacy and security instructions | Ask for a fresh full review |
 
 **In doubt, it is high.** A commit holding both kinds is high.
 
