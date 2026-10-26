@@ -13,8 +13,7 @@ release branch, since there is one environment.
 ## Step 1 — Create the ruleset
 
 Repository → **Settings** → **Rules** → **Rulesets** → **New branch ruleset**,
-or from the command line. This one was created with the API: save the JSON
-below as `ruleset-main.json`, then
+or from the command line: save the JSON below as `ruleset-main.json`, then
 
 ```bash
 gh api repos/<your-org>/<your-repo>/rulesets -X POST --input ruleset-main.json
@@ -108,11 +107,13 @@ It lists `deletion`, `non_fast_forward`, `required_linear_history`,
 
 **Only if that lists all five**, try a direct push. If the ruleset were not in
 force, this push would land on `main` and could only be taken back with a pull
-request, so the read-back comes first. The commit is on no branch, so nothing
-is left behind locally:
+request, so the read-back comes first. The commit sits on the remote's latest
+`main`, so a rejection cannot come from a stale base instead of the ruleset,
+and on no branch, so nothing is left behind locally:
 
 ```bash
-git switch --detach main
+git fetch origin main
+git switch --detach origin/main
 git commit --allow-empty -m "test: direct push to main should be rejected"
 git push origin HEAD:main
 # remote: - Changes must be made through a pull request.
