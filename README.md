@@ -14,9 +14,17 @@ and adapts the next period: longer or shorter, easier or harder.
 
 Every user-facing string is Finnish; code, comments and documents are English.
 
-**Status:** being set up. There is no application code yet; `docs/setup/` is
-written step by step as the infrastructure is stood up, and features follow as
-specs.
+**Status:** being set up. The application is a skeleton with a placeholder
+home page; `docs/setup/` is written step by step as the infrastructure is
+stood up, and features follow as specs.
+
+```bash
+nvm use            # Node 24, from .nvmrc
+npm ci
+npm run test:e2e:browser
+npm run dev        # http://localhost:3000
+npm run verify     # every check, as CI will run them
+```
 
 ---
 

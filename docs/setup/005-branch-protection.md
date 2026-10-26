@@ -138,4 +138,4 @@ current branch and nothing is pushed.
 
 ## Next
 
-→ `006`, the Next.js project, once it is written.
+→ [006 — The Next.js project](006-project-init.md)
