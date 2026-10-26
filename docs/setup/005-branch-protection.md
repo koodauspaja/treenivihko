@@ -74,7 +74,8 @@ Repository → **Settings** → **General** → **Pull Requests**:
 
 ```bash
 gh api repos/<your-org>/<your-repo> -X PATCH \
-  -F allow_merge_commit=false -F delete_branch_on_merge=true
+  -F allow_merge_commit=false -F allow_rebase_merge=true \
+  -F allow_squash_merge=true -F delete_branch_on_merge=true
 ```
 
 ## Step 3 — What the required check does not do
