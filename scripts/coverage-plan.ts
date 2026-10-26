@@ -55,3 +55,22 @@ export function findCoverageGaps(
     staleExclusions: Object.keys(exclusions).filter((file) => !existing.has(file)),
   };
 }
+
+/**
+ * The comma-separated values of `key` in a Java properties file, such as
+ * `sonar-project.properties`. A missing key is an empty list.
+ */
+export function readPropertyList(properties: string, key: string): string[] {
+  const line = properties
+    .split("\n")
+    .map((row) => row.trim())
+    .find((row) => row.startsWith(`${key}=`));
+  if (line === undefined) {
+    return [];
+  }
+  return line
+    .slice(key.length + 1)
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
