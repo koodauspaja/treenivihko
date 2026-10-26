@@ -13,7 +13,8 @@ release branch, since there is one environment.
 ## Step 1 — Create the ruleset
 
 Repository → **Settings** → **Rules** → **Rulesets** → **New branch ruleset**,
-or from the command line. This one was created with the API:
+or from the command line. This one was created with the API: save the JSON
+below as `ruleset-main.json`, then
 
 ```bash
 gh api repos/<your-org>/<your-repo>/rulesets -X POST --input ruleset-main.json
@@ -26,7 +27,7 @@ gh api repos/<your-org>/<your-repo>/rulesets -X POST --input ruleset-main.json
 | Restrict deletions | on | |
 | Block force pushes | on | |
 | Require linear history | on | `main` reads as one line of the work's own commits |
-| Require a pull request | on, **0** approvals | One person works here, and GitHub does not let an author approve their own pull request. The human gate is the merge itself |
+| Require a pull request | on, **0** approvals | One person works here, and GitHub does not let an author approve their own pull request. The human gate is the merge itself, which the ruleset cannot enforce: anyone with write access can merge, Claude Code included, so the rule that Claude merges only when told to is in `CLAUDE.md` |
 | Dismiss stale approvals on push | on | Inert at 0 approvals; right if approvals are ever required |
 | Require conversation resolution | on | The one part of reading the threads that GitHub can enforce |
 | Allowed merge methods | rebase, squash | Rebase keeps each commit's message; squash is there for a branch whose commits are not worth keeping |
@@ -105,7 +106,10 @@ gh api repos/<your-org>/<your-repo>/rules/branches/main --jq '.[].type'
 It lists `deletion`, `non_fast_forward`, `required_linear_history`,
 `pull_request` and `required_status_checks`.
 
-Then try a direct push, from a commit on no branch so nothing is left behind:
+**Only if that lists all five**, try a direct push. If the ruleset were not in
+force, this push would land on `main` and could only be taken back with a pull
+request, so the read-back comes first. The commit is on no branch, so nothing
+is left behind locally:
 
 ```bash
 git switch --detach main

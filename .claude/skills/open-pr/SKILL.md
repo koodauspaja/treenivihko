@@ -71,18 +71,26 @@ that has fallen behind by rebasing it, never by merging `main` into it, which
 
 ```bash
 branch=$(git branch --show-current)
-git fetch origin main
-git rebase origin/main
-git push --force-with-lease origin "HEAD:$branch"
+git fetch origin main &&
+  git rebase origin/main &&
+  git push --force-with-lease origin "HEAD:$branch"
 ```
+
+The `&&` matter: a rebase that stops on a conflict must not be pushed. Resolve
+it, `git rebase --continue`, and push only once the rebase has finished.
 
 `git fetch origin main`, not `git fetch origin`: fetching everything also moves
 this branch's remote-tracking ref, which is what `--force-with-lease` compares
 against, so it would no longer notice someone else's push to the branch.
 
-A rebase gives the branch a new head, with no review of it. A rebase that
-replays the same commits without conflicts is low risk (below); one that
-resolved a conflict is rated by what the resolution changed.
+A rebase gives the branch a new head, with no review of it, and is rated
+like any other commit (below) by what it brings together. It is low risk
+when it replays the same commits without conflicts and `main` gained nothing
+in the parts of the code the branch changes; otherwise it is rated by what
+`main` gained there, or by what the conflict's resolution changed.
+
+Branches here never contain merge commits, since `main` is never merged into
+them, so a plain rebase drops nothing.
 
 ## The Sourcery gate
 
@@ -112,7 +120,7 @@ a body that starts like one and says more is read in full.
 | A review starting `Hey - I've reviewed your changes` or `Hey - I've found N issues` | a full review | Passed, once its threads are read |
 | A review whose whole body is `### Sourcery assessment` and `**Approved.**` | the quick check | Passed if every commit since the last full review is low risk (below); otherwise ask for a full one |
 | A review or a `skipped` check starting `Sorry`, or a budget notice | a skip | Blocked; see the causes in `docs/setup/004-sourcery-setup.md` |
-| No review, and a `success` check | a push Sourcery answered with the check alone | Passed if every commit since the last full review is low risk; otherwise ask for a full one |
+| No review, and a `success` check | a push Sourcery answered with the check alone | Passed only if an earlier head of this pull request has a full review and every commit since it is low risk; otherwise ask for a full one |
 | No review, and no check or one still running | no review yet | Ask for one if nothing has arrived after a few minutes; Sourcery sometimes never starts |
 
 To ask for a full review, comment `@sourcery-ai review` on the pull request,
