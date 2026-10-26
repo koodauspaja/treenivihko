@@ -53,12 +53,41 @@ description: Review your own diff, then open the pull request and hand it to a h
    then passed again on the new head.
 8. **Hand it to the human.** Never merge on your own initiative. Merge when a
    human says to, quoting what they said, and pass the gate once more on the
-   head first: a push after the handoff leaves an earlier pass behind.
+   head first: a push after the handoff leaves an earlier pass behind. Merge
+   by rebase, so each commit lands with its own message:
+
+   ```bash
+   gh pr merge <PR> --rebase --match-head-commit <head>
+   ```
+
+   `main` takes no merge commits. Squash (`--squash`) only when a human asks
+   for it.
+
+## A branch behind `main`
+
+`main` requires a branch to be up to date before it merges. Update a branch
+that has fallen behind by rebasing it, never by merging `main` into it, which
+`main`'s linear history would refuse anyway:
+
+```bash
+branch=$(git branch --show-current)
+git fetch origin main
+git rebase origin/main
+git push --force-with-lease origin "HEAD:$branch"
+```
+
+`git fetch origin main`, not `git fetch origin`: fetching everything also moves
+this branch's remote-tracking ref, which is what `--force-with-lease` compares
+against, so it would no longer notice someone else's push to the branch.
+
+A rebase gives the branch a new head, with no review of it. A rebase that
+replays the same commits without conflicts is low risk (below); one that
+resolved a conflict is rated by what the resolution changed.
 
 ## The Sourcery gate
 
 **A green check is not a review.** When Sourcery skips, its check still goes
-green. What counts is the review Sourcery wrote of the commit that would be
+green, and `main`'s ruleset counts a skipped check as passed too. What counts is the review Sourcery wrote of the commit that would be
 merged, and only the first line of its body says which kind it is.
 
 Read what the head has:
@@ -83,7 +112,8 @@ a body that starts like one and says more is read in full.
 | A review starting `Hey - I've reviewed your changes` or `Hey - I've found N issues` | a full review | Passed, once its threads are read |
 | A review whose whole body is `### Sourcery assessment` and `**Approved.**` | the quick check | Passed if every commit since the last full review is low risk (below); otherwise ask for a full one |
 | A review or a `skipped` check starting `Sorry`, or a budget notice | a skip | Blocked; see the causes in `docs/setup/004-sourcery-setup.md` |
-| Nothing from Sourcery | no review | Ask for one; do not wait for it to arrive |
+| No review, and a `success` check | a push Sourcery answered with the check alone | Passed if every commit since the last full review is low risk; otherwise ask for a full one |
+| No review, and no check or one still running | no review yet | Ask for one if nothing has arrived after a few minutes; Sourcery sometimes never starts |
 
 To ask for a full review, comment `@sourcery-ai review` on the pull request,
 alone. Sourcery sometimes fails to start on a commit, and nothing arrives later
