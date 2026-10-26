@@ -8,10 +8,13 @@
 
 export type SonarScope = { pullRequest: string } | { branch: string };
 
-/** A pull request adds no issue, no duplicated line and no security hotspot. */
+/**
+ * A pull request adds no issue, no duplicated line and no security hotspot.
+ * Duplication is counted in lines, not as a density, which Sonar rounds to 0.0.
+ */
 export const pullRequestLimits: Readonly<Record<string, number>> = {
   new_violations: 0,
-  new_duplicated_lines_density: 0,
+  new_duplicated_lines: 0,
   new_security_hotspots: 0,
 };
 
@@ -22,7 +25,7 @@ export const branchLimits: Readonly<Record<string, number>> = {
 };
 
 /** Metrics Sonar leaves out of its answer when there is nothing to measure. */
-const absentWhenNothingNew = new Set(["new_duplicated_lines_density"]);
+const absentWhenNothingNew = new Set(["new_duplicated_lines"]);
 
 /** The limits for a scope: a pull request is judged on its new code, `main` on all of it. */
 export function limitsFor(scope: SonarScope): Readonly<Record<string, number>> {
@@ -43,7 +46,12 @@ export function measuresUrl(host: string, projectKey: string, scope: SonarScope)
 
 export type GateResult = { passed: boolean; lines: string[] };
 
-type Measure = { metric?: unknown; value?: unknown; period?: { value?: unknown } };
+/**
+ * One entry of the measures API's answer. An overall metric carries `value`;
+ * a new-code metric carries `periods`, one per new-code period, and Sonar
+ * Cloud has only the first.
+ */
+type Measure = { metric?: unknown; value?: unknown; periods?: unknown };
 
 /** The numeric value of each measure in an API answer, by metric; anything unreadable is left out. */
 function readMeasures(answer: unknown): Map<string, number> {
@@ -53,7 +61,8 @@ function readMeasures(answer: unknown): Map<string, number> {
     return values;
   }
   for (const measure of measures as Measure[]) {
-    const raw = measure.value ?? measure.period?.value;
+    const periods = Array.isArray(measure.periods) ? measure.periods : [];
+    const raw = measure.value ?? (periods[0] as { value?: unknown } | undefined)?.value;
     const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : Number.NaN;
     if (typeof measure.metric === "string" && Number.isFinite(value)) {
       values.set(measure.metric, value);
@@ -64,15 +73,15 @@ function readMeasures(answer: unknown): Map<string, number> {
 
 /**
  * Judges an answer from the measures API against the limits. A metric that is
- * missing or unreadable fails, except a duplication density Sonar leaves out
- * because the change has no new lines to measure.
+ * missing or unreadable fails, except a duplicated-line count Sonar leaves out
+ * when it has measured the change's new lines and found none.
  */
 export function judgeMeasures(
   limits: Readonly<Record<string, number>>,
   answer: unknown
 ): GateResult {
   const values = readMeasures(answer);
-  const nothingNew = (values.get("new_lines") ?? 0) === 0;
+  const nothingNew = values.get("new_lines") === 0;
   const lines: string[] = [];
   let passed = true;
   for (const [metric, limit] of Object.entries(limits)) {

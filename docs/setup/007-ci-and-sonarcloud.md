@@ -34,9 +34,10 @@ This project: SonarCloud organisation `koodauspaja`, project key
 5. Project → **Administration** → **Analysis Method** → turn **Automatic
    Analysis** off. With both on, the CI scan fails: SonarCloud refuses a second
    analysis of the same commit.
-6. Project → **Administration** → **Quality Profiles**: set **TypeScript**,
-   **JavaScript** and **YAML** to **Sonar way comprehensive**, which has more
-   rules than the default **Sonar way**.
+6. Project → **Administration** → **Quality Profiles**: set every language
+   listed (here TypeScript, YAML, JSON and CSS, and JavaScript for when a
+   `.js` file arrives) to **Sonar way comprehensive**, which has more rules
+   than the default **Sonar way**.
 
 ## Step 2 — The token
 
@@ -69,7 +70,7 @@ on new code, and it cannot be changed. So after the scan,
 
 | On | Nothing allowed of |
 |---|---|
-| a pull request | new issues, new duplicated lines, new security hotspots |
+| a pull request | new issues, new duplicated lines (counted, not as a density), new security hotspots |
 | `main` | open issues and security hotspots at all, so a rule Sonar adds later and finds on old lines fails the next push |
 
 Coverage needs no Sonar limit: the unit job already fails below 100%.
@@ -79,8 +80,11 @@ A finding is fixed. One that is wrong for this code is ignored in
 beside it; a security rule is never ignored by file.
 
 The jobs run only for the actors named in setup 001's `OWNER_USERNAME` and
-`COLLABORATOR_USERNAME`, and for Renovate. For anyone else they are skipped,
-and the SonarCloud scan, which needs the unit job, is skipped with it.
+`COLLABORATOR_USERNAME`, and for Renovate. For anyone else their first step
+fails, since a skipped required check would count as passed, and the
+SonarCloud scan, which needs the unit job, does not run. That job installs no
+dependency: Node runs `scripts/sonar-gate.ts` directly, so nothing but this
+repository's code runs beside `SONAR_TOKEN`.
 
 ## Step 5 — Require the checks
 

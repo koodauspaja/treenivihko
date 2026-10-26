@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   webServer: {
     // `npm run test:e2e` builds first, so this serves the code as it is now.
-    command: `npx next start --port ${port}`,
+    command: `next start --port ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: false,
   },
