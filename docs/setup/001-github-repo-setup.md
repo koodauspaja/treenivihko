@@ -72,4 +72,4 @@ collaborators**.
 
 ## Next
 
-→ `002-github-project-board.md`, once it is written.
+→ [002 — GitHub Project board](002-github-project-board.md)
