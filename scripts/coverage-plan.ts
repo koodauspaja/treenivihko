@@ -17,6 +17,8 @@ export const coverageInclude = ["src/**/*.{ts,tsx,mts,cts}", "scripts/**/*.{ts,m
 export const coverageExclusions: Readonly<Record<string, string>> = {
   "scripts/coverage-gaps.ts":
     "Reads the report from disk and sets the exit code; what it decides is in coverage-plan.ts, which is tested.",
+  "scripts/sonar-gate.ts":
+    "Calls SonarCloud's API and sets the exit code; what it decides is in sonar-plan.ts, which is tested.",
 };
 
 const sourceFile = /^(src\/.+\.(ts|tsx|mts|cts)|scripts\/.+\.(ts|mts|cts))$/;

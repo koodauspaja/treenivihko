@@ -23,6 +23,19 @@ mechanical held a pull request to the tests or to 100% coverage.
   can be moved to other code; a SHA cannot. Renovate will update the pins.
 - **Jobs run only for the actors in setup 001's variables and Renovate**, so a
   stranger's pull request spends no Actions minutes or secrets.
+- **Zero, not Sonar's defaults.** The free plan's only gate is the built-in
+  **Sonar way**, which allows 80% coverage and 3% duplication on new code, and
+  custom gates need a paid plan. `scripts/sonar-gate.ts` reads SonarCloud's
+  measures after the scan and fails a pull request with any new issue,
+  duplicated line or security hotspot, and a push to `main` with any open
+  issue or hotspot at all. A measure missing from the answer fails, except a
+  duplication density Sonar leaves out because there are no new lines.
+  Coverage is held at 100% by the unit job.
+- **Sonar way comprehensive** for TypeScript, JavaScript and YAML, as in the
+  earlier project, for more rules than the default profile.
+- **A false positive is ignored narrowly, with its reason in the repository**:
+  that rule, in the files named, in `sonar-project.properties`. A security
+  rule is never ignored by file; what it flags is removed instead.
 - **Sonar's coverage exclusions are checked against Vitest's.** Vitest reads
   `scripts/coverage-plan.ts`, and Sonar reads `sonar-project.properties`, which
   cannot import code. A unit test fails when the two disagree, when Sonar's list
@@ -37,9 +50,14 @@ mechanical held a pull request to the tests or to 100% coverage.
   end-to-end job's browser install does not slow the unit job.
 - Sonar's coverage reuses the unit job's report rather than running the tests
   again, so the coverage Sonar sees is the coverage that passed.
+- The earlier project found 17 open issues on `main` with its gate green:
+  Sonar had added rules, and they landed on lines too old to be new code. The
+  check on `main` turns such a rule into a failure the day it arrives.
 
 ## Consequences
 
 - Renaming a job blocks every merge until the ruleset names the new check.
+- A rule Sonar adds can fail `main`'s push with no change of ours; it is fixed
+  or ignored as above, in a chore of its own.
 - A pull request from anyone outside the variables shows its jobs skipped,
   which GitHub counts as passed; such a pull request needs an owner to look.
