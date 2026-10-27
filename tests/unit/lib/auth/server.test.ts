@@ -70,9 +70,26 @@ describe("authOptions", () => {
     "drops Google's tokens before an account %s is written",
     async (write) => {
       const hook = options().databaseHooks.account[write].before;
-      const row = { id: "a1", providerId: "google", accessToken: "token", idToken: "id-token" };
+      const later = new Date(Date.now() + 3_600_000);
+      const row = {
+        id: "a1",
+        providerId: "google",
+        accessToken: "token",
+        refreshToken: "refresh",
+        idToken: "id-token",
+        accessTokenExpiresAt: later,
+        refreshTokenExpiresAt: later,
+      };
       expect(await hook(row as never)).toEqual({
-        data: { id: "a1", providerId: "google", accessToken: null, idToken: null },
+        data: {
+          id: "a1",
+          providerId: "google",
+          accessToken: null,
+          refreshToken: null,
+          idToken: null,
+          accessTokenExpiresAt: null,
+          refreshTokenExpiresAt: null,
+        },
       });
     }
   );
