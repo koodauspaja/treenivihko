@@ -196,6 +196,25 @@ describe("the name", () => {
       )
     ).toEqual({ kind: "saved", id: first });
   });
+
+  it("keeps one of two saves of the same exercise at once, whole, never a mix of both", async () => {
+    const id = await saved("u1", LADDER);
+    const indoors = { ...LADDER, name: "Sisällä", labels: ["speed", "indoors"] as const };
+    const gym = { ...LADDER, name: "Salilla", labels: ["strength", "gym", "jump_rope"] as const };
+    const results = await Promise.all([
+      updateExercise("u1", id, checked(indoors), report),
+      updateExercise("u1", id, checked(gym), report),
+    ]);
+    expect(results).toEqual([
+      { kind: "saved", id },
+      { kind: "saved", id },
+    ]);
+    const stored = await getExercise("u1", id, report);
+    expect([
+      { id, ...indoors },
+      { id, ...gym },
+    ]).toContainEqual(stored);
+  });
 });
 
 describe("saving and deleting", () => {
