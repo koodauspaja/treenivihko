@@ -111,12 +111,15 @@ The merge gate in `.claude/skills/open-pr/SKILL.md` reads these.
   | Five automatic re-reviews on one PR | `@sourcery-ai review` resets the count |
 
 - **The limits depend on the plan.** A public repository starts on Open
-  Source:
+  Source. **This repository is on Team.** A clone on another plan reads its
+  own row, and the open-pr skill's size check uses whichever plan is named
+  here, so a change of plan is a change to this line.
 
   | Plan | Per PR | Rolling 7 days |
   |---|---|---|
-  | **Open Source** | **150,000** diff characters | **250,000** per developer |
+  | Open Source | 150,000 diff characters | 250,000 per developer |
   | Pro | 300,000 | 1,500,000 per seat |
+  | **Team** | **500,000** | **2,500,000** per seat |
 
   Source: <https://docs.sourcery.ai/admin/plans/>. A skip message states the
   cap it applied, so check that before assuming the diff was miscounted.
