@@ -151,8 +151,11 @@ describe("readExercise", () => {
 
   it("gives an exercise that cannot change between the check and the write", () => {
     const reading = readExercise(VALID);
-    expect(reading.ok && Object.isFrozen(reading.exercise)).toBe(true);
-    expect(reading.ok && Object.isFrozen(reading.exercise.labels)).toBe(true);
+    if (!reading.ok) {
+      throw new Error("the fixture is valid");
+    }
+    expect(Object.isFrozen(reading.exercise)).toBe(true);
+    expect(Object.isFrozen(reading.exercise.labels)).toBe(true);
   });
 
   it("keeps a video link as typed, only trimmed, never normalised", () => {
