@@ -114,6 +114,9 @@ describe("checkMigrationHistory", () => {
     const head = new Map(main);
     head.set("0000_create_a.sql", "edited");
     head.delete("meta/0000_snapshot.json");
-    expect(problemsOf(head)).toHaveLength(2);
+    expect(problemsOf(head)).toEqual([
+      "0000_create_a.sql changed: an applied migration is never edited; add a new one instead",
+      "meta/0000_snapshot.json is on main but not here: rebase onto main, or restore it",
+    ]);
   });
 });
