@@ -74,11 +74,11 @@ why its paths are what they are.
 
 **Block 4**: `**`
 ```
-This repository has one writer, who opens every pull request against main from a branch of this repository and merges them one at a time. Do not report risks that need a second person with write access, a pull request from a fork, overlapping merges or pushes to main, or a pull request retargeted from another branch. The database is written only by the app, and whoever holds its credentials is the owner: do not report a write from outside the app that skips the app's checks. A path inside the app that skips them is still a finding. One parent uses the app, so two of their requests at the same instant are rare: report a race between them only when it can lose data or leave it half saved, not when the worst outcome is an error page or a refusal that doing it again fixes.
+This repository has one writer, who opens every pull request against main from a branch of this repository and merges them one at a time. Do not report risks that need a second person with write access, a pull request from a fork, overlapping merges or pushes to main, or a pull request retargeted from another branch. The database is written only by this repository's code: the app, its migrations and its scripts. Whoever holds the database's credentials is the owner, so do not report a write made by hand, outside that code, that skips its checks. A path in that code which skips them, a migration or a script included, is still a finding. One parent uses the app, so two of their requests at the same instant are rare: report a race between them only when it can lose data or leave it half saved, not when the worst outcome is an error page or a refusal that doing it again fixes.
 ```
 
 Block 4 is context rather than a check. A clone with more than one writer,
-or whose app has more than one user at a time or a writer besides the app,
+or whose app has more than one user at a time or a writer besides its code,
 leaves it out, or rewrites it to say how that repository and its app are run.
 
 ## Step 5 — Test with a pull request
