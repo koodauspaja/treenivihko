@@ -76,4 +76,4 @@ A pull request that changes `package-lock.json` is also scanned for licences
 
 ## Next
 
-→ `009`, the database, once it is written.
+→ [009 — The database](009-database.md)

@@ -19,6 +19,16 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
    run, its merge or what happens on `main` afterwards cannot be: it goes in
    the pull request's **How to verify**, or, when it matters later, in a
    section the issue calls *Observed after the merge*, without a box.
+   **The title** follows one convention, by kind:
+
+   | Kind | Title | Example |
+   |---|---|---|
+   | A setup step | `Setup NNN: <what>`, NNN its `docs/setup/` number | Setup 009: database |
+   | A feature | `Feature NNN: <what>`, NNN its spec's number, the issue's own | Feature 031: weekly program |
+   | A chore or a bug | a plain imperative sentence, no number | Keep dependencies current with Renovate |
+
+   A feature's number is known only once the issue exists: create it with a
+   working title, then rename it with its number.
 2. Create it with its kind label and no assignee:
 
    ```bash
