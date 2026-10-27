@@ -1,55 +1,39 @@
 /**
- * `npm run db:check-history -- <ref>`: fails when this branch changes a
- * migration that `<ref>` (default `origin/main`) already has.
+ * `npm run db:check-history`: fails when the commit checked out changes a
+ * migration that `origin/main` already has. Both sides are read through git,
+ * so line endings and uncommitted edits cannot make them differ.
  *
  * decisions/025-migration-history.md
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { MIGRATIONS_FOLDER } from "../src/lib/db/migrations.ts";
 import { checkMigrationHistory, type MigrationFiles } from "./migration-history-plan.ts";
 
-const ref = process.argv[2] ?? "origin/main";
+const MAIN = "origin/main";
 
-const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" });
+// An absolute path, so a directory earlier on PATH cannot stand in for git.
+const git = (...args: string[]) => execFileSync("/usr/bin/git", args, { encoding: "utf8" });
 
-/** The migrations folder at `ref`, read through git. */
-function atRef(): MigrationFiles {
-  const listed = git("ls-tree", "-r", "--name-only", ref, "--", MIGRATIONS_FOLDER)
+/** The migrations folder at a commit, by path relative to the folder. */
+function filesAt(commit: string): MigrationFiles {
+  const listed = git("ls-tree", "-r", "--name-only", commit, "--", MIGRATIONS_FOLDER)
     .split("\n")
     .filter((line) => line !== "");
   return new Map(
     listed.map((file) => [
       path.posix.relative(MIGRATIONS_FOLDER, file),
-      git("show", `${ref}:${file}`),
+      git("show", `${commit}:${file}`),
     ])
   );
 }
 
-/** The migrations folder as it is in the working tree. */
-function here(): MigrationFiles {
-  if (!existsSync(MIGRATIONS_FOLDER)) {
-    return new Map();
-  }
-  return new Map(
-    readdirSync(MIGRATIONS_FOLDER, { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile())
-      .map((entry) => {
-        const file = path.join(entry.parentPath, entry.name);
-        const relative = path.relative(MIGRATIONS_FOLDER, file).split(path.sep).join("/");
-        return [relative, readFileSync(file, "utf8")] as const;
-      })
-  );
-}
-
-const result = checkMigrationHistory(atRef(), here());
+const result = checkMigrationHistory(filesAt(MAIN), filesAt("HEAD"));
 if (result.ok) {
   process.stdout.write(`Migration history: ${result.message}.\n`);
 } else {
-  process.stderr.write(
-    `Migration history, against ${ref}:\n${result.problems.map((p) => `- ${p}`).join("\n")}\n`
-  );
+  const lines = result.problems.map((problem) => "- " + problem);
+  process.stderr.write(["Migration history, against " + MAIN + ":", ...lines, ""].join("\n"));
   process.exitCode = 1;
 }
