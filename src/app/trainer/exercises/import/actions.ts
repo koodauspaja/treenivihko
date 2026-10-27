@@ -4,6 +4,7 @@
  * The import's action. It is reachable by a direct POST, so it checks the
  * unlock itself; it logs every refusal with ids and counts, never the text.
  *
+ * decisions/f001-trainer-side.md
  * decisions/f003-exercise-import.md
  */
 

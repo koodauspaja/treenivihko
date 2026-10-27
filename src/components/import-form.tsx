@@ -76,8 +76,9 @@ function FileChoice() {
 const START: ImportFormState = { version: 0, message: null, refusal: null, failing: [], text: "" };
 
 /**
- * The import's form. A file or text over the limit is refused here before it
- * is sent, as a body over Next's 1 MB never reaches the action's own check.
+ * The import's form. A file and text over the limit together are refused here
+ * before they are sent, as a body over Next's 1 MB never reaches the action's
+ * own check.
  * decisions/f003-exercise-import.md
  */
 export function ImportForm() {
@@ -86,10 +87,11 @@ export function ImportForm() {
   const checkSize = (event: FormEvent<HTMLFormElement>) => {
     const field = event.currentTarget.elements.namedItem("file") as HTMLInputElement;
     const pasted = event.currentTarget.elements.namedItem("text") as HTMLTextAreaElement;
-    // A file field always has its list, empty when nothing is chosen.
-    const oversized =
-      [...(field.files as FileList)].some((file) => file.size > IMPORT_MAX_BYTES) ||
-      new TextEncoder().encode(pasted.value).length > IMPORT_MAX_BYTES;
+    // What is sent, file and text together; a file field always has its list.
+    const sent =
+      [...(field.files as FileList)].reduce((total, file) => total + file.size, 0) +
+      new TextEncoder().encode(pasted.value).length;
+    const oversized = sent > IMPORT_MAX_BYTES;
     setTooLarge(oversized);
     if (oversized) {
       event.preventDefault();

@@ -146,11 +146,6 @@ function readOne(item: unknown): Reading {
       exercise: null,
     };
   }
-  const before = Object.keys(item)
-    .filter((field) => !FIELDS.has(field))
-    .map(unknownField);
-  const after: string[] = [];
-
   const hasCount = Object.hasOwn(item, "kertaa");
   const hasSeconds = Object.hasOwn(item, "sekuntia");
   const video = item.videolinkki ?? "";
@@ -175,28 +170,26 @@ function readOne(item: unknown): Reading {
   const reading = readExercise(values);
   const errors = reading.ok ? {} : reading.errors;
 
-  if (errors.name !== undefined) {
-    before.push(errors.name);
-  }
-  if (errors.instructions !== undefined) {
-    after.push(errors.instructions);
-  }
-  if (typeof video !== "string") {
-    after.push(REFUSAL.videoUrl);
-  } else if (errors.videoUrl !== undefined) {
-    after.push(errors.videoUrl);
-  }
-  if (hasCount === hasSeconds) {
-    after.push(EXERCISE_REASON.amount);
-  } else {
-    after.push(...[errors.count, errors.time].filter((error) => error !== undefined));
-  }
-  after.push(...[errors.duration, errors.level].filter((error) => error !== undefined));
-  if (typeof warmUp !== "boolean") {
-    after.push(EXERCISE_REASON.warmUp);
-  }
-  after.push(...labelReasons);
-  after.push(...[errors.skill, errors.place].filter((error) => error !== undefined));
+  const present = (reasons: (string | undefined)[]) =>
+    reasons.filter((reason) => reason !== undefined);
+  // In the fields' order; a wrong type is refused here where the form never meets one.
+  const before = present([
+    ...Object.keys(item)
+      .filter((field) => !FIELDS.has(field))
+      .map(unknownField),
+    errors.name,
+  ]);
+  const after = present([
+    errors.instructions,
+    typeof video === "string" ? errors.videoUrl : REFUSAL.videoUrl,
+    ...(hasCount === hasSeconds ? [EXERCISE_REASON.amount] : [errors.count, errors.time]),
+    errors.duration,
+    errors.level,
+    typeof warmUp === "boolean" ? undefined : EXERCISE_REASON.warmUp,
+    ...labelReasons,
+    errors.skill,
+    errors.place,
+  ]);
 
   const name = typeof item.nimi === "string" && tidy(item.nimi) !== "" ? tidy(item.nimi) : null;
   return {

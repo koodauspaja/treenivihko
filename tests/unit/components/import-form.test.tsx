@@ -118,6 +118,16 @@ describe("ImportForm", () => {
     expect(importFromForm).not.toHaveBeenCalled();
   });
 
+  it("refuses a file and text that are over the limit together, each within it", async () => {
+    render(<ImportForm />);
+    choose(new File(["x".repeat(IMPORT_MAX_BYTES / 2)], "puolet.json"));
+    fireEvent.change(text(), { target: { value: "x".repeat(IMPORT_MAX_BYTES / 2 + 1) } });
+    submit();
+    expect(screen.getByRole("alert").textContent).toBe("Tuonti on liian suuri: enintään 500 kt.");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(importFromForm).not.toHaveBeenCalled();
+  });
+
   it("names the chosen file beside its Finnish button, and none when nothing is chosen", () => {
     render(<ImportForm />);
     expect(screen.getByText("Ei valittua tiedostoa.")).toBeDefined();

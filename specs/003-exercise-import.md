@@ -246,7 +246,7 @@ Ids and counts only. Never an exercise's text, the file or the pasted text.
 | Event | Level | Line |
 |---|---|---|
 | An import saved | info | `exercises imported: user ‹id›, ‹n› exercises` |
-| An import refused as a whole | info | `exercise import refused: user ‹id›, ‹reason›`, the reason one of `empty`, `both`, `size`, `encoding`, `json`, `shape`, `none`, `count` |
+| An import refused as a whole | info | `exercise import refused: user ‹id›, ‹reason›`, the reason one of `empty`, `both`, `size`, `encoding`, `json`, `shape`, `none`, `count`; a size the page refuses before sending reaches no server, and is not logged |
 | An import refused for its exercises | info | `exercise import refused: user ‹id›, ‹n› of ‹m› exercises failing` |
 | A name saved meanwhile | info | `exercise import refused, name in use: user ‹id›` |
 | A database failure | error | the event's name, `failed`, the ids, and Postgres's reason, as Feature 001 logs them |
@@ -259,7 +259,8 @@ Ids and counts only. Never an exercise's text, the file or the pasted text.
   added to the parent's own library only.
 - **Size**: the 500 KB limit is checked on the server before the text is
   parsed. It is under the 1 MB Next allows a server action's body by default.
-  The page also checks a chosen file's or pasted text's size before sending it, since a body
+  The page also checks the size of what it sends, the file and the text
+  together, before sending it, since a body
   over 1 MB is refused before the action runs, which would show the error
   page rather than the refusal.
 

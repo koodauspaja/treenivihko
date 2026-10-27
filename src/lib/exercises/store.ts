@@ -216,9 +216,21 @@ export function importExercises(
       report,
       () =>
         getDatabase().transaction(async (tx) => {
-          for (const values of exercises) {
-            await insertExercise(tx, userId, values);
-          }
+          // Two statements for the whole import, rows in one order by name, so
+          // two imports at once sharing a name wait on each other, not deadlock.
+          const added = [...exercises]
+            .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+            .map((values) => ({ id: randomUUID(), values }));
+          await tx
+            .insert(exercise)
+            .values(added.map(({ id, values }) => ({ id, userId, ...columnsOf(values) })));
+          await tx
+            .insert(exerciseLabel)
+            .values(
+              added.flatMap(({ id, values }) =>
+                values.labels.map((label) => ({ exerciseId: id, label }))
+              )
+            );
           return { kind: "imported", count: exercises.length } as const;
         })
     );

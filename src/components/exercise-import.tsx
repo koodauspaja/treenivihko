@@ -8,7 +8,11 @@ import {
 } from "@/lib/exercises/import-messages";
 import { requireTrainer } from "@/lib/trainer/access";
 
-/** The import page's content, behind the unlock. decisions/f003-exercise-import.md */
+/**
+ * The import page's content, behind the unlock.
+ * decisions/f001-trainer-side.md
+ * decisions/f003-exercise-import.md
+ */
 export async function ExerciseImport() {
   const { expiresAt } = await requireTrainer();
   return (
