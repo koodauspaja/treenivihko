@@ -46,7 +46,10 @@ const LADDER: Exercise = {
   labels: ["footwork", "field", "ladder"],
 };
 
-/** The exercise through readExercise, as every write is; a fixture that fails it fails the test. */
+/**
+ * The exercise through readExercise, as every write is; a fixture that fails it fails the test.
+ * decisions/f002-exercise-library.md
+ */
 const checked = (values: Exercise): CheckedExercise => {
   const reading = readExercise(valuesFrom(values));
   if (!reading.ok) {
@@ -159,6 +162,7 @@ describe("the name", () => {
   });
 
   // The test database's locale folds Ä too, so the index's own definition is what shows it does not rely on one.
+  // decisions/f002-exercise-library.md
   it("is lowercased by ICU, whatever the database's locale", async () => {
     const [index] = await database().execute<{ indexdef: string }>(
       sql`select indexdef from pg_indexes where indexname = 'exercise_user_name_idx'`
@@ -269,6 +273,9 @@ describe("the database's own checks", () => {
     ],
     ["instructions with a line break at their start", { instructions: "\nTee näin." }, false],
     ["instructions with a line break inside", { instructions: "Tee\nnäin." }, true],
+    // The trimmed checks' list is \u escapes: a letter or digit from them is not trimmed.
+    ["a name ending in u", { name: "Juoksu" }, true],
+    ["instructions ending in a hexadecimal digit", { instructions: "Sarjan koko 3a" }, true],
     ["an http video link", { videoUrl: "http://example.com" }, false],
     ["a video link of 500 characters", { videoUrl: `https://${"x".repeat(492)}` }, true],
     ["a video link of 501 characters", { videoUrl: `https://${"x".repeat(493)}` }, false],
