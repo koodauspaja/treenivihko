@@ -151,7 +151,11 @@ export const exercise = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("exercise_user_name_idx").on(table.userId, sql`lower(${table.name})`),
+    // Lowercased by ICU, the same whatever the database's locale: under C, lower() leaves Ä as it is.
+    uniqueIndex("exercise_user_name_idx").on(
+      table.userId,
+      sql`lower(${table.name} collate "und-x-icu")`
+    ),
     check("exercise_name_length", sql`char_length(${table.name}) between 1 and 40`),
     // Trimmed of the same whitespace readExercise trims; line breaks inside are kept.
     check(

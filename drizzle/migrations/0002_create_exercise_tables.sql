@@ -30,4 +30,4 @@ CREATE TABLE "exercise_label" (
 --> statement-breakpoint
 ALTER TABLE "exercise" ADD CONSTRAINT "exercise_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "exercise_label" ADD CONSTRAINT "exercise_label_exercise_id_exercise_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."exercise"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "exercise_user_name_idx" ON "exercise" USING btree ("user_id",lower("name"));
+CREATE UNIQUE INDEX "exercise_user_name_idx" ON "exercise" USING btree ("user_id",lower("name" collate "und-x-icu"));

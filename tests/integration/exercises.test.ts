@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
@@ -156,6 +156,14 @@ describe("the name", () => {
       kind: "nameInUse",
     });
     expect(lines.at(-1)).toBe("exercise refused, name in use: user u1");
+  });
+
+  // The test database's locale folds Ä too, so the index's own definition is what shows it does not rely on one.
+  it("is lowercased by ICU, whatever the database's locale", async () => {
+    const [index] = await database().execute<{ indexdef: string }>(
+      sql`select indexdef from pg_indexes where indexname = 'exercise_user_name_idx'`
+    );
+    expect(index?.indexdef).toContain(`lower((name COLLATE "und-x-icu"))`);
   });
 
   it("decides between two saves at once in the database", async () => {

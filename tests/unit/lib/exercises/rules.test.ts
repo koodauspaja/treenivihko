@@ -133,7 +133,7 @@ describe("readExercise", () => {
   it("counts a video link as stored, since it is never normalised", () => {
     const base = "https://example.com/";
     const decomposed = `${base}${"a\u0308".repeat(240)}`;
-    expect(decomposed.length).toBe(500);
+    expect(decomposed).toHaveLength(500);
     expect(errorsOf({ videoUrl: decomposed })).toBeNull();
     expect(errorsOf({ videoUrl: `${decomposed}x` })).toEqual({
       videoUrl: "Videolinkin on oltava https-osoite.",
@@ -142,9 +142,17 @@ describe("readExercise", () => {
 
   it("counts a line break in the instructions as one character, however the browser sent it", () => {
     const lines = Array.from({ length: 10 }, () => "x".repeat(99)).join("\r\n");
-    expect(lines.length).toBe(1008);
+    expect(lines).toHaveLength(1008);
     const reading = readExercise({ ...VALID, instructions: lines });
-    expect(reading.ok && reading.exercise.instructions.length).toBe(999);
+    expect(reading.ok && reading.exercise.instructions).toBe(
+      Array.from({ length: 10 }, () => "x".repeat(99)).join("\n")
+    );
+  });
+
+  it("gives an exercise that cannot change between the check and the write", () => {
+    const reading = readExercise(VALID);
+    expect(reading.ok && Object.isFrozen(reading.exercise)).toBe(true);
+    expect(reading.ok && Object.isFrozen(reading.exercise.labels)).toBe(true);
   });
 
   it("keeps a video link as typed, only trimmed, never normalised", () => {

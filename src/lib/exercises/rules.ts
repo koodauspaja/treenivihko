@@ -32,16 +32,17 @@ export type Exercise = {
   durationMinutes: number;
   level: Level;
   warmUp: boolean;
-  labels: LabelKey[];
+  labels: readonly LabelKey[];
 };
 
 declare const checked: unique symbol;
 
 /**
  * An exercise that has passed every rule here. Only `readExercise` makes one,
- * and the store writes nothing else, so no write can go around the rules.
+ * frozen, and the store writes nothing else, so no write can go around the
+ * rules or change what they passed.
  */
-export type CheckedExercise = Exercise & { readonly [checked]: true };
+export type CheckedExercise = Readonly<Exercise> & { readonly [checked]: true };
 
 export type ExerciseField = keyof typeof REFUSAL;
 
@@ -201,7 +202,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
   return {
     ok: true,
     // The one place a CheckedExercise is made.
-    exercise: {
+    exercise: Object.freeze({
       name,
       instructions,
       videoUrl: videoUrl ?? null,
@@ -210,8 +211,8 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
       durationMinutes: durationMinutes as number,
       level: level as Level,
       warmUp: values.warmUp,
-      labels: LABEL_KEYS.filter((key) => keys.includes(key)),
-    } as CheckedExercise,
+      labels: Object.freeze(LABEL_KEYS.filter((key) => keys.includes(key))),
+    }) as CheckedExercise,
   };
 }
 

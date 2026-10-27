@@ -165,7 +165,7 @@ A failure the user cannot fix shows the existing error page.
 
 | Table | Columns | Why |
 |---|---|---|
-| `exercise` | `id`; `user_id`, references `user`, deleted with it; `name`, text; `instructions`, text; `video_url`, text, nullable; `amount_kind`, `count` or `time`; `amount`, integer: times, or seconds; `duration_minutes`, integer; `level`, integer; `warm_up`, boolean; `created_at`; `updated_at` | The library. Each rule in *The exercise* is a check in the database too, and the name is unique per parent by `lower(name)` |
+| `exercise` | `id`; `user_id`, references `user`, deleted with it; `name`, text; `instructions`, text; `video_url`, text, nullable; `amount_kind`, `count` or `time`; `amount`, integer: times, or seconds; `duration_minutes`, integer; `level`, integer; `warm_up`, boolean; `created_at`; `updated_at` | The library. Each field's own rule in *The exercise* is a check in the database too; the rule across labels, a skill and a place, and the video link's parse are the app's. The name is unique per parent by its lowercase, by ICU whatever the database's locale |
 | `exercise_label` | `exercise_id`, references `exercise`, deleted with it; `label`, text, one of the list's keys; primary key both | The labels. Stored by English keys, such as `dribbling`, with the Finnish names in code; the database refuses any other key |
 
 The library belongs to the parent who made it, as the child's profile does.
@@ -231,7 +231,7 @@ Ids only: the user and exercise ids. Never an exercise's text.
 | Level | What |
 |---|---|
 | Unit | Each field's rule at its boundaries: name 0, 1, 40 and 41 characters; instructions 0, 1, 1000 and 1001; video link absent, `http://`, `https://`, and 500 and 501 characters; count 0, 1, 100 and 101; time 0, 5, 7, 600 and 605 seconds; duration 0, 1, 30 and 31. The amount's and the duration's display; the label list's keys, groups and names; the filters' rules, including no ticks, several ticks and every equipment item unticked; the Finnish sort; each refusal's message |
-| Integration, against Postgres | The tables, their checks and deletes; the name's uniqueness by `lower(name)`, with two concurrent saves; a label key the database refuses; one parent's exercises out of another's reach; the log lines |
+| Integration, against Postgres | The tables, their checks and deletes; the name's uniqueness by its lowercase, Finnish letters included, with two concurrent saves; a label key the database refuses; one parent's exercises out of another's reach; the log lines |
 | End to end | The menu and **Lukitse ja palaa**; adding, editing and deleting an exercise; a refusal; the filters; the not-found page |
 
 ## Open questions
