@@ -42,7 +42,10 @@ mechanical held a pull request to the tests or to 100% coverage.
   Coverage is held at 100% by the unit job.
 - **Sonar way comprehensive** for every language the project has, as in the
   earlier project, for more rules than the default profile.
-- **Tests are analysed** with Sonar's test rules, not excluded.
+- **Tests are analysed as tests**: `sonar.tests` indexes them with Sonar's
+  test rules, and `sonar.exclusions` keeps them out of the main sources,
+  which with `sonar.sources=.` would otherwise index them twice and abort the
+  scan.
 - **A false positive is ignored narrowly, with its reason in the repository**:
   that rule, in the files named, in `sonar-project.properties`. A security
   rule is never ignored by file; what it flags is removed instead.
