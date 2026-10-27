@@ -8,6 +8,7 @@ import { SIGN_IN_PATH, SIGNED_IN_PATH } from "@/lib/auth/paths";
 /**
  * Starts Google's sign-in; a refusal comes back to the sign-in page with its
  * code. If the start itself fails, the button works again and says so.
+ * decisions/029-sign-in.md
  */
 export function SignInButton() {
   const [state, setState] = useState<"ready" | "starting" | "failed">("ready");

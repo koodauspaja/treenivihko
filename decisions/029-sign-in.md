@@ -55,9 +55,10 @@ trainer side asks for a password of its own, which is the next feature's.
 ## Consequences
 
 - **A second adult** is one more address in `AUTH_ALLOWED_EMAILS`, on Railway
-  and in `.env`.
-- **Removing an address** stops that account signing in again; a session it
-  already has lasts until it expires or is deleted.
+  and in `.env`, and a Google test user. A changed variable reaches the running
+  app only through a redeploy.
+- **Removing an address** stops that account signing in again once the app has
+  redeployed; a session it already has lasts until it expires or is deleted.
 - **A new page** gets an English folder and, if a reader sees its address, a
   row in `src/lib/routes.ts`.
 - **The first migration is applied**, on Railway as well, so a change to these
