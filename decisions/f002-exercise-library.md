@@ -51,7 +51,7 @@ parent, a file and a model.
 | Decision | Why |
 |---|---|
 | Column checks in the database, the rest in `rules.ts` | A column check costs nothing and holds against a careless write; a skill-and-place check across rows would need a trigger, for writes that all come through `readExercise` |
-| A `CheckedExercise` type, not a second check in the store | The compiler refuses a write that skipped the rules; a second check would be a second copy of them |
+| A `CheckedExercise` type, not a second check in the store | The compiler refuses a write that skipped the rules, or a changed copy of one that passed them, since its mark is a private member a spread does not carry; a second check would be a second copy of them |
 | Names lowercased by ICU in the unique index, not by the database's locale | Under the libc `C` locale, Postgres's `lower` leaves `Ä` as it is, so `Äijä` and `äIJÄ` would both pass. It needs a Postgres built with ICU, as the official images are, which CI's and Railway's `postgres-ssl` build on; an ICU upgrade on the server can ask for a `REINDEX` of the index |
 | The whitespace listed, not `\s` in SQL | Postgres's `\s` follows the server's locale; a list is the same on both sides, and a test holds it to JavaScript's `trim` |
 | A line break counted as one | Browsers send a textarea's line breaks as `\r\n`; a person counts one |

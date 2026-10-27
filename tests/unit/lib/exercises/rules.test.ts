@@ -356,6 +356,16 @@ describe("a checked exercise", () => {
     expect(reading.ok && unchecked.name).toBe("Tikkaat");
   });
 
+  it("is not kept by a changed copy, which has not passed the rules", () => {
+    const reading = readExercise(VALID);
+    if (!reading.ok) {
+      throw new Error("the fixture is valid");
+    }
+    // @ts-expect-error a spread copy with a changed field is not checked
+    const changed: CheckedExercise = { ...reading.exercise, name: "" };
+    expect(changed.name).toBe("");
+  });
+
   it("is what the store's writes take, and nothing less", () => {
     const plain = { ...VALID } as unknown as Exercise;
     // @ts-expect-error createExercise writes only a checked exercise
