@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Why each setting is as it is: decisions/020-renovate.md",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Helsinki",
+  "schedule": ["before 7am on Monday"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": [
+        "CI installs an exact npm, because Node 24's bundled npm is older than .npmrc's engine-strict accepts.",
+        "tests/unit/config/renovate.test.ts checks this pattern matches every npm@<version> in ci.yml."
+      ],
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": ["npm@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "npm",
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": [
+        "TypeScript stays on 6.x.",
+        "Next's TypeScript plugin and the type check in next build use TypeScript's in-process JS API, which TypeScript 7 does not ship.",
+        "Lift this when TypeScript 7 has a stable JS API that Next supports. See decisions/012-project-init.md."
+      ],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": [
+        "Node's types follow the Node line the app runs on, which .nvmrc names.",
+        "Raise this together with .nvmrc when the app moves to a newer even-numbered Node."
+      ],
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    }
+  ]
+}

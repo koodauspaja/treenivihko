@@ -112,4 +112,4 @@ merge, so a rename updates the ruleset in the same pull request.
 
 ## Next
 
-→ `008`, the database, once it is written.
+→ [008 — Renovate](008-renovate.md)
