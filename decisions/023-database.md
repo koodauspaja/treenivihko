@@ -24,10 +24,12 @@ table, so that each table arrives with the spec that needs it.
   migration once, so an edit would never reach the databases it already ran
   on.
 - **No migrations yet is a normal state.** Drizzle's migrator fails without a
-  journal, so `runMigrations` answers "none" until the first migration exists;
-  SQL files without a journal are an error instead.
+  journal, so `runMigrations` answers "none" until the first migration exists.
+  SQL files without a journal are an error instead, and so is a SQL file the
+  journal does not list, which the migrator would skip.
 - **The integration tests run only against a database on this machine named
-  `*_test`.** A
+  `*_test`, with no query string**, since the driver would read a host or a
+  database from one. A
   guard refuses the whole run, before any test file loads, and says why. It
   reads `TEST_DATABASE_URL`, which the project gives its tests as
   `DATABASE_URL`, because a project's `env` does not reach `globalSetup`; and

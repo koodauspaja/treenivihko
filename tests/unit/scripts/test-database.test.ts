@@ -13,6 +13,11 @@ describe("integrationDatabaseRefusal", () => {
   it.each([
     ["a hosted database", "postgresql://u:p@db.example.com:5432/app_test", /"db\.example\.com"/],
     ["another machine", "postgresql://u:p@192.168.1.20:5432/app_test", /"192\.168\.1\.20"/],
+    [
+      "a second host after a local one",
+      "postgresql://u:p@localhost,db.example.com/app_test",
+      /"localhost,db\.example\.com"/,
+    ],
   ])("refuses %s, even with a _test name", (_name, url, reason) => {
     expect(integrationDatabaseRefusal(url)).toMatch(reason);
   });
