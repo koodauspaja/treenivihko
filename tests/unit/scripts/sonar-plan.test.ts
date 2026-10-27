@@ -156,6 +156,24 @@ describe("judgeMeasures", () => {
     });
   });
 
+  it("does not waive the duplicated-line count when new_lines is sent but unreadable", () => {
+    const result = judgeMeasures(
+      { new_duplicated_lines: 0 },
+      answer([newCode("new_lines", "none")])
+    );
+    expect(result).toEqual({
+      passed: false,
+      lines: ["new_duplicated_lines: missing from SonarCloud's answer"],
+    });
+  });
+
+  it("says a limited metric was unreadable, not missing", () => {
+    expect(judgeMeasures({ new_violations: 0 }, answer([newCode("new_violations", "")]))).toEqual({
+      passed: false,
+      lines: ["new_violations: unreadable in SonarCloud's answer"],
+    });
+  });
+
   it("still fails an empty answer, on the metrics Sonar always sends", () => {
     expect(judgeMeasures(pullRequestLimits, answer([])).passed).toBe(false);
   });

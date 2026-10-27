@@ -4,6 +4,7 @@
  * built-in quality gate, which cannot be changed.
  *
  * decisions/016-ci-and-sonarcloud.md
+ * decisions/018-sourcery-repository-context.md
  */
 
 export type SonarScope = { pullRequest: string } | { branch: string };
@@ -53,9 +54,9 @@ export type GateResult = { passed: boolean; lines: string[] };
  */
 type Measure = { metric?: unknown; value?: unknown; periods?: unknown };
 
-/** The numeric value of each measure in an API answer, by metric; anything unreadable is left out. */
-function readMeasures(answer: unknown): Map<string, number> {
-  const values = new Map<string, number>();
+/** Each measure's numeric value by metric, `null` for one sent but unreadable. */
+function readMeasures(answer: unknown): Map<string, number | null> {
+  const values = new Map<string, number | null>();
   const measures = (answer as { component?: { measures?: unknown } })?.component?.measures;
   if (!Array.isArray(measures)) {
     return values;
@@ -64,25 +65,25 @@ function readMeasures(answer: unknown): Map<string, number> {
     const periods = Array.isArray(measure.periods) ? measure.periods : [];
     const raw = measure.value ?? (periods[0] as { value?: unknown } | undefined)?.value;
     const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : Number.NaN;
-    if (typeof measure.metric === "string" && Number.isFinite(value)) {
-      values.set(measure.metric, value);
+    if (typeof measure.metric === "string") {
+      values.set(measure.metric, Number.isFinite(value) ? value : null);
     }
   }
   return values;
 }
 
 /**
- * Judges an answer from the measures API against the limits. A metric that is
- * missing or unreadable fails, except a duplicated-line count when the change
- * has no new lines in analysed files: Sonar then leaves out both that count and
- * `new_lines`, as a recorded answer shows.
+ * Judges a measures answer against the limits. Missing or unreadable fails, bar a
+ * duplicated-line count when `new_lines` is 0 or not sent, as for a change to no
+ * analysed file.
  */
 export function judgeMeasures(
   limits: Readonly<Record<string, number>>,
   answer: unknown
 ): GateResult {
   const values = readMeasures(answer);
-  const nothingNew = (values.get("new_lines") ?? 0) === 0;
+  const newLines = values.get("new_lines");
+  const nothingNew = newLines === undefined || newLines === 0;
   const lines: string[] = [];
   let passed = true;
   for (const [metric, limit] of Object.entries(limits)) {
@@ -94,6 +95,9 @@ export function judgeMeasures(
       }
       passed = false;
       lines.push(`${metric}: missing from SonarCloud's answer`);
+    } else if (value === null) {
+      passed = false;
+      lines.push(`${metric}: unreadable in SonarCloud's answer`);
     } else if (value > limit) {
       passed = false;
       lines.push(`${metric}: ${value}, over the limit of ${limit}`);
