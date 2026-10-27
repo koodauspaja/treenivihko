@@ -1,5 +1,5 @@
 {
-  "id": "d219b32d-70a3-4d67-9f9a-c45592ba44c6",
+  "id": "02680308-cbee-4410-a4bf-6a25a4a59229",
   "prevId": "85103f8d-9f7b-45d4-9b9d-9e3cd29d2251",
   "version": "7",
   "dialect": "postgresql",
@@ -324,6 +324,14 @@
         "exercise_name_length": {
           "name": "exercise_name_length",
           "value": "char_length(\"exercise\".\"name\") between 1 and 40"
+        },
+        "exercise_name_trimmed": {
+          "name": "exercise_name_trimmed",
+          "value": "\"exercise\".\"name\" = btrim(\"exercise\".\"name\", E'\\u0009\\u000a\\u000b\\u000c\\u000d\\u0020\\u00a0\\u1680\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff')"
+        },
+        "exercise_instructions_trimmed": {
+          "name": "exercise_instructions_trimmed",
+          "value": "\"exercise\".\"instructions\" = btrim(\"exercise\".\"instructions\", E'\\u0009\\u000a\\u000b\\u000c\\u000d\\u0020\\u00a0\\u1680\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff')"
         },
         "exercise_instructions_length": {
           "name": "exercise_instructions_length",

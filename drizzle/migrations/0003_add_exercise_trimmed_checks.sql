@@ -1,2 +1,0 @@
-ALTER TABLE "exercise" ADD CONSTRAINT "exercise_name_trimmed" CHECK ("exercise"."name" = btrim("exercise"."name", E' \t\n\r'));--> statement-breakpoint
-ALTER TABLE "exercise" ADD CONSTRAINT "exercise_instructions_trimmed" CHECK ("exercise"."instructions" = btrim("exercise"."instructions", E' \t\n\r'));

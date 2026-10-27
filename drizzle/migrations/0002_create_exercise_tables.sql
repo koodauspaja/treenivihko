@@ -12,6 +12,8 @@ CREATE TABLE "exercise" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "exercise_name_length" CHECK (char_length("exercise"."name") between 1 and 40),
+	CONSTRAINT "exercise_name_trimmed" CHECK ("exercise"."name" = btrim("exercise"."name", E'\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff')),
+	CONSTRAINT "exercise_instructions_trimmed" CHECK ("exercise"."instructions" = btrim("exercise"."instructions", E'\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff')),
 	CONSTRAINT "exercise_instructions_length" CHECK (char_length("exercise"."instructions") between 1 and 1000),
 	CONSTRAINT "exercise_video_url" CHECK ("exercise"."video_url" is null or ("exercise"."video_url" like 'https://%' and char_length("exercise"."video_url") <= 500)),
 	CONSTRAINT "exercise_amount" CHECK (("exercise"."amount_kind" = 'count' and "exercise"."amount" between 1 and 100) or ("exercise"."amount_kind" = 'time' and "exercise"."amount" between 5 and 600 and "exercise"."amount" % 5 = 0)),
