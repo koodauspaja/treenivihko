@@ -1,5 +1,6 @@
-# What npm run verify runs, on every pull request to main and every push to
-# it, and SonarCloud's analysis with the unit coverage.
+# What npm run verify runs, and SonarCloud's analysis with the unit coverage,
+# on every pull request to main and every push to it. They pass only for the
+# actors named in setup 001, and Renovate; for anyone else they fail.
 #
 # decisions/016-ci-and-sonarcloud.md
 
