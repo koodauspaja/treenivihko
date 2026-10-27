@@ -4,8 +4,9 @@ What Sourcery checks on every pull request, and why. The rule text itself is
 in [`docs/setup/004-sourcery-setup.md`](docs/setup/004-sourcery-setup.md), the
 one copy that is pasted into the dashboard; this file explains it.
 
-**The dashboard is what runs.** A change to a rule changes the dashboard, that
-setup document and this file, in one pull request.
+**The dashboard is what runs.** A change to a rule changes that setup document
+and this file in one pull request, and the dashboard by hand once it merges:
+until the owner pastes the new text there, Sourcery reviews by the old.
 
 **The rules are few on purpose.** A review rule answers by judgement, so it is
 kept for what matters most and what nothing deterministic can check. Whatever
