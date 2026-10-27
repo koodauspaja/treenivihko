@@ -4,6 +4,7 @@
  * migrations, which may legitimately run longer.
  *
  * decisions/023-database.md
+ * decisions/026-railway.md
  */
 
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
@@ -19,12 +20,24 @@ export const STATEMENT_TIMEOUT_MS = 10_000;
 /** A migration's statements are not cancelled: Postgres reads 0 as no timeout. */
 export const MIGRATION_STATEMENT_TIMEOUT_MS = 0;
 
+/**
+ * How long a connection may sit idle before it is closed. Open, the driver sends
+ * a keepalive every minute, and Railway lets nothing sleep that still sends.
+ */
+export const IDLE_TIMEOUT_SECONDS = 20;
+
 type Connection = { database: Database; close: () => Promise<void> };
 
-function open(statementTimeoutMs: number): Connection {
-  const client = postgres(requireDatabaseUrl(), {
+/** The driver's options for a client whose statements time out after `statementTimeoutMs`. */
+export function clientOptions(statementTimeoutMs: number) {
+  return {
+    idle_timeout: IDLE_TIMEOUT_SECONDS,
     connection: { statement_timeout: statementTimeoutMs },
-  });
+  };
+}
+
+function open(statementTimeoutMs: number): Connection {
+  const client = postgres(requireDatabaseUrl(), clientOptions(statementTimeoutMs));
   return { database: drizzle(client, { schema }), close: () => client.end({ timeout: 2 }) };
 }
 
