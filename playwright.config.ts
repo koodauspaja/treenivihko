@@ -22,12 +22,14 @@ if (refusal !== null) {
 }
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 
-const { PORT, SERVER_ENV } = await import("./tests/e2e/support/environment.ts");
+const { PORT, SERVER_ENV, WORKERS } = await import("./tests/e2e/support/environment.ts");
 
 export default defineConfig({
   testDir: "tests/e2e",
   globalSetup: "./tests/e2e/support/global-setup.ts",
   forbidOnly: !!process.env.CI,
+  // One allowed parent per worker running at once.
+  workers: WORKERS,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },

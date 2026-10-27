@@ -11,7 +11,7 @@ import { authOptions } from "../../../src/lib/auth/server.ts";
 import { getDatabase } from "../../../src/lib/db/index.ts";
 import { user } from "../../../src/lib/db/schema.ts";
 import { setTrainerPassword } from "../../../src/lib/trainer/store.ts";
-import { PARENTS, PORT, SERVER_ENV } from "./environment.ts";
+import { parentEmail, SERVER_ENV } from "./environment.ts";
 
 export const TRAINER_PASSWORD = "end-to-end trainer password";
 
@@ -29,11 +29,11 @@ const auth = betterAuth({
 const quiet = () => {};
 
 /**
- * A fresh parent for this test's browser project, signed in on `page`, with
- * the trainer password set unless `withPassword` is false.
+ * A fresh parent for this test's worker, signed in on `page`, with the trainer
+ * password set unless `withPassword` is false.
  */
 export async function signInParent(page: Page, info: TestInfo, { withPassword = true } = {}) {
-  const email = PARENTS[info.project.name as keyof typeof PARENTS];
+  const email = parentEmail(info.parallelIndex);
   await getDatabase().delete(user).where(eq(user.email, email));
   const signedUp = await auth.api.signUpEmail({
     body: { email, password: "end-to-end sign-up password", name: "Test Parent" },
@@ -55,5 +55,13 @@ export async function signInParent(page: Page, info: TestInfo, { withPassword = 
   if (withPassword) {
     await setTrainerPassword(signedUp.response.user.id, TRAINER_PASSWORD, quiet);
   }
-  return { baseURL: `http://localhost:${PORT}` };
+  return { userId: signedUp.response.user.id };
+}
+
+/** Opens the trainer side on `page`, which `signInParent` has signed in. */
+export async function unlockTrainer(page: Page) {
+  await page.goto("/valmentaja/avaa");
+  await page.getByLabel("Salasana").fill(TRAINER_PASSWORD);
+  await page.getByRole("button", { name: "Avaa" }).click();
+  await page.waitForURL(/\/valmentaja$/);
 }

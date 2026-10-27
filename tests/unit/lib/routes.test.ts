@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { SIGN_IN_PATH } from "@/lib/auth/paths";
 import { ROUTES, routeRedirects, routeRewrites } from "@/lib/routes";
-import { TRAINER_PATH, UNLOCK_PATH } from "@/lib/trainer/paths";
+import {
+  EXERCISES_PATH,
+  exercisePath,
+  NEW_EXERCISE_PATH,
+  NICKNAME_PATH,
+  TRAINER_PATH,
+  UNLOCK_PATH,
+} from "@/lib/trainer/paths";
 
 describe("the route table", () => {
   it("serves the sign-in address from the English sign-in folder", () => {
@@ -12,6 +19,18 @@ describe("the route table", () => {
     expect(ROUTES).toContainEqual([TRAINER_PATH, "/trainer"]);
     expect(ROUTES).toContainEqual([UNLOCK_PATH, "/trainer/unlock"]);
     expect([TRAINER_PATH, UNLOCK_PATH]).toEqual(["/valmentaja", "/valmentaja/avaa"]);
+  });
+
+  it("serves the nickname and the library, a new exercise before an exercise's id", () => {
+    const addresses = ROUTES.map(([address]) => address);
+    expect(ROUTES).toContainEqual([NICKNAME_PATH, "/trainer/nickname"]);
+    expect(ROUTES).toContainEqual([EXERCISES_PATH, "/trainer/exercises"]);
+    expect(ROUTES).toContainEqual([NEW_EXERCISE_PATH, "/trainer/exercises/new"]);
+    expect(ROUTES).toContainEqual(["/valmentaja/harjoitteet/:id", "/trainer/exercises/:id"]);
+    expect(addresses.indexOf(NEW_EXERCISE_PATH)).toBeLessThan(
+      addresses.indexOf("/valmentaja/harjoitteet/:id")
+    );
+    expect(exercisePath("a b/c")).toBe("/valmentaja/harjoitteet/a%20b%2Fc");
   });
 
   it("rewrites each Finnish address to its folder", () => {

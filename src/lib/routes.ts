@@ -6,6 +6,7 @@
  *
  * decisions/029-sign-in.md
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> = [
@@ -14,6 +15,11 @@ export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> =
   // The trainer side, and its lock page.
   ["/valmentaja", "/trainer"],
   ["/valmentaja/avaa", "/trainer/unlock"],
+  // The nickname, and the exercise library: "uusi" before an exercise's id, since order decides.
+  ["/valmentaja/nimi", "/trainer/nickname"],
+  ["/valmentaja/harjoitteet", "/trainer/exercises"],
+  ["/valmentaja/harjoitteet/uusi", "/trainer/exercises/new"],
+  ["/valmentaja/harjoitteet/:id", "/trainer/exercises/:id"],
 ];
 
 /** Next's rewrites: each address served from its folder. */
