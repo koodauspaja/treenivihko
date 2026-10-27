@@ -79,7 +79,7 @@ npm run db:migrate
 `db:migrate` uses a client of its own, without the application's 10-second
 statement timeout, since a migration on a populated table can take longer. A
 migrations folder with SQL files but no journal is an error, not "no
-migrations yet".
+migrations yet", and so is a SQL file the journal does not list.
 
 | Rule | Why |
 |---|---|

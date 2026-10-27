@@ -1,15 +1,20 @@
 import { globSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-// Set by GitHub Actions (CI) or as a CI secret (SONAR_TOKEN), never in a local .env.
-const CI_ONLY = new Set(["CI", "SONAR_TOKEN"]);
+// Set by GitHub Actions (CI) or by the workflow (PR_NUMBER, SONAR_TOKEN), never in a local .env.
+const CI_ONLY = new Set(["CI", "PR_NUMBER", "SONAR_TOKEN"]);
 
-const code = globSync(["*.config.ts", "src/**/*.ts", "scripts/**/*.ts", "tests/support/**/*.ts"]);
+const code = globSync([
+  "*.config.ts",
+  "src/**/*.{ts,tsx}",
+  "scripts/**/*.ts",
+  "tests/support/**/*.ts",
+]);
 const read = new Set([
   ...code.flatMap((file) =>
-    [...readFileSync(file, "utf8").matchAll(/process\.env\.([A-Z_]+)/g)].map((match) => match[1])
+    [...readFileSync(file, "utf8").matchAll(/\benv\.([A-Z][A-Z0-9_]*)/g)].map((match) => match[1])
   ),
-  ...[...readFileSync("docker-compose.yml", "utf8").matchAll(/\$\{([A-Z_]+)/g)].map(
+  ...[...readFileSync("docker-compose.yml", "utf8").matchAll(/\$\{?([A-Z][A-Z0-9_]*)/g)].map(
     (match) => match[1]
   ),
 ]);
@@ -19,7 +24,7 @@ const required = [...read]
 
 const entries = readFileSync(".env.example", "utf8")
   .split("\n")
-  .filter((line) => /^[A-Z_]+=/.test(line))
+  .filter((line) => /^[A-Z][A-Z0-9_]*=/.test(line))
   .map((line) => {
     const [name = "", ...value] = line.split("=");
     return { name, value: value.join("=") };
