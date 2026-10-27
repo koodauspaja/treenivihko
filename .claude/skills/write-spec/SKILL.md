@@ -15,8 +15,9 @@ because in review it looks intentional.
 ## Before writing
 
 The feature has an issue, opened from the Feature template per `/start-work`.
-The spec takes its number: `specs/NNN-short-name.md`, with NNN the issue
-number padded to three digits.
+The spec takes its feature's number, from the issue's title: Feature 007 is
+`specs/007-short-name.md`, and its decision record `decisions/f007-short-name.md`
+(`CLAUDE.md`, *Numbering*).
 
 ## Sections
 

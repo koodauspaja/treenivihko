@@ -9,7 +9,7 @@ type: Feature
 <!-- One sentence: what does this let the child or the parent do? -->
 
 ## Spec
-`specs/NNN-short-name.md`, where NNN is this issue's number
+`specs/NNN-short-name.md`, where NNN is the feature number in this issue's title
 
 ## Acceptance criteria
 <!-- Filled in from the spec once it has its go. -->

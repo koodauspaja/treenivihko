@@ -58,8 +58,9 @@ human:
 
 Implementation is mostly done by Claude Code. Every feature, and every chore
 or bug that changes something meaningful, writes a decision record in
-`decisions/` saying what was chosen and why. A spec, its decision record and
-its branch all carry their issue's number. The detailed rules are in
+`decisions/` saying what was chosen and why. A piece of work's spec, decision
+record and branch all carry one number: a feature's own, Feature 001 onwards,
+or a chore's or a bug's issue number. The detailed rules are in
 [`CLAUDE.md`](CLAUDE.md), and the skills that carry them out are in
 [`.claude/skills/`](.claude/skills/).
 
