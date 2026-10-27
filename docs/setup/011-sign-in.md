@@ -125,7 +125,9 @@ Then `/valmentaja` asks for it.
   comma-separated, on Railway and in `.env`, and as a Google test user (Step
   2). The running app sees a changed variable only after a redeploy: Railway
   redeploys on a change by itself, except after `--skip-deploys`, when
-  `railway redeploy -s treenivihko` does it.
+  `railway redeploy -s treenivihko` does it. Once they have signed in, Step
+  7's command refuses, since it sets the password of the only user there is;
+  choosing whose is a change of its own.
 - **Rotating the client secret:** a new secret in Google Cloud, then Step 5's
   `GOOGLE_CLIENT_SECRET` line again, and `.env`.
 - **Signing a device out:** **Kirjaudu ulos** on the trainer side. For a device
