@@ -41,6 +41,10 @@ async function logged<T>(event: string, ids: string, report: Report, work: () =>
   }
 }
 
+/** An unlock's end moved to 15 minutes from `now`, or kept, when it is already later. */
+const laterEnd = (now: Date) =>
+  sql`greatest(${trainerUnlock.expiresAt}, ${unlockExpiry(now).toISOString()}::timestamptz)`;
+
 export type ChildProfile = { id: string; nickname: string | null };
 
 /** The parent's child, created without a nickname the first time it is asked for. */
@@ -148,9 +152,10 @@ export function tryPassword(
         await tx
           .insert(trainerUnlock)
           .values({ sessionId, expiresAt: unlockExpiry(now) })
+          // As in touchUnlock: tries landing out of order keep the later end.
           .onConflictDoUpdate({
             target: trainerUnlock.sessionId,
-            set: { expiresAt: unlockExpiry(now) },
+            set: { expiresAt: laterEnd(now) },
           });
         return true;
       });
@@ -201,9 +206,7 @@ export function touchUnlock(
     const [touched] = await getDatabase()
       .update(trainerUnlock)
       // Overlapping requests may land out of order; the later end wins.
-      .set({
-        expiresAt: sql`greatest(${trainerUnlock.expiresAt}, ${unlockExpiry(now).toISOString()}::timestamptz)`,
-      })
+      .set({ expiresAt: laterEnd(now) })
       .where(and(eq(trainerUnlock.sessionId, sessionId), gt(trainerUnlock.expiresAt, now)))
       .returning({ expiresAt: trainerUnlock.expiresAt });
     return touched?.expiresAt ?? null;

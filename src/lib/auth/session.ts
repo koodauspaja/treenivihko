@@ -5,6 +5,7 @@
  * has left the allowlist counts as signed out, though Better Auth would renew it.
  *
  * decisions/029-sign-in.md
+ * decisions/f001-trainer-side.md
  */
 
 import { getSessionCookie } from "better-auth/cookies";
@@ -17,7 +18,7 @@ import { getAuth } from "./server";
 /**
  * What a page needs of the user, and no more: no address, no token. The
  * session's id is the signed-in browser's, which the trainer side's unlock
- * belongs to (decisions/f001-trainer-side.md).
+ * belongs to.
  */
 export type SignedInUser = { id: string; name: string; sessionId: string };
 
