@@ -28,6 +28,7 @@ const PASSWORD = "integration-test-password";
 
 // Google's sign-in cannot run here, so users are created through email sign-up,
 // which passes the same allowlist: it applies to every way a user is created.
+// decisions/029-sign-in.md
 const auth = betterAuth({
   ...authOptions(ENV),
   plugins: [],
@@ -111,8 +112,10 @@ describe("sign-in against the test database", () => {
       providerId: "google",
       userId: created?.id ?? "",
       accessToken: "ya29.test-access-token",
+      refreshToken: "test-refresh-token",
       idToken: "eyJ.test-id-token",
       accessTokenExpiresAt: new Date(Date.now() + 3_600_000),
+      refreshTokenExpiresAt: new Date(Date.now() + 3_600_000),
     });
     const [stored] = await getDatabase()
       .select()
@@ -121,8 +124,10 @@ describe("sign-in against the test database", () => {
     expect(stored).toMatchObject({
       providerId: "google",
       accessToken: null,
+      refreshToken: null,
       idToken: null,
       accessTokenExpiresAt: null,
+      refreshTokenExpiresAt: null,
     });
   });
 });
