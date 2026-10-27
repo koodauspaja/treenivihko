@@ -188,8 +188,8 @@ and nothing deleted.
 | `period` | `id`; `user_id`, references `user`, deleted with it; `starts_on`, date; `weeks`, integer 1–4; `created_at`; `updated_at` | A period. No two of one parent's overlap, which the database holds too |
 | `training_session` | `id`; `period_id`, references `period`, deleted with it; `position`, integer from 1, unique within the period; `place`, a place key; `target_minutes`, integer; `created_at`; `updated_at` | A session in its order |
 | `training_session_equipment` | `session_id`, references `training_session`, deleted with it; `label`, an equipment key; primary key both | The equipment at hand |
-| `block` | `id`; `session_id`, references `training_session`, deleted with it; `position`, integer from 1, unique within the session; `theme`, text | A block in its order |
-| `block_exercise` | `id`; `block_id`, references `block`, deleted with it; `exercise_id`, references `exercise`, never deleted while referenced; `position`, integer from 1, unique within the block; `amount_kind`, `count` or `time`; `amount`, integer | An exercise in a block, with the kind and amount it was given |
+| `block` | `id`; `session_id`, references `training_session`, deleted with it; `position`, integer from 1, unique within the session; `theme`, text; `created_at`; `updated_at` | A block in its order |
+| `block_exercise` | `id`; `block_id`, references `block`, deleted with it; `exercise_id`, references `exercise`, never deleted while referenced; `position`, integer from 1, unique within the block; `amount_kind`, `count` or `time`; `amount`, integer; `created_at`; `updated_at` | An exercise in a block, with the kind and amount it was given |
 
 `session` is Better Auth's sign-in table, so a training session's is
 `training_session`. Each column's own rule is a check in the database too. The rules across rows,
