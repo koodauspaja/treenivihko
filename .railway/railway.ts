@@ -21,12 +21,18 @@ export const REGION = "europe-west4-drams3a";
  */
 export const NPM_INSTALL = "npx --yes npm@12.2.1 ci --ignore-scripts";
 
-/** What redeploys the site: application code and its build configuration, nothing else. */
+/**
+ * What redeploys the site: application code, the scripts run on the service
+ * (migrations, and the trainer password, decisions/f001-trainer-side.md), and
+ * the build's configuration, nothing else.
+ */
 export const WATCH_PATTERNS = [
   "src/**",
   "public/**",
   "drizzle/**",
   "scripts/migrate.ts",
+  "scripts/set-trainer-password.ts",
+  "scripts/trainer-password-plan.ts",
   "package.json",
   "package-lock.json",
   ".nvmrc",

@@ -8,6 +8,9 @@
 export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> = [
   // The sign-in page.
   ["/kirjaudu", "/sign-in"],
+  // The trainer side, and its lock page. decisions/f001-trainer-side.md
+  ["/valmentaja", "/trainer"],
+  ["/valmentaja/avaa", "/trainer/unlock"],
 ];
 
 /** Next's rewrites: each address served from its folder. */

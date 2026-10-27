@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { SIGN_IN_PATH } from "@/lib/auth/paths";
 import { ROUTES, routeRedirects, routeRewrites } from "@/lib/routes";
+import { TRAINER_PATH, UNLOCK_PATH } from "@/lib/trainer/paths";
 
 describe("the route table", () => {
   it("serves the sign-in address from the English sign-in folder", () => {
     expect(ROUTES).toContainEqual([SIGN_IN_PATH, "/sign-in"]);
+  });
+
+  it("serves the trainer side and its lock page from English folders", () => {
+    expect(ROUTES).toContainEqual([TRAINER_PATH, "/trainer"]);
+    expect(ROUTES).toContainEqual([UNLOCK_PATH, "/trainer/unlock"]);
+    expect([TRAINER_PATH, UNLOCK_PATH]).toEqual(["/valmentaja", "/valmentaja/avaa"]);
   });
 
   it("rewrites each Finnish address to its folder", () => {

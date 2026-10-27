@@ -60,7 +60,7 @@ Open a pull request. Three checks run:
 | Check | Runs | Fails when |
 |---|---|---|
 | `Lint, types and unit tests` | `npm run lint`, `npm run typecheck`, `npm run test:unit` | as `npm run verify` would |
-| `Build and end-to-end` | `npm run test:e2e`, with Chromium and its system libraries | the build or the smoke test fails |
+| `Build and end-to-end` | `npm run test:e2e`, with Chromium and its system libraries, on the test database (setup 009) | the build or an end-to-end test fails |
 | `SonarCloud scan` | the analysis, with the unit job's `coverage/lcov.info`, then `scripts/sonar-gate.ts` | SonarCloud's quality gate fails, or the stricter limits below are not met |
 
 **The limits are stricter than SonarCloud's gate.** The free plan has only

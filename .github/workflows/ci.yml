@@ -113,6 +113,24 @@ jobs:
     name: Build and end-to-end
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The signed-in pages need a database: the same test one as the integration job's.
+    # decisions/f001-trainer-side.md
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: treenivihko_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d treenivihko_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/treenivihko_test
     steps:
       # A skipped job counts as passed, so anyone else gets a failure, not a skip.
       - name: Only the people named in setup 001

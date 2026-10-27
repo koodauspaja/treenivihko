@@ -1,6 +1,14 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { account, session, user, verification } from "@/lib/db/schema";
+import {
+  account,
+  child,
+  session,
+  trainerPassword,
+  trainerUnlock,
+  user,
+  verification,
+} from "@/lib/db/schema";
 
 const config = (table: Parameters<typeof getTableConfig>[0]) => getTableConfig(table);
 const columns = (table: Parameters<typeof getTableConfig>[0]) =>
@@ -45,5 +53,27 @@ describe("the schema", () => {
     expect(reference?.foreignColumns.map((column) => column.name)).toEqual(["id"]);
     expect(getTableConfig(reference?.foreignTable ?? user).name).toBe("user");
     expect(foreignKey?.onDelete).toBe("cascade");
+  });
+
+  it.each([
+    ["child", child, "user_id", "user"],
+    ["trainer_password", trainerPassword, "user_id", "user"],
+    ["trainer_unlock", trainerUnlock, "session_id", "session"],
+  ] as const)("deletes each %s row with its %s's owner", (name, table, column, owner) => {
+    expect(config(table).name).toBe(name);
+    const [foreignKey] = config(table).foreignKeys;
+    const reference = foreignKey?.reference();
+    expect(reference?.columns.map((each) => each.name)).toEqual([column]);
+    expect(getTableConfig(reference?.foreignTable ?? user).name).toBe(owner);
+    expect(foreignKey?.onDelete).toBe("cascade");
+  });
+
+  it("holds one child per parent, with a nickname of 1 to 20 characters or none", () => {
+    expect(config(child).columns.find((column) => column.name === "user_id")?.isUnique).toBe(true);
+    expect(config(child).columns.find((column) => column.name === "nickname")?.notNull).toBe(false);
+    expect(config(child).checks.map((each) => each.name)).toEqual(["child_nickname_length"]);
+    expect(config(trainerPassword).checks.map((each) => each.name)).toEqual([
+      "trainer_password_failed_attempts",
+    ]);
   });
 });

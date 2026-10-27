@@ -1,17 +1,45 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const requireUser = vi.fn(async () => ({ id: "u1", name: "Test Parent" }));
+const requireUser = vi.fn();
+const ensureChild = vi.fn();
 vi.mock("@/lib/auth/session", () => ({ requireUser: () => requireUser() }));
+vi.mock("@/lib/trainer/store", () => ({
+  ensureChild: (...args: unknown[]) => ensureChild(...args),
+}));
 
 const { SignedInPanel } = await import("@/components/signed-in-panel");
 
+beforeEach(() => {
+  requireUser.mockReset().mockResolvedValue({ id: "u1", name: "Test Parent", sessionId: "s1" });
+  ensureChild.mockReset().mockResolvedValue({ id: "c1", nickname: null });
+});
+
+afterEach(() => {
+  cleanup();
+});
+
 describe("SignedInPanel", () => {
-  it("requires a signed-in browser, then shows the child's placeholder and nothing of the parent's", async () => {
+  it("requires a signed-in browser, then greets the child, and shows nothing of the parent's", async () => {
     const { container } = render(await SignedInPanel());
     expect(requireUser).toHaveBeenCalledOnce();
+    expect(ensureChild).toHaveBeenCalledWith("u1");
+    expect(screen.getByRole("heading", { level: 2, name: "Hei!" })).toBeDefined();
     expect(screen.getByText("Treenit tulevat tänne pian.")).toBeDefined();
     expect(container.textContent).not.toContain("Test Parent");
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("greets the child by nickname once there is one", async () => {
+    ensureChild.mockResolvedValue({ id: "c1", nickname: "Testi" });
+    render(await SignedInPanel());
+    expect(screen.getByRole("heading", { level: 2, name: "Hei, Testi!" })).toBeDefined();
+  });
+
+  it("links to the trainer side's address", async () => {
+    render(await SignedInPanel());
+    expect(screen.getByRole("link", { name: "Valmentaja" }).getAttribute("href")).toBe(
+      "/valmentaja"
+    );
   });
 });

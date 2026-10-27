@@ -8,6 +8,13 @@
       "when": 1793095360380,
       "tag": "0000_create_auth_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793105437054,
+      "tag": "0001_create_child_and_trainer_tables",
+      "breakpoints": true
     }
   ]
 }

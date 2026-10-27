@@ -27,7 +27,7 @@ Project `treenivihko`, in the Koodauspaja workspace, with one environment,
 | Health check | `/api/health`, up to 60 s |
 | Restarts | On failure, at most 3 times |
 | Sleeps when idle | Yes; wakes on the next request |
-| Redeploys on | `src/**`, `public/**`, `drizzle/**`, `scripts/migrate.ts`, `package.json`, `package-lock.json`, `.nvmrc`, `.npmrc`, `next.config.ts`, `tsconfig.json` |
+| Redeploys on | `src/**`, `public/**`, `drizzle/**`, `scripts/migrate.ts`, `scripts/set-trainer-password.ts`, `scripts/trainer-password-plan.ts`, `package.json`, `package-lock.json`, `.nvmrc`, `.npmrc`, `next.config.ts`, `tsconfig.json` |
 | Variables | `DATABASE_URL`, a reference to Postgres's; `RAILPACK_NODE_NPM_INSTALL`; `BETTER_AUTH_URL`, a reference to the service's domain; `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `AUTH_ALLOWED_EMAILS`, set on Railway and kept by every apply (`docs/setup/011-sign-in.md`); and Railway's own `RAILWAY_*` |
 
 ### The health route

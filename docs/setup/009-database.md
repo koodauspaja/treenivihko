@@ -48,11 +48,13 @@ also where CI's service container listens), it carries no query string, and
 its database name ends in `_test`. A local port forwarded to a database
 elsewhere would pass that check, so never point `TEST_DATABASE_URL` through a
 tunnel. `npm run verify` runs
-them between the unit tests and the end-to-end tests.
+them between the unit tests and the end-to-end tests. The end-to-end tests use
+the same database, under the same check, for the signed-in pages.
 
 ## Step 4 — CI's database
 
-The `Integration tests` job starts a Postgres service container. Its password
+The `Integration tests` and `Build and end-to-end` jobs each start a Postgres
+service container. Its password
 is the repository secret `CI_POSTGRES_PASSWORD`, a random value nobody needs to
 know, so no password is written in the workflow:
 
