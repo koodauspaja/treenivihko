@@ -129,7 +129,9 @@ any one of them leads to the others.
   does nothing until `railway config apply` (`docs/setup/010-railway.md`).
 - Specs: `specs/`. Decision records: `decisions/`.
 - The code: `src/app` for routes, `src/components` for UI, `src/lib/<domain>`
-  for the rest (`decisions/012-project-init.md`). Tests mirror it under
+  for the rest (`decisions/012-project-init.md`). Folders and file names are
+  English; a page's Finnish address is a row in `src/lib/routes.ts`
+  (`decisions/029-sign-in.md`). Tests mirror it under
   `tests/unit`, and `tests/e2e` holds the Playwright tests.
 - **`npm run verify` before every push**: lint, type check, unit tests at 100%
   with `coverage-gaps`, the build and the end-to-end tests, stopping at the

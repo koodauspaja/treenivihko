@@ -1,0 +1,118 @@
+# 011 — Sign-in
+
+## Goal
+
+The parent signs in with Google, and only the addresses on an allowlist can.
+Google Cloud holds the OAuth client; its two values, a secret of the app's own
+and the allowlist go in `.env` locally and in Railway's variables. Why it is
+built this way: `decisions/029-sign-in.md`.
+
+---
+
+## Step 1 — The Google Cloud project
+
+At <https://console.cloud.google.com>: the project menu → **New project**,
+named after the app (`treenivihko` here). Check it is the selected project for
+every step below.
+
+## Step 2 — Google Auth Platform
+
+Menu → **Google Auth Platform** (or **APIs & Services → OAuth consent
+screen**) → **Get started**:
+
+| Step | Fill in |
+|---|---|
+| App information | The app's name; your address as the support email |
+| Audience | **External**. Internal is for Google Workspace organisations only |
+| Contact information | Your address |
+| Finish | Accept the user data policy → **Create** |
+
+Then:
+
+- **Branding:** no logo, which would start Google's verification, and no app
+  domain or authorised domain, which only publishing needs.
+- **Audience:** keep **Testing**, and do not publish: publishing needs a
+  privacy policy page and a domain Google can verify. Add yourself as a test
+  user if you like; **it restricts nobody**. For an app asking only for name
+  and email, Google lets any account sign in while in Testing. The app's own
+  allowlist is the gate.
+- **Data Access:** add no scope. `openid`, `email` and `profile` come by
+  themselves; anything more needs verification.
+
+## Step 3 — The OAuth client
+
+**Clients → Create client → Web application**:
+
+| Field | Value |
+|---|---|
+| Authorised JavaScript origins | empty |
+| Authorised redirect URIs | `http://localhost:3000/api/auth/callback/google`<br>`https://<your Railway domain>/api/auth/callback/google` |
+
+The URIs must match exactly: `http` for localhost, no trailing slash. Download
+the JSON; Google may not show the secret again.
+
+## Step 4 — The values, locally
+
+From the repository root, with the downloaded file in `$f`:
+
+```bash
+f=$(ls ~/Downloads/client_secret_*.json)
+{
+  echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)"
+  echo "BETTER_AUTH_URL=http://localhost:3000"
+  echo "GOOGLE_CLIENT_ID=$(jq -r .web.client_id "$f")"
+  echo "GOOGLE_CLIENT_SECRET=$(jq -r .web.client_secret "$f")"
+  echo "AUTH_ALLOWED_EMAILS=<your address>"
+} >> .env
+```
+
+## Step 5 — The values, on Railway
+
+`.railway/railway.ts` declares these four by name only, so an apply keeps
+what is set; `BETTER_AUTH_URL` it sets itself, from the service's domain.
+`--stdin` keeps each value off the command line:
+
+```bash
+openssl rand -base64 32 | railway variable set BETTER_AUTH_SECRET --stdin -s treenivihko --skip-deploys
+jq -r .web.client_id "$f" | railway variable set GOOGLE_CLIENT_ID --stdin -s treenivihko --skip-deploys
+jq -r .web.client_secret "$f" | railway variable set GOOGLE_CLIENT_SECRET --stdin -s treenivihko --skip-deploys
+printf '%s' '<your address>' | railway variable set AUTH_ALLOWED_EMAILS --stdin -s treenivihko --skip-deploys
+```
+
+Then keep the JSON in a password manager, or delete it.
+
+## Step 6 — Check it
+
+```bash
+npm run db:migrate
+npm run dev
+```
+
+At <http://localhost:3000>: you land on `/kirjaudu`. Signing in with an
+address on the list lands on the child's side; another Google account comes
+back to `/kirjaudu` with "Tällä Google-tilillä ei voi kirjautua
+Treenivihkoon." and leaves no user row. Then the same on Railway.
+
+---
+
+## Later
+
+- **Another adult:** add their address to `AUTH_ALLOWED_EMAILS`,
+  comma-separated, on Railway and in `.env`. No redeploy is needed for the
+  list: it is read at every sign-in.
+- **Rotating the client secret:** a new secret in Google Cloud, then Step 5's
+  `GOOGLE_CLIENT_SECRET` line again, and `.env`.
+- **Signing a device out** before the trainer side has its button: delete the
+  user's rows in `session`; the cookie then points at nothing.
+
+---
+
+## Done when
+
+- [ ] An address on the list signs in, locally and on Railway, and lands on the child's side
+- [ ] Another Google account is refused with the Finnish message, and leaves no user row
+- [ ] `railway config plan` reports the configuration up to date
+
+## Next
+
+→ The trainer side, as a feature with a spec.
