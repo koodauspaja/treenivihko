@@ -65,7 +65,8 @@ Two things hold for every feature:
 - **Every migration is named** `<verb>_<what>`: `npm run db:generate --
   --name=create_exercises`. `db:generate` refuses an unnamed one and a unit
   test fails on one that exists. **An applied migration is never edited**; a
-  change is a new migration. **A migration works with the version still
+  change is a new migration, and CI fails a pull request that edits one `main`
+  has. **A migration works with the version still
   serving**, which runs until the new one takes traffic: add a column in one
   deploy, drop or rename it only once nothing reads it
   (`docs/setup/009-database.md`).

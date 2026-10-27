@@ -23,6 +23,8 @@ export const coverageExclusions: Readonly<Record<string, string>> = {
     "Spawns drizzle-kit and sets the exit code; what it decides is in migration-name.ts, which is tested.",
   "scripts/migrate.ts":
     "Connects to the database and sets the exit code; what it does is runMigrations, which is tested, and the integration tests run it against Postgres.",
+  "scripts/migration-history.ts":
+    "Reads the migrations through git and from disk, and sets the exit code; what it decides is in migration-history-plan.ts, which is tested.",
 };
 
 const sourceFile = /^(src\/.+\.(ts|tsx|mts|cts)|scripts\/.+\.(ts|mts|cts))$/;
