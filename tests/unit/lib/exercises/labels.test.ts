@@ -36,17 +36,30 @@ describe("the label list", () => {
     );
   });
 
-  it("gives each label its meaning in Finnish, as the import's prompt shows it", () => {
-    expect(labelOf("footwork")?.meaning).toBe(
-      "Nopea, rytminen askelkuvio toistettuna, kuten tikkailla"
-    );
-    expect(labelOf("gym")?.meaning).toBe(
-      "Talon kuntosali: tilaa liikkua ja hypätä, ei kovia potkuja"
-    );
-    // No English left: every meaning is one of the spec's Finnish sentences.
-    expect(LABELS.filter((label) => /\b(the|and|or|a|an|to|with)\b/.test(label.meaning))).toEqual(
-      []
-    );
+  it("gives each label its meaning in Finnish, word for word as the spec's table", () => {
+    expect(LABELS.map((label) => [label.name, label.meaning])).toEqual([
+      ["Kuljetus", "Pallo liikkuu lapsen mukana: juoksu, käännökset ja kiihdytykset pallo lähellä"],
+      ["Harhautus", "Harhautus tai liike, jolla ohitetaan vastustaja"],
+      ["Syöttö", "Pallo pelataan tarkasti kohteeseen, seinään tai toiselle"],
+      ["Laukaus", "Kova potku maaliin tai kohteeseen"],
+      ["Pallonhallinta", "Hallinta pienessä tilassa: ensikosketus, vastaanotto, pompottelu"],
+      ["Jalkatyö", "Nopea, rytminen askelkuvio toistettuna, kuten tikkailla"],
+      ["Nopeus", "Lyhyet spurtit, lähdöt ja kiihdytykset"],
+      ["Ketteryys", "Suunnanmuutokset, väistöt ja reagointi"],
+      ["Tasapaino", "Kehon hallinta yhdellä jalalla tai vaikeissa asennoissa"],
+      ["Voima", "Lihasvoima omalla painolla"],
+      ["Liikkuvuus", "Venyttely ja nivelten liikkuvuus"],
+      ["Kenttä", "Ulkona kentällä: tilaa juosta ja potkaista kovaa"],
+      ["Sisällä", "Kotona sisällä: vähän tilaa, ei kovia potkuja eikä hyppyjä"],
+      ["Kuntosali", "Talon kuntosali: tilaa liikkua ja hypätä, ei kovia potkuja"],
+      ["Pallo", "Jalkapallo, tai sisällä pehmeä pallo"],
+      ["Tikkaat", "Ketteryystikkaat"],
+      ["Aidat", "Pienet aidat"],
+      ["Kartiot", "Kartiot tai merkit"],
+      ["Maali", "Maali, tai maaliksi merkitty kohde"],
+      ["Seinä", "Seinä tai palautin, johon pallon voi pelata"],
+      ["Hyppynaru", "Hyppynaru"],
+    ]);
   });
 
   it("finds a label by key, and none for a key not on the list", () => {

@@ -90,7 +90,8 @@ export function ImportForm() {
     // What is sent, file and text together; a file field always has its list.
     const sent =
       [...(field.files as FileList)].reduce((total, file) => total + file.size, 0) +
-      new TextEncoder().encode(pasted.value).length;
+      // A form sends a text field's line breaks as CRLF, as the action receives them.
+      new TextEncoder().encode(pasted.value.replace(/\r?\n/g, "\r\n")).length;
     const oversized = sent > IMPORT_MAX_BYTES;
     setTooLarge(oversized);
     if (oversized) {
