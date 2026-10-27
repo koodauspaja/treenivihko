@@ -20,6 +20,7 @@ import {
   valuesOf,
 } from "@/lib/exercises/rules";
 import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/store";
+import { NOT_FOUND } from "@/lib/messages";
 import { requireTrainer } from "@/lib/trainer/access";
 import { EXERCISES_PATH } from "@/lib/trainer/paths";
 
@@ -30,8 +31,6 @@ export type ExerciseFormState = {
   errors: Partial<Record<ExerciseField, string>>;
   values: ExerciseValues;
 };
-
-const NOT_FOUND = "Sivua ei löytynyt.";
 
 /** Adds or saves an exercise, or shows why not beside each field. */
 export async function saveExercise(
