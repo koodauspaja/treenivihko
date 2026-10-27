@@ -41,7 +41,8 @@ export type ExerciseValues = {
   name: string;
   instructions: string;
   videoUrl: string;
-  amountKind: AmountKind;
+  // As sent: a kind that is neither is refused, not read as a count.
+  amountKind: string;
   count: string;
   seconds: string;
   durationMinutes: string;
@@ -104,7 +105,7 @@ export function valuesOf(form: FormData): ExerciseValues {
     name: text(form, "name"),
     instructions: text(form, "instructions"),
     videoUrl: text(form, "videoUrl"),
-    amountKind: text(form, "amountKind") === "time" ? "time" : "count",
+    amountKind: text(form, "amountKind"),
     count: text(form, "count"),
     seconds: text(form, "seconds"),
     durationMinutes: text(form, "durationMinutes"),
@@ -145,12 +146,16 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
   if (videoUrl === undefined) {
     errors.videoUrl = REFUSAL.videoUrl;
   }
+  const amountKind: AmountKind | null =
+    values.amountKind === "count" || values.amountKind === "time" ? values.amountKind : null;
   const amount =
-    values.amountKind === "count"
-      ? wholeNumber(values.count, 1, COUNT_MAX)
-      : wholeNumber(values.seconds, SECONDS_MIN, SECONDS_MAX);
-  if (amount === null || (values.amountKind === "time" && amount % SECONDS_STEP !== 0)) {
-    errors[values.amountKind] = REFUSAL[values.amountKind];
+    amountKind === "time"
+      ? wholeNumber(values.seconds, SECONDS_MIN, SECONDS_MAX)
+      : wholeNumber(values.count, 1, COUNT_MAX);
+  if (amountKind === null) {
+    errors.count = REFUSAL.count;
+  } else if (amount === null || (amountKind === "time" && amount % SECONDS_STEP !== 0)) {
+    errors[amountKind] = REFUSAL[amountKind];
   }
   const durationMinutes = wholeNumber(values.durationMinutes, 1, DURATION_MAX_MINUTES);
   if (durationMinutes === null) {
@@ -179,7 +184,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
       name,
       instructions,
       videoUrl: videoUrl ?? null,
-      amountKind: values.amountKind,
+      amountKind: amountKind as AmountKind,
       amount: amount as number,
       durationMinutes: durationMinutes as number,
       level: level as Level,
@@ -227,8 +232,8 @@ export const FILTERED_PARAM = "rajaus";
  */
 export function filtersFrom(query: Query): Filters {
   const keysIn = (name: string, group: LabelGroup) => {
-    const offered = labelsIn(group).map((label) => label.key);
-    return all(query, name).filter((key) => offered.includes(key));
+    const offered = new Set<string>(labelsIn(group).map((label) => label.key));
+    return all(query, name).filter((key) => offered.has(key));
   };
   return {
     skills: keysIn("taito", "skill"),

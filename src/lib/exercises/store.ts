@@ -62,11 +62,14 @@ const columnsOf = (values: Exercise) => ({
   warmUp: values.warmUp,
 });
 
-async function withLabels(rows: Row[]): Promise<StoredExercise[]> {
+type Reader = Pick<ReturnType<typeof getDatabase>, "select">;
+
+/** The rows' labels, read by `reader`, so in the same snapshot as the rows. */
+async function withLabels(reader: Reader, rows: Row[]): Promise<StoredExercise[]> {
   if (rows.length === 0) {
     return [];
   }
-  const labels = await getDatabase()
+  const labels = await reader
     .select()
     .from(exerciseLabel)
     .where(
@@ -83,23 +86,32 @@ async function withLabels(rows: Row[]): Promise<StoredExercise[]> {
   );
 }
 
+// Rows and labels in one snapshot, so a save between the two reads cannot mix versions.
+const SNAPSHOT = { isolationLevel: "repeatable read", accessMode: "read only" } as const;
+
 /** The parent's whole library, in no particular order. */
 export function listExercises(userId: string, report: Report = toStderr) {
-  return logged("exercise list", `user ${userId}`, report, async () =>
-    withLabels(await getDatabase().select().from(exercise).where(eq(exercise.userId, userId)))
+  return logged("exercise list", `user ${userId}`, report, () =>
+    getDatabase().transaction(
+      async (tx) =>
+        withLabels(tx, await tx.select().from(exercise).where(eq(exercise.userId, userId))),
+      SNAPSHOT
+    )
   );
 }
 
 /** One of the parent's exercises, or null when it is not theirs or not there. */
 export function getExercise(userId: string, id: string, report: Report = toStderr) {
-  return logged("exercise read", `user ${userId}, exercise ${id}`, report, async () => {
-    const rows = await getDatabase()
-      .select()
-      .from(exercise)
-      .where(and(eq(exercise.userId, userId), eq(exercise.id, id)));
-    const [found] = await withLabels(rows);
-    return found ?? null;
-  });
+  return logged("exercise read", `user ${userId}, exercise ${id}`, report, () =>
+    getDatabase().transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(exercise)
+        .where(and(eq(exercise.userId, userId), eq(exercise.id, id)));
+      const [found] = await withLabels(tx, rows);
+      return found ?? null;
+    }, SNAPSHOT)
+  );
 }
 
 /** Adds an exercise, with its labels, or says its name is already in use. */

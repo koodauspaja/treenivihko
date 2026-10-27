@@ -27,9 +27,10 @@ const VALID: ExerciseValues = {
   labels: ["footwork", "field", "ladder"],
 };
 
+/** Null for an accepted exercise, its refusals for a refused one, so the two never read the same. */
 const errorsOf = (changes: Partial<ExerciseValues>) => {
   const reading = readExercise({ ...VALID, ...changes });
-  return reading.ok ? {} : reading.errors;
+  return reading.ok ? null : reading.errors;
 };
 
 describe("wholeNumber", () => {
@@ -81,8 +82,8 @@ describe("readExercise", () => {
   });
 
   it("accepts names of 1 and 40 characters", () => {
-    expect(errorsOf({ name: "x" })).toEqual({});
-    expect(errorsOf({ name: "x".repeat(40) })).toEqual({});
+    expect(errorsOf({ name: "x" })).toBeNull();
+    expect(errorsOf({ name: "x".repeat(40) })).toBeNull();
   });
 
   it("takes instructions of 1 to 1000 characters, line breaks kept", () => {
@@ -92,8 +93,8 @@ describe("readExercise", () => {
     expect(errorsOf({ instructions: "x".repeat(1001) })).toEqual({
       instructions: "Ohjeessa on oltava 1–1000 merkkiä.",
     });
-    expect(errorsOf({ instructions: "x" })).toEqual({});
-    expect(errorsOf({ instructions: "x".repeat(1000) })).toEqual({});
+    expect(errorsOf({ instructions: "x" })).toBeNull();
+    expect(errorsOf({ instructions: "x".repeat(1000) })).toBeNull();
     const reading = readExercise({ ...VALID, instructions: " yksi\nkaksi " });
     expect(reading.ok && reading.exercise.instructions).toBe("yksi\nkaksi");
   });
@@ -111,7 +112,7 @@ describe("readExercise", () => {
     ["https://example.com/video", true],
   ])("a video link %j is accepted: %s", (videoUrl, accepted) => {
     expect(errorsOf({ videoUrl })).toEqual(
-      accepted ? {} : { videoUrl: "Videolinkin on oltava https-osoite." }
+      accepted ? null : { videoUrl: "Videolinkin on oltava https-osoite." }
     );
   });
 
@@ -127,7 +128,7 @@ describe("readExercise", () => {
     ["101", false],
     ["", false],
   ])("a count of %j is accepted: %s", (count, accepted) => {
-    expect(errorsOf({ count })).toEqual(accepted ? {} : { count: "Kertoja on oltava 1–100." });
+    expect(errorsOf({ count })).toEqual(accepted ? null : { count: "Kertoja on oltava 1–100." });
   });
 
   it.each([
@@ -138,8 +139,12 @@ describe("readExercise", () => {
     ["605", false],
   ])("a time of %j seconds is accepted: %s", (seconds, accepted) => {
     expect(errorsOf({ amountKind: "time", count: "", seconds })).toEqual(
-      accepted ? {} : { time: "Ajan on oltava 5 s – 10 min, 5 sekunnin välein." }
+      accepted ? null : { time: "Ajan on oltava 5 s – 10 min, 5 sekunnin välein." }
     );
+  });
+
+  it.each(["laps", ""])("refuses an amount kind %j that is neither", (amountKind) => {
+    expect(errorsOf({ amountKind })).toEqual({ count: "Kertoja on oltava 1–100." });
   });
 
   it("reads only the chosen amount's field", () => {
@@ -157,7 +162,7 @@ describe("readExercise", () => {
     ["31", false],
   ])("a duration of %j minutes is accepted: %s", (durationMinutes, accepted) => {
     expect(errorsOf({ durationMinutes })).toEqual(
-      accepted ? {} : { duration: "Keston on oltava 1–30 minuuttia." }
+      accepted ? null : { duration: "Keston on oltava 1–30 minuuttia." }
     );
   });
 
@@ -171,11 +176,11 @@ describe("readExercise", () => {
     expect(errorsOf({ labels: ["footwork", "field", "heading"] })).toEqual({
       skill: "Valitse vähintään yksi taito.",
     });
-    expect(errorsOf({ labels: ["footwork", "field"] })).toEqual({});
+    expect(errorsOf({ labels: ["footwork", "field"] })).toBeNull();
   });
 
   it("names every failing field at once", () => {
-    expect(Object.keys(errorsOf({ name: "", level: "", labels: [] })).sort()).toEqual([
+    expect(Object.keys(errorsOf({ name: "", level: "", labels: [] }) ?? {}).sort()).toEqual([
       "level",
       "name",
       "place",
@@ -201,7 +206,7 @@ describe("the form's values", () => {
       warmUp: true,
       labels: ["footwork", "field"],
     });
-    expect(valuesOf(new FormData())).toEqual(EMPTY_VALUES);
+    expect(valuesOf(new FormData())).toEqual({ ...EMPTY_VALUES, amountKind: "" });
   });
 
   it("shows a stored exercise in its form, the amount in its own field", () => {

@@ -5,6 +5,7 @@
  * text).
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 export type Report = (line: string) => void;

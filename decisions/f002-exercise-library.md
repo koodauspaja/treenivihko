@@ -23,8 +23,11 @@ parent, a file and a model.
   3 places, 7 equipment items, each with a meaning. Stored by English key,
   shown by Finnish name. The database refuses a key not on the list, so
   changing it is a pull request and a migration.
-- **Every rule twice**: in `rules.ts`, which gives each field its Finnish
-  refusal, and as a check in the database, which no write passes around.
+- **Every rule in `rules.ts`**, which gives each field its Finnish refusal,
+  and every write goes through it. **Each column's own rule is a check in the
+  database too**: lengths, the amount, the duration, the level, a known label
+  key, and a video link starting `https://`. The rules across rows (a skill
+  and a place) and the link's parse are `rules.ts`'s alone.
 - **A name unique per parent by `lower(name)`**, decided by the unique index
   and read back from its error, so two saves at once cannot both pass.
 - **The library belongs to the parent who made it**, and every read and write
@@ -42,6 +45,7 @@ parent, a file and a model.
 
 | Decision | Why |
 |---|---|
+| Column checks in the database, the rest in `rules.ts` | A column check costs nothing and holds against a careless write; a skill-and-place check across rows would need a trigger, for writes that all come through `readExercise` |
 | Labels in code, not editable in the app | The filters, the import and the AI all depend on the same words, and a renamed label would quietly change what each of them means |
 | English keys, Finnish names | A Finnish name can be corrected without a migration, and keys stay out of the user's sight |
 | Warm-up as a field, not a label | It is a property an exercise has besides its skill, as easy ladder steps can be both; a group with one label in it was the sign. Sessions open with one (Features 004 and 009) |

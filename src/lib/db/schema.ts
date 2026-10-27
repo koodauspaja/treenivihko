@@ -182,7 +182,7 @@ export const exerciseLabel = pgTable(
     primaryKey({ columns: [table.exerciseId, table.label] }),
     check(
       "exercise_label_known",
-      sql.raw(`label in (${LABEL_KEYS.map((key) => `'${key}'`).join(", ")})`)
+      sql.raw(`label in (${LABEL_KEYS.map((key) => "'" + key + "'").join(", ")})`)
     ),
   ]
 );

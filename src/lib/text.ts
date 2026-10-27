@@ -4,6 +4,7 @@
  * it was typed and an emoji is 1, as Postgres's `char_length` counts it.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 /** The text trimmed and in one form of each character. */
