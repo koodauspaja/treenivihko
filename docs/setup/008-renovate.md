@@ -25,11 +25,13 @@ close it if it does, since the committed file is the configuration.
 | Schedule | Monday before 07:00, Helsinki | Updates arrive together at the start of the week |
 | Limits | 10 open, 5 an hour | A big release day does not flood the board |
 | Label | `dependencies` | |
+| Minimum release age | 14 days | A compromised release is usually caught and pulled within days, and Renovate's pull requests run CI with the repository's secrets |
 | Lockfile maintenance | on | Moves the transitive dependencies `package.json` alone never moves |
 | Automerge | off | Every update gets CI, SonarCloud, Sourcery and a human merge |
 | `npm@<version>` in `ci.yml` | a custom manager | CI installs an exact npm; Renovate bumps it like a dependency |
 | `typescript` | below 7 | Next's plugin and build type check need TypeScript's JS API, which 7 does not ship |
 | `@types/node` | below 25 | The types follow the Node line `.nvmrc` names |
+| A Node major in `.nvmrc` | waits for approval in the Dependency Dashboard | The `@types/node` hold has to move with it, by hand |
 
 The GitHub Actions pins (`@<sha> # v<version>`) and `.nvmrc` are updated by
 Renovate's own managers. `tests/unit/config/renovate.test.ts` checks that the

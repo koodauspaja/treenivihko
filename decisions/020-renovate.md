@@ -10,6 +10,14 @@ moves fall behind without anyone noticing.
 
 - **Renovate, weekly**: Monday before 07:00 Helsinki, at most 10 pull requests
   open and 5 an hour, labelled `dependencies`, with lockfile maintenance.
+- **Nothing younger than 14 days.** Renovate's pull requests come from
+  branches of this repository, so their CI runs hold `SONAR_TOKEN`, and the
+  SonarCloud job runs the scan action at whatever pin the pull request names.
+  A compromised release, of an action or a package, is usually found and
+  pulled within days; waiting two weeks keeps it from being proposed at all.
+- **A Node major in `.nvmrc` waits for approval** in the Dependency Dashboard,
+  because the `@types/node` hold must move with it, and a test that ties the
+  two would fail a pull request that moved only one.
 - **No automerge.** An update is a change like any other: CI, SonarCloud,
   Sourcery and a human merge.
 - **No issue for Renovate's pull requests**, the one exception to `CLAUDE.md`'s
