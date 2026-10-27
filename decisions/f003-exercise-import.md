@@ -1,0 +1,63 @@
+# F003 — The exercise import
+
+Spec: `specs/003-exercise-import.md`. Issue: #36.
+
+Changes one thing of `decisions/f002-exercise-library.md`: the labels'
+meanings in `src/lib/exercises/labels.ts` are Finnish, not English.
+
+## Context
+
+A library filled by hand, one form at a time, is slow to start. The parent
+can ask an AI tool for exercises, but its answer has to meet the same rules
+as an exercise typed into the form, and the labels have to mean the same
+for the tool as for the parent and, later, for the app's own AI (Feature 009).
+
+## Decision
+
+- **One JSON list**, read from a chosen file or from pasted text, exactly one
+  of the two, at most 500 000 bytes and 100 exercises. Field names are
+  Finnish without diacritics, labels are their Finnish names.
+- **Every exercise read into Feature 002's form values and through
+  `readExercise`**, so the import has no copy of the library's rules. Its own
+  checks are only the format's: fields, types, exactly one amount, labels by
+  name, and names used twice.
+- **All or nothing**: every failing exercise is listed with every reason, and
+  the import is saved only when none fail, in one transaction.
+- **Whole numbers written in digits only**, read from the number's source
+  text, so `2.0` and `1e1` are refused as the form refuses them.
+- **A field not in the format is refused**, and so is `null` where the format
+  allows only leaving a field out.
+- **A name in the library, or earlier in the import, is refused before the
+  save**, compared by its lowercase; the unique index still decides a name
+  saved meanwhile, which refuses the whole import.
+- **A prompt for an AI tool**, built from the label list, on the page with a
+  copy button.
+- **The labels' meanings in Finnish**, in the one list, since the prompt
+  shows them to the parent.
+- **The size checked in the browser too**, of the file or the text, before it is sent.
+
+## Why
+
+| Decision | Why |
+|---|---|
+| JSON, not CSV | AI tools write it reliably, and a list of labels is a list, not a separated cell |
+| A file or pasted text | An AI tool answers in text; saving it as a file first is awkward on a phone |
+| Through `readExercise`, not a second set of rules | One copy of each rule, so the form and the import cannot drift; each refusal is the form's text |
+| All or nothing | A half-imported file leaves the parent working out which exercises are in; fixing the file and importing it again is one step |
+| Whole numbers by source text | `JSON.parse` turns `2.0` into `2`; only the reviver's source text, which Node 24 gives, tells them apart |
+| An unknown field refused | A typo in an optional field, such as `välineet`, would otherwise drop the equipment without a word |
+| `null` refused where a field may only be left out | `null` is a value the tool chose to write; reading it as the default would hide a misunderstanding of the format |
+| Names compared by JavaScript's lowercase before the save | It folds as the index's ICU `lower` does for the letters a name uses; where the two could differ, the index refuses the whole import with its own message, and nothing is half saved |
+| Labels matched ignoring case and spaces | Labels are unique by name in any case, so this reads `jalkatyö` as meant and never as another label |
+| An empty file counts as none chosen | A file field with nothing chosen still sends an empty file |
+| Size checked in the browser too, file and text | A body over Next's 1 MB is refused before the action runs, and the parent would see the error page rather than the size refusal |
+| The labels' meanings in Finnish | The prompt shows them to the parent, and what a user sees is Finnish; one list keeps the import, the parent and Feature 009's AI labelling by the same words |
+| A prompt built from the list | It always names exactly the labels the import accepts |
+| `exercises/store.ts` still excluded from unit coverage | As `decisions/f002-exercise-library.md`; `importExercises` is a query, and `tests/integration/exercises.test.ts` runs it |
+
+## Consequences
+
+- **A label renamed in Finnish breaks older files** that use the old name;
+  they are refused by name, and nothing is saved.
+- **The prompt's wording may change** after use, without changing the format.
+- **An import never changes an exercise** already in the library.

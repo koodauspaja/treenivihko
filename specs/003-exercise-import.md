@@ -58,7 +58,8 @@ these fields, and no others:
 
 - Each value then meets Feature 002's rule for its field: the same trimming,
   lengths, ranges and steps.
-- A whole number is a JSON number with no fraction. `"10"`, a text, is not one.
+- A whole number is a JSON number written in digits only, as the form takes one:
+  `2.0` and `1e1` are not whole numbers, and `"10"`, a text, is not a number.
 - A label is its Finnish name, as in Feature 002's list. It matches ignoring
   case and the spaces around it, so `jalkatyö` is `Jalkatyö`. A name listed
   twice counts once.
@@ -130,7 +131,7 @@ beside `Uusi harjoite`, to the import page.
 | After copying | `Kopioitu.` |
 | When copying fails | `Kopiointi ei onnistunut. Valitse teksti ja kopioi se itse.` |
 | The form's heading | `Tuonti` |
-| The file's field | `Tiedosto (.json)` |
+| The file's field, a button | `Tiedosto (.json)`, then the chosen file's name, or `Ei valittua tiedostoa.` |
 | The text's field | `Tai liitä teksti` |
 | Button | `Tuo` |
 | After an import | `Tuotu ‹n› harjoitetta.`, or `Tuotu 1 harjoite.`, and the form empty again |
@@ -171,7 +172,7 @@ exactly the labels the import accepts.
 
 | Case | Text |
 |---|---|
-| Neither a file nor text | `Valitse tiedosto tai liitä teksti.` |
+| Neither a file nor text; an empty file counts as none, as a browser sends one for an empty field | `Valitse tiedosto tai liitä teksti.` |
 | Both a file and text | `Valitse tiedosto tai liitä teksti, ei molempia.` |
 | Over 500 KB | `Tuonti on liian suuri: enintään 500 kt.` |
 | Not UTF-8 text | `Tiedoston on oltava UTF-8-tekstiä.` |
@@ -234,7 +235,7 @@ reaches the child.
 | The AI tool's answer wrapped in ```` ```json ```` fences, or with text around it | `Tämä ei ole JSON-muotoa.` |
 | A label name with other case or spaces around it | Accepted, as its name on the list |
 | An exercise using `Tikkaat` as a skill | `Tuntematon taito: Tikkaat.` |
-| `"taso": 2.0`, `"kertaa": "10"` | Feature 002's refusal for that field |
+| `"taso": 2.0`, `"kertaa": 1e1`, `"kertaa": "10"` | Feature 002's refusal for that field |
 | The unlock ends while the page is open | The next import goes to the lock page, as in Feature 001; what was pasted is lost |
 | The database unreachable | The existing error page |
 
@@ -258,6 +259,9 @@ Ids and counts only. Never an exercise's text, the file or the pasted text.
   added to the parent's own library only.
 - **Size**: the 500 KB limit is checked on the server before the text is
   parsed. It is under the 1 MB Next allows a server action's body by default.
+  The page also checks a chosen file's or pasted text's size before sending it, since a body
+  over 1 MB is refused before the action runs, which would show the error
+  page rather than the refusal.
 
 ## Acceptance criteria
 

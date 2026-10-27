@@ -55,6 +55,10 @@ A duration is shown as `5 min`.
 Fixed in code. Each has a meaning, which the import and the AI are given too,
 so that everyone labels an exercise the same way.
 
+Feature 003 gives the meanings in Finnish, as its import's prompt shows them
+to the parent (`specs/003-exercise-import.md`); the code holds those. The
+English below is what they translate.
+
 | Group | Label | Apply it when |
 |---|---|---|
 | **Taito** | Kuljetus | The ball moves with the child: running, turning, speeding up with it close |

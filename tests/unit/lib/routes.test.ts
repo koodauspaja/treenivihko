@@ -4,6 +4,7 @@ import { ROUTES, routeRedirects, routeRewrites } from "@/lib/routes";
 import {
   EXERCISES_PATH,
   exercisePath,
+  IMPORT_PATH,
   NEW_EXERCISE_PATH,
   NICKNAME_PATH,
   TRAINER_PATH,
@@ -21,13 +22,18 @@ describe("the route table", () => {
     expect([TRAINER_PATH, UNLOCK_PATH]).toEqual(["/valmentaja", "/valmentaja/avaa"]);
   });
 
-  it("serves the nickname and the library, a new exercise before an exercise's id", () => {
+  it("serves the nickname and the library, a new exercise and the import before an exercise's id", () => {
     const addresses = ROUTES.map(([address]) => address);
     expect(ROUTES).toContainEqual([NICKNAME_PATH, "/trainer/nickname"]);
     expect(ROUTES).toContainEqual([EXERCISES_PATH, "/trainer/exercises"]);
     expect(ROUTES).toContainEqual([NEW_EXERCISE_PATH, "/trainer/exercises/new"]);
     expect(ROUTES).toContainEqual(["/valmentaja/harjoitteet/:id", "/trainer/exercises/:id"]);
     expect(addresses.indexOf(NEW_EXERCISE_PATH)).toBeLessThan(
+      addresses.indexOf("/valmentaja/harjoitteet/:id")
+    );
+    expect(ROUTES).toContainEqual([IMPORT_PATH, "/trainer/exercises/import"]);
+    expect(IMPORT_PATH).toBe("/valmentaja/harjoitteet/tuonti");
+    expect(addresses.indexOf(IMPORT_PATH)).toBeLessThan(
       addresses.indexOf("/valmentaja/harjoitteet/:id")
     );
     expect(exercisePath("a b/c")).toBe("/valmentaja/harjoitteet/a%20b%2Fc");
