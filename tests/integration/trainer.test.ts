@@ -148,6 +148,13 @@ describe("the password", () => {
     expect(lines.at(-1)).toBe("trainer unlocked: user u1, session s1");
   });
 
+  it("never moves an open unlock's end back with a try that lands out of order", async () => {
+    await setTrainerPassword("u1", PASSWORD, report);
+    await attempt(PASSWORD, minutes(10));
+    expect(await attempt(PASSWORD, minutes(5))).toEqual({ kind: "unlocked" });
+    expect((await unlockRow("s1"))?.expiresAt).toEqual(minutes(25));
+  });
+
   it("counts wrong passwords, and a right one sets the count back to 0", async () => {
     await setTrainerPassword("u1", PASSWORD, report);
     for (const expected of [1, 2, 3]) {

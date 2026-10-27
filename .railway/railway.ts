@@ -7,6 +7,7 @@
  * decisions/023-database.md
  * decisions/026-railway.md
  * decisions/029-sign-in.md
+ * decisions/f001-trainer-side.md
  */
 import { defineRailway, github, postgres, preserve, project, service } from "railway/iac";
 
@@ -23,7 +24,7 @@ export const NPM_INSTALL = "npx --yes npm@12.2.1 ci --ignore-scripts";
 
 /**
  * What redeploys the site: application code, the scripts run on the service
- * (migrations, and the trainer password, decisions/f001-trainer-side.md), and
+ * (migrations, and the trainer password), and
  * the build's configuration, nothing else.
  */
 export const WATCH_PATTERNS = [
