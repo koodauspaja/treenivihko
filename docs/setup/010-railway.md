@@ -84,6 +84,29 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
 
 ## Later
 
+- **A dump before a risky migration.** Railway's Postgres has no backups yet
+  (`decisions/031-database-dump.md`), so before a migration that drops,
+  renames or rewrites anything, dump it to your machine. The file holds
+  personal data: keep it outside the repository and delete it when it is no
+  longer needed.
+
+  ```bash
+  railway ssh -s Postgres -- pg_dump -U postgres --format=custom railway \
+    > ~/treenivihko-$(date +%Y-%m-%d).dump
+  ```
+
+  To check it, or to look at it, restore it into the local development
+  database, which it replaces, and count the rows:
+
+  ```bash
+  docker compose exec -T postgres pg_restore -U postgres --no-owner \
+    --clean --if-exists -d treenivihko < ~/treenivihko-<date>.dump
+  docker compose exec -T postgres psql -U postgres -d treenivihko \
+    -c 'select count(*) from "user"'
+  ```
+
+  The same count on Railway: `railway ssh -s Postgres -- psql -U postgres
+  -d railway -c 'select count(*) from "user"'`.
 - **A change to `.railway/railway.ts` takes effect only when applied.**
   Merging it does nothing. After the merge: `railway config plan`, read it,
   then `railway config apply`. An apply removes whatever the file no longer

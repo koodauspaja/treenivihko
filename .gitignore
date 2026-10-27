@@ -26,3 +26,6 @@ next-env.d.ts
 playwright-report/
 test-results/
 blob-report/
+
+# A database dump holds personal data (docs/setup/010-railway.md).
+*.dump
