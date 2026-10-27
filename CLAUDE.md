@@ -92,10 +92,11 @@ One path for features, chores and bugs. The differences:
 | Starts from | a spec, `/write-spec` | an issue | an issue |
 | Go is said on | the spec | the issue | the issue |
 | Decision record | always | when it changes something meaningful | when it changes something meaningful |
-| Branch | `feature/NNN-short-name` | `chore/NNN-short-name` | `bug/NNN-short-name` |
+| Branch | `feature/007-short-name` | `chore/42-short-name` | `bug/42-short-name` |
 
 1. **Open the issue** from its template, per `/start-work`. A feature's issue
-   opens when its spec is started, so that the spec can take its number.
+   has its feature number from the start, and can wait in `Backlog` until its
+   spec is written.
 2. **Agree the work.** A feature's spec is written with `/write-spec`; every
    open question is answered, and a human says **go**. A feature then copies
    the spec's acceptance criteria to its issue: the issue is what the human
@@ -117,9 +118,19 @@ a feature with a spec.
 
 ## Numbering
 
-One number per piece of work: its issue's. The spec, the decision record and
-the branch of issue 42 are `specs/042-…`, `decisions/042-…` and `…/42-…`, so
-any one of them leads to the others.
+One number per piece of work, so any one of its files leads to the others
+(`decisions/042-feature-numbering.md`):
+
+| Work | Its number | Issue title | Spec | Decision record | Branch |
+|---|---|---|---|---|---|
+| A feature | its own, from 001 | `Feature 007: <what>` | `specs/007-…` | `decisions/f007-…` | `feature/007-…` |
+| A chore or a bug, issue 42 | its issue's | a plain imperative sentence | — | `decisions/042-…` | `chore/42-…`, `bug/42-…` |
+| A setup step | its `docs/setup/` document's | `Setup 010: <what>` | — | as a chore | as a chore |
+
+A new feature's number is one more than the highest `Feature NNN` title among
+all issues, open or closed. The `f` keeps feature records apart from those
+numbered by issue. Whatever the number, a pull request links its issue with
+`Closes #N`.
 
 ## Reference
 

@@ -1,12 +1,13 @@
 Closes #<!-- issue number. A closing keyword, never a bare #N: only a keyword links the two -->
 
 ## Spec
-<!-- A feature: `specs/NNN-short-name.md`. A bug: the spec it breaks, if any.
+<!-- A feature: `specs/NNN-short-name.md`, NNN its feature number. A bug: the spec it breaks, if any.
      Otherwise: `Not applicable - chore` or `Not applicable - bug`. -->
 
 ## Decision record
-<!-- `decisions/NNN-short-name.md`. A feature always has one; a chore or a bug
-     when it changes something meaningful. Otherwise: `Not applicable`. -->
+<!-- A feature always has one, `decisions/fNNN-short-name.md`; a chore or a bug
+     when it changes something meaningful, `decisions/NNN-short-name.md` with its
+     issue's number. Otherwise: `Not applicable`. -->
 
 ## Summary
 <!-- What changed and why, in one or two sentences. -->

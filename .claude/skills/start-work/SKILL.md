@@ -24,11 +24,19 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
    | Kind | Title | Example |
    |---|---|---|
    | A setup step | `Setup NNN: <what>`, NNN its `docs/setup/` number | Setup 009: database |
-   | A feature | `Feature NNN: <what>`, NNN its spec's number, the issue's own | Feature 031: weekly program |
+   | A feature | `Feature NNN: <what>`, NNN its feature number, not its issue's | Feature 007: weekly program |
    | A chore or a bug | a plain imperative sentence, no number | Keep dependencies current with Renovate |
 
-   A feature's number is known only once the issue exists: create it with a
-   working title, then rename it with its number.
+   A feature's number is one more than the highest `Feature NNN` title among
+   all issues, open or closed (`CLAUDE.md`, *Numbering*). Read it, and check
+   that the count of issues read is below the limit, so the answer is not one
+   page of them:
+
+   ```bash
+   gh issue list --state all --limit 1000 --json title --jq '
+     [.[].title | capture("^Feature (?<n>[0-9]{3}): ").n | tonumber] as $f
+     | "next=\(($f | max // 0) + 1) features=\($f | length) issues_read=\(length)"'
+   ```
 2. Create it with its kind label and no assignee:
 
    ```bash
@@ -73,8 +81,8 @@ permission to reshape the work, and silence are not a start.
    message, the sentence that says to start.
 2. **Move it to `In Progress`.**
 3. **Create the branch** from an up-to-date `main`:
-   `feature/NNN-short-name`, `chore/NNN-short-name` or `bug/NNN-short-name`, with
-   NNN the issue number.
+   `feature/NNN-short-name`, with NNN the feature number from its title, or
+   `chore/N-short-name` or `bug/N-short-name`, with N the issue number.
 
 If a move fails, stop there: no branch until the card is in `In Progress`, so
 the board never shows less than what has started.
