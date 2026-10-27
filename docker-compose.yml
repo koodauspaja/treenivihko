@@ -17,8 +17,10 @@ services:
       - postgres-data:/var/lib/postgresql
       # Runs once, when the volume is first created.
       - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    # Over TCP, which the first start's setup server does not listen on, and
+    # against the test database, so healthy means the init script has run.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d treenivihko"]
+      test: ["CMD-SHELL", "psql -h 127.0.0.1 -U postgres -d treenivihko_test -tAc 'select 1'"]
       interval: 2s
       timeout: 3s
       retries: 15
