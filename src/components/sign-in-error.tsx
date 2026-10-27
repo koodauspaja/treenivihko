@@ -1,6 +1,6 @@
 import { signInErrorMessage } from "@/lib/auth/messages";
 
-/** Why the last sign-in failed, from the address's `error`, or nothing. */
+/** Why the last sign-in failed, from the address's `error`, or nothing. decisions/029-sign-in.md */
 export async function SignInError({
   searchParams,
 }: {

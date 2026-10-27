@@ -59,7 +59,8 @@ export function authOptions(env: Environment = process.env) {
       },
     },
     user: {
-      // Read on every call, so a change to the variable needs no restart.
+      // Read at each sign-in rather than at load, so a test can set it. On Railway a
+      // changed value reaches the process only through a redeploy.
       validateUserInfo: ({ user: identity }: { user: { email?: unknown } }) =>
         signInRefusal(identity.email, process.env.AUTH_ALLOWED_EMAILS),
     },

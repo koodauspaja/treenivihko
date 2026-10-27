@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const social = vi.fn();
@@ -47,10 +47,20 @@ describe("SignInButton", () => {
   });
 
   it("stays disabled on success, while the browser goes to Google", async () => {
-    social.mockResolvedValue({ data: { url: "https://accounts.google.com/" } });
+    let answered = () => {};
+    const handled = new Promise<void>((resolve) => {
+      answered = resolve;
+    });
+    social.mockImplementation(async () => {
+      queueMicrotask(answered);
+      return { data: { url: "https://accounts.google.com/" } };
+    });
     render(<SignInButton />);
     fireEvent.click(button());
-    await waitFor(() => expect(social).toHaveBeenCalledOnce());
+    // The answer, and the component's handling of it, have both run before the check.
+    await act(async () => {
+      await handled;
+    });
     expect((button() as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByRole("alert")).toBeNull();
   });

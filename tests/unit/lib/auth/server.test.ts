@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { authOptions, getAuth, requireVariables, SESSION_DAYS } from "@/lib/auth/server";
 
 const ENV = {
@@ -7,6 +7,11 @@ const ENV = {
   GOOGLE_CLIENT_ID: "unit-test-client-id",
   GOOGLE_CLIENT_SECRET: "unit-test-client-secret",
 };
+
+// The adapter needs a database address, though nothing connects; never the one in .env.
+beforeEach(() => {
+  vi.stubEnv("DATABASE_URL", "postgresql://user:secret@127.0.0.1:1/none");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -75,9 +80,11 @@ describe("authOptions", () => {
 });
 
 describe("getAuth", () => {
-  it("makes the server once, from the environment", () => {
+  it("makes a Better Auth server once, from the environment", () => {
     for (const [name, value] of Object.entries(ENV)) vi.stubEnv(name, value);
-    vi.stubEnv("DATABASE_URL", "postgresql://user:secret@127.0.0.1:1/none");
-    expect(getAuth()).toBe(getAuth());
+    const first = getAuth();
+    expect(typeof first.api.getSession).toBe("function");
+    expect(typeof first.handler).toBe("function");
+    expect(getAuth()).toBe(first);
   });
 });

@@ -32,10 +32,12 @@ Then:
 - **Branding:** no logo, which would start Google's verification, and no app
   domain or authorised domain, which only publishing needs.
 - **Audience:** keep **Testing**, and do not publish: publishing needs a
-  privacy policy page and a domain Google can verify. Add yourself as a test
-  user if you like; **it restricts nobody**. For an app asking only for name
-  and email, Google lets any account sign in while in Testing. The app's own
-  allowlist is the gate.
+  privacy policy page and a domain Google can verify. **Add each allowed
+  address as a test user**, though today the list restricts nobody: for an app
+  asking only for name and email, Google lets any account through while in
+  Testing (measured on the earlier project, with accounts not on the list).
+  The app's own allowlist is the gate; the test users keep the allowed
+  addresses working if Google starts enforcing its list.
 - **Data Access:** add no scope. `openid`, `email` and `profile` come by
   themselves; anything more needs verification.
 
@@ -98,8 +100,10 @@ Treenivihkoon." and leaves no user row. Then the same on Railway.
 ## Later
 
 - **Another adult:** add their address to `AUTH_ALLOWED_EMAILS`,
-  comma-separated, on Railway and in `.env`. No redeploy is needed for the
-  list: it is read at every sign-in.
+  comma-separated, on Railway and in `.env`, and as a Google test user (Step
+  2). The running app sees a changed variable only after a redeploy: Railway
+  redeploys on a change by itself, except after `--skip-deploys`, when
+  `railway redeploy -s treenivihko` does it.
 - **Rotating the client secret:** a new secret in Google Cloud, then Step 5's
   `GOOGLE_CLIENT_SECRET` line again, and `.env`.
 - **Signing a device out** before the trainer side has its button: delete the
