@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  clientOptions,
   closeDatabase,
   getDatabase,
   MIGRATION_STATEMENT_TIMEOUT_MS,
   openMigrationDatabase,
   STATEMENT_TIMEOUT_MS,
 } from "@/lib/db/index";
+
+describe("clientOptions", () => {
+  it("closes a connection idle for twenty seconds, so the server can sleep", () => {
+    expect(clientOptions(STATEMENT_TIMEOUT_MS).idle_timeout).toBe(20);
+  });
+
+  it("sets the statement timeout it is given", () => {
+    expect(clientOptions(1234).connection).toEqual({ statement_timeout: 1234 });
+  });
+});
 
 describe("getDatabase", () => {
   const saved = process.env.DATABASE_URL;
