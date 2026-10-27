@@ -17,8 +17,7 @@ const renovate = JSON.parse(readFileSync("renovate.json", "utf8")) as {
 };
 const workflow = readFileSync(".github/workflows/ci.yml", "utf8");
 
-/** Renovate writes a file pattern as `/regex/`. */
-const fromSlashes = (pattern: string) => new RegExp(pattern.slice(1, -1));
+const regexFromSlashedPattern = (pattern: string) => new RegExp(pattern.slice(1, -1));
 
 describe("Renovate's manager for the npm version CI installs", () => {
   const [manager] = renovate.customManagers;
@@ -26,7 +25,7 @@ describe("Renovate's manager for the npm version CI installs", () => {
   it("applies to the CI workflow", () => {
     expect(
       manager?.managerFilePatterns
-        .map(fromSlashes)
+        .map(regexFromSlashedPattern)
         .some((re) => re.test(".github/workflows/ci.yml"))
     ).toBe(true);
   });
@@ -60,7 +59,29 @@ describe("Renovate's guards", () => {
   });
 
   it("asks before moving .nvmrc to a new Node major, which the @types/node hold must follow", () => {
-    const rule = renovate.packageRules.find((r) => r.matchManagers?.includes("nvm"));
+    const rule = renovate.packageRules.find(
+      (r) => r.matchManagers?.includes("nvm") && r.dependencyDashboardApproval
+    );
     expect(rule).toMatchObject({ matchUpdateTypes: ["major"], dependencyDashboardApproval: true });
+  });
+
+  it.each([
+    ["24.16.0", true],
+    ["26.0.0", true],
+    ["28.1.2", true],
+    ["25.0.0", false],
+    ["27.3.0", false],
+  ])("proposes Node %s for .nvmrc: %s", (version, allowed) => {
+    const rule = renovate.packageRules.find(
+      (r) => r.matchManagers?.includes("nvm") && r.allowedVersions
+    );
+    expect(regexFromSlashedPattern(rule?.allowedVersions ?? "/(?!)/").test(version)).toBe(allowed);
+  });
+
+  it("asks before updating the one action that runs beside SONAR_TOKEN", () => {
+    const rule = renovate.packageRules.find((r) =>
+      r.matchPackageNames?.includes("SonarSource/sonarqube-scan-action")
+    );
+    expect(rule?.dependencyDashboardApproval).toBe(true);
   });
 });

@@ -50,6 +50,20 @@
       "matchManagers": ["nvm"],
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": [
+        "Only even-numbered Node lines are proposed for .nvmrc: engines refuses 25, as jsdom does."
+      ],
+      "matchManagers": ["nvm"],
+      "allowedVersions": "/^\\d*[02468]\\./"
+    },
+    {
+      "description": [
+        "The SonarCloud scan action is the one third-party code that runs beside SONAR_TOKEN, so its updates wait for approval in the Dependency Dashboard, after its release has been looked at."
+      ],
+      "matchPackageNames": ["SonarSource/sonarqube-scan-action"],
+      "dependencyDashboardApproval": true
     }
   ]
 }
