@@ -1,3 +1,9 @@
+/**
+ * Signs a parent in for an end-to-end test the way the server checks it: a
+ * real Better Auth session in the test database, its cookie in the browser.
+ * decisions/f001-trainer-side.md
+ */
+
 import type { Page, TestInfo } from "@playwright/test";
 import { betterAuth } from "better-auth";
 import { eq } from "drizzle-orm";

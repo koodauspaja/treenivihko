@@ -25,6 +25,13 @@ describe("passwordRefusal", () => {
     expect(passwordRefusal(password, password)).toBe(expected);
   });
 
+  it("counts an emoji as one character", () => {
+    expect(passwordRefusal("😀".repeat(4), "😀".repeat(4))).toBe(
+      "a password is 8 to 128 characters"
+    );
+    expect(passwordRefusal("😀".repeat(8), "😀".repeat(8))).toBeNull();
+  });
+
   it("refuses two passwords that differ", () => {
     expect(passwordRefusal("long enough", "long enougH")).toBe("the two passwords differ");
   });

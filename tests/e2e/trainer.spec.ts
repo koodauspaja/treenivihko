@@ -98,9 +98,10 @@ test("an open trainer page goes to the child's side when its 15 minutes run out"
   await page.goto("/valmentaja/avaa");
   await unlock(page);
   await expect(page).toHaveURL(/\/valmentaja$/);
-  await page.clock.fastForward("14:59");
+  // Margins either side: the server's 15 minutes started a moment after the browser's clock did.
+  await page.clock.fastForward("14:30");
   await expect(page).toHaveURL(/\/valmentaja$/);
-  await page.clock.fastForward("00:02");
+  await page.clock.fastForward("01:00");
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { level: 2, name: "Hei!" })).toBeVisible();
 });

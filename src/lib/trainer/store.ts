@@ -82,17 +82,23 @@ export function saveNickname(userId: string, nickname: string, report: Report = 
 export type PasswordState = { kind: "none" } | { kind: "locked"; until: Date } | { kind: "ready" };
 
 /** Whether the parent has a password, and whether it is locked out at `now`. */
-export async function passwordState(userId: string, now = new Date()): Promise<PasswordState> {
-  const [row] = await getDatabase()
-    .select({ lockedUntil: trainerPassword.lockedUntil })
-    .from(trainerPassword)
-    .where(eq(trainerPassword.userId, userId));
-  if (!row) {
-    return { kind: "none" };
-  }
-  return isLockedOut(row.lockedUntil, now)
-    ? { kind: "locked", until: row.lockedUntil }
-    : { kind: "ready" };
+export function passwordState(
+  userId: string,
+  now = new Date(),
+  report: Report = toStderr
+): Promise<PasswordState> {
+  return logged("trainer password read", `user ${userId}`, report, async () => {
+    const [row] = await getDatabase()
+      .select({ lockedUntil: trainerPassword.lockedUntil })
+      .from(trainerPassword)
+      .where(eq(trainerPassword.userId, userId));
+    if (!row) {
+      return { kind: "none" } as const;
+    }
+    return isLockedOut(row.lockedUntil, now)
+      ? ({ kind: "locked", until: row.lockedUntil } as const)
+      : ({ kind: "ready" } as const);
+  });
 }
 
 export type UnlockResult = PasswordState | { kind: "wrong" } | { kind: "unlocked" };
@@ -183,16 +189,25 @@ export function tryPassword(
 }
 
 /**
- * Moves this browser's unlock 15 minutes on from `now`, and returns its new
- * end; null when there is none or it has ended, in one statement.
+ * Moves this browser's unlock 15 minutes on from `now`, never back, and
+ * returns its end; null when there is none or it has ended, in one statement.
  */
-export async function touchUnlock(sessionId: string, now = new Date()): Promise<Date | null> {
-  const [touched] = await getDatabase()
-    .update(trainerUnlock)
-    .set({ expiresAt: unlockExpiry(now) })
-    .where(and(eq(trainerUnlock.sessionId, sessionId), gt(trainerUnlock.expiresAt, now)))
-    .returning({ expiresAt: trainerUnlock.expiresAt });
-  return touched?.expiresAt ?? null;
+export function touchUnlock(
+  sessionId: string,
+  now = new Date(),
+  report: Report = toStderr
+): Promise<Date | null> {
+  return logged("trainer unlock touched", `session ${sessionId}`, report, async () => {
+    const [touched] = await getDatabase()
+      .update(trainerUnlock)
+      // Overlapping requests may land out of order; the later end wins.
+      .set({
+        expiresAt: sql`greatest(${trainerUnlock.expiresAt}, ${unlockExpiry(now).toISOString()}::timestamptz)`,
+      })
+      .where(and(eq(trainerUnlock.sessionId, sessionId), gt(trainerUnlock.expiresAt, now)))
+      .returning({ expiresAt: trainerUnlock.expiresAt });
+    return touched?.expiresAt ?? null;
+  });
 }
 
 /** Ends this browser's unlock. */
