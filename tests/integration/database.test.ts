@@ -1,9 +1,9 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, describe, expect, it } from "vitest";
-import { closeDatabase, getDatabase } from "@/db/index";
-import { runMigrations } from "@/db/migrations";
+import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
+import { runMigrations, sqlFilesIn } from "@/lib/db/migrations";
 
 afterAll(async () => {
   await closeDatabase();
@@ -29,11 +29,22 @@ describe("the test database", () => {
     expect(row?.statement_timeout).toBe("10s");
   });
 
-  it("takes the repository's migrations", async () => {
-    const run = await runMigrations({
-      exists: existsSync,
-      migrate: (folder) => migrate(getDatabase(), { migrationsFolder: folder }),
-    });
-    expect(run).toBe(existsSync("drizzle/migrations/meta/_journal.json") ? "applied" : "none");
+  it("takes the repository's migrations, over a client without the statement timeout", async () => {
+    const migration = openMigrationDatabase();
+    try {
+      const [timeout] = await migration.database.execute<{ statement_timeout: string }>(
+        sql`show statement_timeout`
+      );
+      expect(timeout?.statement_timeout).toBe("0");
+      const run = await runMigrations({
+        exists: existsSync,
+        sqlFiles: () =>
+          sqlFilesIn(existsSync("drizzle/migrations") ? readdirSync("drizzle/migrations") : []),
+        migrate: (folder) => migrate(migration.database, { migrationsFolder: folder }),
+      });
+      expect(run).toBe(existsSync("drizzle/migrations/meta/_journal.json") ? "applied" : "none");
+    } finally {
+      await migration.close();
+    }
   });
 });

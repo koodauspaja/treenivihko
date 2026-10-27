@@ -8,20 +8,26 @@ table, so that each table arrives with the spec that needs it.
 
 ## Decision
 
-- **Postgres 18 in Docker locally, on port 5433**, so another project's
-  Postgres can keep 5432. Its password comes from `.env`; Compose refuses to
+- **Postgres 18 in Docker locally, on port 5433 of `127.0.0.1`**, so another
+  project's Postgres can keep 5432 and nothing on the network can reach it. Its password comes from `.env`; Compose refuses to
   start without it.
 - **Two databases**: `treenivihko` for development and `treenivihko_test` for
   the integration tests, made when the volume is first created.
-- **Drizzle with postgres.js.** The client is made on first use, so importing
-  the database needs no `DATABASE_URL`, and every statement has a 10-second
-  timeout, so a stalled query fails instead of holding a request.
+- **Drizzle with postgres.js, under `src/lib/db`**, the layout decision 012
+  set. The client is made on first use, so importing the database needs no
+  `DATABASE_URL`, and every statement has a 10-second timeout, so a stalled
+  query fails instead of holding a request. Migrations get a client of their
+  own without that timeout, since one can legitimately run longer.
 - **Named migrations only.** `db:generate` refuses a migration without a
   `<verb>_<what>` name, and a unit test fails on any file or journal entry
-  without one. An applied migration is never edited.
+  without one. An applied migration is never edited: a database runs each
+  migration once, so an edit would never reach the databases it already ran
+  on.
 - **No migrations yet is a normal state.** Drizzle's migrator fails without a
-  journal, so `runMigrations` answers "none" until the first migration exists.
-- **The integration tests run only against a database named `*_test`.** A
+  journal, so `runMigrations` answers "none" until the first migration exists;
+  SQL files without a journal are an error instead.
+- **The integration tests run only against a database on this machine named
+  `*_test`.** A
   guard refuses the whole run, before any test file loads, and says why. It
   reads `TEST_DATABASE_URL`, which the project gives its tests as
   `DATABASE_URL`, because a project's `env` does not reach `globalSetup`; and
@@ -43,6 +49,9 @@ table, so that each table arrives with the spec that needs it.
   and a test behind it stop that at the first one.
 
 ## Consequences
+
+- Migrations are applied from one place at a time. The Railway step decides
+  where they run on deploy, and must keep it to one.
 
 - A clone needs Docker for `npm run verify`, since it runs the integration
   tests.
