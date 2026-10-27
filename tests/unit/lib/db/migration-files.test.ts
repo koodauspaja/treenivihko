@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { MIGRATION_JOURNAL, MIGRATIONS_FOLDER } from "@/db/migrations";
-import { MIGRATION_TAG } from "../../../scripts/migration-name.ts";
+import { MIGRATION_JOURNAL, MIGRATIONS_FOLDER } from "@/lib/db/migrations";
+import { MIGRATION_TAG } from "../../../../scripts/migration-name.ts";
 
 describe("the migrations in the repository", () => {
   it("are each named <verb>_<what>, file and journal entry alike", () => {

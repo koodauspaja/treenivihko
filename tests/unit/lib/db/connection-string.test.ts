@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { requireDatabaseUrl } from "@/db/connection-string";
+import { requireDatabaseUrl } from "@/lib/db/connection-string";
 
 describe("requireDatabaseUrl", () => {
   it("gives the connection string, trimmed", () => {

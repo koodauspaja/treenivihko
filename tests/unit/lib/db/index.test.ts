@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { closeDatabase, getDatabase, STATEMENT_TIMEOUT_MS } from "@/db/index";
+import {
+  closeDatabase,
+  getDatabase,
+  MIGRATION_STATEMENT_TIMEOUT_MS,
+  openMigrationDatabase,
+  STATEMENT_TIMEOUT_MS,
+} from "@/lib/db/index";
 
 describe("getDatabase", () => {
   const saved = process.env.DATABASE_URL;
@@ -32,5 +38,24 @@ describe("getDatabase", () => {
 
   it("cancels a statement after ten seconds", () => {
     expect(STATEMENT_TIMEOUT_MS).toBe(10_000);
+  });
+});
+
+describe("openMigrationDatabase", () => {
+  const saved = process.env.DATABASE_URL;
+  afterEach(() => {
+    process.env.DATABASE_URL = saved;
+  });
+
+  it("makes a client of its own, apart from the application's, without connecting", async () => {
+    process.env.DATABASE_URL = "postgresql://user:secret@127.0.0.1:1/none";
+    const migration = openMigrationDatabase();
+    expect(migration.database).not.toBe(getDatabase());
+    await migration.close();
+    await closeDatabase();
+  });
+
+  it("does not cancel a migration's statements", () => {
+    expect(MIGRATION_STATEMENT_TIMEOUT_MS).toBe(0);
   });
 });
