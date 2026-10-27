@@ -36,9 +36,12 @@ export type Exercise = {
 };
 
 // A private member, unlike a symbol key, is not carried by a spread, so a
-// changed copy of a checked exercise is no longer one.
-declare class Checked {
-  private readonly checked: true;
+// changed copy of a checked exercise is no longer one. In a namespace, as
+// Playwright's Babel refuses a declared class's fields.
+declare namespace Brand {
+  class Checked {
+    private readonly checked: true;
+  }
 }
 
 /**
@@ -46,7 +49,7 @@ declare class Checked {
  * frozen, and the store writes nothing else, so no write can go around the
  * rules or change what they passed.
  */
-export type CheckedExercise = Readonly<Exercise> & Checked;
+export type CheckedExercise = Readonly<Exercise> & Brand.Checked;
 
 export type ExerciseField = keyof typeof REFUSAL;
 

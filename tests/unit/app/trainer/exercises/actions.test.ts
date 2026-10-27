@@ -83,6 +83,19 @@ describe("saveExercise", () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
+  it("shows a saved exercise as it was saved, not as it was typed", async () => {
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    const state = await saveExercise(
+      START,
+      form({ ...VALID, id: "e1", name: "  Tikkaat ", instructions: "Tee\r\nnäin. ", count: " 10" })
+    );
+    expect(state.values).toMatchObject({
+      name: "Tikkaat",
+      instructions: "Tee\nnäin.",
+      count: "10",
+    });
+  });
+
   it("refuses a wrong field, keeps what was typed, and saves nothing", async () => {
     const state = await saveExercise(START, form({ ...VALID, name: "" }));
     expect(state).toMatchObject({

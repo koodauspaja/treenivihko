@@ -13,7 +13,7 @@ import {
 } from "@/lib/exercises/messages";
 import {
   byFinnishName,
-  FILTERED_PARAM,
+  EXERCISE_FILTER,
   type Filters,
   filtersFrom,
   formatAmount,
@@ -26,15 +26,10 @@ import { EXERCISES_PATH, exercisePath } from "@/lib/trainer/paths";
 
 type Query = Record<string, string | string[] | undefined>;
 
-const FILTER_PARAM: Record<LabelGroup, string> = {
-  skill: "taito",
-  place: "paikka",
-  equipment: "valineet",
-};
-
 function FilterGroup({ group, filters }: Readonly<{ group: LabelGroup; filters: Filters }>) {
-  const ticked =
-    group === "skill" ? filters.skills : group === "place" ? filters.places : filters.equipment;
+  const ticked = { skill: filters.skills, place: filters.places, equipment: filters.equipment }[
+    group
+  ];
   return (
     <fieldset className="flex flex-col gap-1">
       <legend className="font-semibold">
@@ -44,7 +39,7 @@ function FilterGroup({ group, filters }: Readonly<{ group: LabelGroup; filters: 
         <label key={label.key} className="flex items-center gap-2">
           <input
             type="checkbox"
-            name={FILTER_PARAM[group]}
+            name={EXERCISE_FILTER[group]}
             value={label.key}
             defaultChecked={ticked.includes(label.key)}
           />
@@ -68,7 +63,7 @@ export async function ExerciseLibrary({ query }: Readonly<{ query: Promise<Query
     <>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <form action={EXERCISES_PATH} method="get" className="mt-6 flex flex-col gap-4">
-        <input type="hidden" name={FILTERED_PARAM} value="1" />
+        <input type="hidden" name={EXERCISE_FILTER.sent} value="1" />
         <FilterGroup group="skill" filters={filters} />
         <FilterGroup group="place" filters={filters} />
         <FilterGroup group="equipment" filters={filters} />
