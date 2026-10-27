@@ -2,16 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const requireTrainer = vi.fn();
-const ensureChild = vi.fn();
-const lockTrainerSide = vi.fn();
 vi.mock("@/lib/trainer/access", () => ({ requireTrainer: () => requireTrainer() }));
-vi.mock("@/lib/trainer/store", () => ({
-  ensureChild: (...args: unknown[]) => ensureChild(...args),
-}));
-vi.mock("@/app/trainer/actions", () => ({ lockTrainerSide: () => lockTrainerSide() }));
-vi.mock("@/components/nickname-form", () => ({
-  NicknameForm: ({ nickname }: { nickname: string | null }) => <p>nickname {String(nickname)}</p>,
-}));
+vi.mock("@/app/trainer/actions", () => ({ lockTrainerSide: vi.fn() }));
 vi.mock("@/components/sign-out-button", () => ({ SignOutButton: () => <p>sign-out</p> }));
 vi.mock("@/components/trainer-timeout", () => ({
   TrainerTimeout: ({ expiresAt }: { expiresAt: string }) => <p>timeout {expiresAt}</p>,
@@ -26,7 +18,6 @@ beforeEach(() => {
     user: { id: "u1", name: "Test Parent", sessionId: "s1" },
     expiresAt: END,
   });
-  ensureChild.mockReset().mockResolvedValue({ id: "c1", nickname: "Testi" });
 });
 
 afterEach(() => {
@@ -34,11 +25,15 @@ afterEach(() => {
 });
 
 describe("TrainerPanel", () => {
-  it("shows the nickname, the lock and sign-out, and times out when the unlock ends", async () => {
+  it("is the menu: the library, the nickname, Lukitse ja palaa and sign-out", async () => {
     render(await TrainerPanel());
-    expect(ensureChild).toHaveBeenCalledWith("u1");
-    expect(screen.getByText("nickname Testi")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Lukitse" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Harjoitteet" }).getAttribute("href")).toBe(
+      "/valmentaja/harjoitteet"
+    );
+    expect(screen.getByRole("link", { name: "Lapsen nimi" }).getAttribute("href")).toBe(
+      "/valmentaja/nimi"
+    );
+    expect(screen.getByRole("button", { name: "Lukitse ja palaa" })).toBeDefined();
     expect(screen.getByText("sign-out")).toBeDefined();
     expect(screen.getByText(`timeout ${END.toISOString()}`)).toBeDefined();
   });
@@ -46,6 +41,5 @@ describe("TrainerPanel", () => {
   it("shows nothing without an unlock", async () => {
     requireTrainer.mockRejectedValue(new Error("redirect /valmentaja/avaa"));
     await expect(TrainerPanel()).rejects.toThrow("redirect /valmentaja/avaa");
-    expect(ensureChild).not.toHaveBeenCalled();
   });
 });

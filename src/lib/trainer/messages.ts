@@ -1,6 +1,8 @@
 /**
- * The Finnish the trainer side and the child's side show, as the spec gives it.
+ * The Finnish the trainer side and the child's side show, as the specs give it.
+ *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { minutesLeft } from "./rules";
@@ -22,7 +24,9 @@ export const NICKNAME_LABEL = "Lapsen nimi";
 export const SAVE_BUTTON = "Tallenna";
 export const SAVED = "Tallennettu.";
 export const NICKNAME_REFUSED = "Nimessä on oltava 1–20 merkkiä.";
-export const LOCK_BUTTON = "Lukitse";
+export const LOCK_BUTTON = "Lukitse ja palaa";
+export const EXERCISES_LINK = "Harjoitteet";
+export const NICKNAME_LINK = "Lapsen nimi";
 export const SIGN_OUT_BUTTON = "Kirjaudu ulos";
 
 /** The child's side's heading: by nickname once there is one. */

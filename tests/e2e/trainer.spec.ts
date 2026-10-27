@@ -58,7 +58,7 @@ test("a wrong password is refused, and the 5th locks it for 15 minutes", async (
   await expect(page).toHaveURL(/\/valmentaja\/avaa$/);
 });
 
-test("the right password opens the trainer side, where the nickname is saved", async ({
+test("the right password opens the trainer menu, and the nickname is saved on its page", async ({
   page,
 }, info) => {
   await signInParent(page, info);
@@ -66,6 +66,8 @@ test("the right password opens the trainer side, where the nickname is saved", a
   await expect(page).toHaveURL(/\/valmentaja\/avaa$/);
   await unlock(page);
   await expect(page).toHaveURL(/\/valmentaja$/);
+  await page.getByRole("link", { name: "Lapsen nimi" }).click();
+  await expect(page).toHaveURL(/\/valmentaja\/nimi$/);
   await page.getByLabel("Lapsen nimi").fill("x".repeat(21));
   await page.getByRole("button", { name: "Tallenna" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
@@ -78,13 +80,13 @@ test("the right password opens the trainer side, where the nickname is saved", a
   await expect(page.getByRole("heading", { level: 2, name: "Hei, Testi!" })).toBeVisible();
 });
 
-test("Lukitse returns to the child's side, and the trainer side then asks again", async ({
+test("Lukitse ja palaa returns to the child's side, and the trainer side then asks again", async ({
   page,
 }, info) => {
   await signInParent(page, info);
   await page.goto("/valmentaja/avaa");
   await unlock(page);
-  await page.getByRole("button", { name: "Lukitse" }).click();
+  await page.getByRole("button", { name: "Lukitse ja palaa" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/valmentaja");
   await expect(page).toHaveURL(/\/valmentaja\/avaa$/);
