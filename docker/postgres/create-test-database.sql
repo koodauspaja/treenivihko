@@ -1,2 +1,2 @@
--- The integration tests' own database, beside the development one.
+-- The integration tests' own database (decisions/023-database.md).
 CREATE DATABASE treenivihko_test;

@@ -1,9 +1,9 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
-import { runMigrations, sqlFilesIn } from "@/lib/db/migrations";
+import { journalTagsIn, runMigrations, sqlFilesIn } from "@/lib/db/migrations";
 
 afterAll(async () => {
   await closeDatabase();
@@ -40,6 +40,8 @@ describe("the test database", () => {
         exists: existsSync,
         sqlFiles: () =>
           sqlFilesIn(existsSync("drizzle/migrations") ? readdirSync("drizzle/migrations") : []),
+        journalTags: () =>
+          journalTagsIn(readFileSync("drizzle/migrations/meta/_journal.json", "utf8")),
         migrate: (folder) => migrate(migration.database, { migrationsFolder: folder }),
       });
       expect(run).toBe(existsSync("drizzle/migrations/meta/_journal.json") ? "applied" : "none");

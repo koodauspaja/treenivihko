@@ -44,8 +44,10 @@ npm run test:integration
 
 They run against `TEST_DATABASE_URL`, and refuse the whole run, before any
 test, unless it is on this machine (`localhost`, `127.0.0.1` or `::1`, which is
-also where CI's service container listens) and its database name ends in
-`_test`. `npm run verify` runs
+also where CI's service container listens), it carries no query string, and
+its database name ends in `_test`. A local port forwarded to a database
+elsewhere would pass that check, so never point `TEST_DATABASE_URL` through a
+tunnel. `npm run verify` runs
 them between the unit tests and the end-to-end tests.
 
 ## Step 4 — CI's database

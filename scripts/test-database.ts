@@ -22,7 +22,16 @@ export function integrationDatabaseRefusal(url: string | undefined): string | nu
   if (!LOCAL_HOSTS.has(parsed.hostname)) {
     return `The integration tests run only on this machine's Postgres, not on "${parsed.hostname}"`;
   }
-  const name = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+  // The driver reads options such as host or db from the query, after this check.
+  if (parsed.search !== "") {
+    return "TEST_DATABASE_URL may not carry a query string, which could name another host or database";
+  }
+  let name: string;
+  try {
+    name = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+  } catch {
+    return "TEST_DATABASE_URL's database name is not readable";
+  }
   if (!name.endsWith("_test")) {
     return `The integration tests run only on a database whose name ends in _test, not "${name || "(none)"}"`;
   }
