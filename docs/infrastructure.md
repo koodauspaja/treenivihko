@@ -49,6 +49,8 @@ database does not answer, and the reason on the service's log as one
 - **Railway never reads `.railway/railway.ts` during a deploy.** A merged
   change takes effect when it is applied (`docs/setup/010-railway.md`,
   *Later*), and every apply redeploys from `main`.
-- **No backups yet.** Postgres's data exists in one place until the backup
-  step.
+- **No backups yet.** Postgres's data exists in one place; backups are decided
+  with the first feature that stores the child's data
+  (`decisions/031-database-dump.md`). Before a risky migration, dump it by
+  hand (`docs/setup/010-railway.md`, *Later*).
 - **The first request after a quiet spell waits** while the service wakes.
