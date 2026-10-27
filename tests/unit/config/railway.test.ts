@@ -62,6 +62,8 @@ describe(".railway/railway.ts", () => {
           "public/**",
           "drizzle/**",
           "scripts/migrate.ts",
+          "scripts/set-trainer-password.ts",
+          "scripts/trainer-password-plan.ts",
           "package.json",
           "package-lock.json",
           ".nvmrc",

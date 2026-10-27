@@ -95,6 +95,28 @@ address on the list lands on the child's side; another Google account comes
 back to `/kirjaudu` with "Tällä Google-tilillä ei voi kirjautua
 Treenivihkoon." and leaves no user row. Then the same on Railway.
 
+## Step 7 — The trainer password
+
+The trainer side opens with the app's own password, never the Google one, and
+only this command sets or replaces it, so nothing on the home device can
+(`decisions/f001-trainer-side.md`). It asks for the password twice, without
+echoing it, and sets it for the one user there is: sign in with Google first.
+A password is 8 to 128 characters. Setting it ends every open unlock.
+
+Locally:
+
+```bash
+npm run trainer:set-password
+```
+
+On Railway, in the running service, which has the database's address:
+
+```bash
+railway ssh -s treenivihko -- npm run trainer:set-password
+```
+
+Then `/valmentaja` asks for it.
+
 ---
 
 ## Later
@@ -106,8 +128,10 @@ Treenivihkoon." and leaves no user row. Then the same on Railway.
   `railway redeploy -s treenivihko` does it.
 - **Rotating the client secret:** a new secret in Google Cloud, then Step 5's
   `GOOGLE_CLIENT_SECRET` line again, and `.env`.
-- **Signing a device out** before the trainer side has its button: delete the
-  user's rows in `session`; the cookie then points at nothing.
+- **Signing a device out:** **Kirjaudu ulos** on the trainer side. For a device
+  out of reach, delete the user's rows in `session`; the cookie then points at
+  nothing.
+- **A forgotten trainer password:** Step 7 again; it replaces the old one.
 
 ---
 
@@ -116,7 +140,8 @@ Treenivihkoon." and leaves no user row. Then the same on Railway.
 - [ ] An address on the list signs in, locally and on Railway, and lands on the child's side
 - [ ] Another Google account is refused with the Finnish message, and leaves no user row
 - [ ] `railway config plan` reports the configuration up to date
+- [ ] The trainer password is set on Railway, and `/valmentaja` opens with it
 
 ## Next
 
-→ The trainer side, as a feature with a spec.
+→ The features, starting with Feature 002, the exercise library.

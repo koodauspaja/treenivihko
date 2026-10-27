@@ -45,6 +45,10 @@ describe("authOptions", () => {
     expect(options().session).toEqual({ expiresIn: 90 * 86_400, updateAge: 86_400 });
   });
 
+  it("reads the client's address from the header Railway's edge sets", () => {
+    expect(options().advanced).toEqual({ ipAddress: { ipAddressHeaders: ["x-real-ip"] } });
+  });
+
   it("sends no telemetry", () => {
     expect(options().telemetry).toEqual({ enabled: false });
   });

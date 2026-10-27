@@ -4,6 +4,7 @@
  * client is, so a build needs none of its variables.
  *
  * decisions/029-sign-in.md
+ * decisions/f001-trainer-side.md
  */
 
 import { type BetterAuthOptions, betterAuth } from "better-auth";
@@ -89,6 +90,9 @@ export function authOptions(env: Environment = process.env) {
         update: { before: (row) => Promise.resolve({ data: withoutTokens(row) }) },
       },
     },
+    // Railway's edge sets X-Real-IP to the client's address on every request, replacing
+    // any a client sends; Better Auth's default header carries more than one address there.
+    advanced: { ipAddress: { ipAddressHeaders: ["x-real-ip"] } },
     telemetry: { enabled: false },
     // Writes Better Auth's cookies through Next's cookie API; it must be last.
     plugins: [nextCookies()],

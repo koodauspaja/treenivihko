@@ -24,7 +24,8 @@
     "db:generate": "tsx scripts/generate-migration.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:check-history": "tsx scripts/migration-history.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "trainer:set-password": "tsx scripts/set-trainer-password.ts"
   },
   "dependencies": {
     "better-auth": "1.7.7",

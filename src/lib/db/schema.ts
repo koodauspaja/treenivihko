@@ -4,9 +4,11 @@
  *
  * decisions/023-database.md
  * decisions/029-sign-in.md
+ * decisions/f001-trainer-side.md
  */
 
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, check, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -76,3 +78,42 @@ export const verification = pgTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
+
+/** The child, one per signed-in parent: what later features attach marks to. */
+export const child = pgTable(
+  "child",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // What the parent types for the greeting; the only personal data here.
+    nickname: text("nickname"),
+    ...timestamps,
+  },
+  (table) => [check("child_nickname_length", sql`char_length(${table.nickname}) between 1 and 20`)]
+);
+
+/** The app's own password for the trainer side, as a hash, and the count of wrong tries. */
+export const trainerPassword = pgTable(
+  "trainer_password",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    passwordHash: text("password_hash").notNull(),
+    failedAttempts: integer("failed_attempts").default(0).notNull(),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check("trainer_password_failed_attempts", sql`${table.failedAttempts} >= 0`)]
+);
+
+/** A signed-in browser with the trainer side open, until `expires_at`; gone with its session. */
+export const trainerUnlock = pgTable("trainer_unlock", {
+  sessionId: text("session_id")
+    .primaryKey()
+    .references(() => session.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});

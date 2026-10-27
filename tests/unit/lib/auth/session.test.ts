@@ -31,13 +31,13 @@ describe("currentUser", () => {
     expect(getSession).not.toHaveBeenCalled();
   });
 
-  it("hands back only the id and the name of a valid session's user", async () => {
+  it("hands back only the user's id and name, and the session's id", async () => {
     signedIn();
     getSession.mockResolvedValue({
       user: { id: "u1", name: "Test Parent", email: "parent@example.com" },
-      session: { token: "abc" },
+      session: { id: "s1", token: "abc" },
     });
-    expect(await currentUser()).toEqual({ id: "u1", name: "Test Parent" });
+    expect(await currentUser()).toEqual({ id: "u1", name: "Test Parent", sessionId: "s1" });
     expect(getSession).toHaveBeenCalledWith({ headers: requestHeaders });
   });
 
@@ -62,8 +62,9 @@ describe("requireUser", () => {
     signedIn();
     getSession.mockResolvedValue({
       user: { id: "u1", name: "Test Parent", email: "parent@example.com" },
+      session: { id: "s1", token: "abc" },
     });
-    expect(await requireUser()).toEqual({ id: "u1", name: "Test Parent" });
+    expect(await requireUser()).toEqual({ id: "u1", name: "Test Parent", sessionId: "s1" });
     expect(redirect).not.toHaveBeenCalled();
   });
 

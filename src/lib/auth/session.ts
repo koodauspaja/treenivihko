@@ -14,8 +14,12 @@ import { isAllowed } from "./allowlist";
 import { SIGN_IN_PATH } from "./paths";
 import { getAuth } from "./server";
 
-/** What a page needs of the user, and no more: no address, no token. */
-export type SignedInUser = { id: string; name: string };
+/**
+ * What a page needs of the user, and no more: no address, no token. The
+ * session's id is the signed-in browser's, which the trainer side's unlock
+ * belongs to (decisions/f001-trainer-side.md).
+ */
+export type SignedInUser = { id: string; name: string; sessionId: string };
 
 /** The signed-in user, or null. */
 export async function currentUser(): Promise<SignedInUser | null> {
@@ -27,7 +31,7 @@ export async function currentUser(): Promise<SignedInUser | null> {
   if (!found || !isAllowed(found.user.email, process.env.AUTH_ALLOWED_EMAILS)) {
     return null;
   }
-  return { id: found.user.id, name: found.user.name };
+  return { id: found.user.id, name: found.user.name, sessionId: found.session.id };
 }
 
 /** The signed-in user, or a redirect to the sign-in page. */
