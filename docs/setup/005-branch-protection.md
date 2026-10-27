@@ -30,7 +30,7 @@ gh api repos/<your-org>/<your-repo>/rulesets -X POST --input ruleset-main.json
 | Dismiss stale approvals on push | on | Inert at 0 approvals; right if approvals are ever required |
 | Require conversation resolution | on | The one part of reading the threads that GitHub can enforce |
 | Allowed merge methods | rebase, squash | Rebase keeps each commit's message; squash is there for a branch whose commits are not worth keeping |
-| Require status checks | `Sourcery review` (app `sourcery-ai`), branch up to date | See Step 3 |
+| Require status checks | `Sourcery review` (app `sourcery-ai`), branch up to date; setup 007 adds the three CI checks once they have reported | See Step 3 |
 
 The ruleset as JSON:
 
@@ -88,7 +88,8 @@ failure and makes the expectation visible; the gate in
 `.claude/skills/open-pr/SKILL.md`, which reads the review itself, is still what
 decides.
 
-When CI and SonarCloud exist, their checks are added here. A required check
+Setup 007 adds CI's three checks, `Lint, types and unit tests`,
+`Build and end-to-end` and `SonarCloud scan`, beside it. A required check
 that stops reporting, for example after a job is renamed, blocks every merge
 until the ruleset names the new check, so a rename updates the ruleset in the
 same pull request.
