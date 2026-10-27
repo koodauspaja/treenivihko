@@ -9,9 +9,9 @@ import type { Page, TestInfo } from "@playwright/test";
 import { betterAuth } from "better-auth";
 import { eq } from "drizzle-orm";
 import { authOptions } from "../../../src/lib/auth/server.ts";
-import { getDatabase } from "../../../src/lib/db/index.ts";
 import { user } from "../../../src/lib/db/schema.ts";
 import { setTrainerPassword } from "../../../src/lib/trainer/store.ts";
+import { deleteUsers } from "../../support/users.ts";
 import { parentEmail, SERVER_ENV } from "./environment.ts";
 
 export const TRAINER_PASSWORD = "end-to-end trainer password";
@@ -35,7 +35,7 @@ const quiet = () => {};
  */
 export async function signInParent(page: Page, info: TestInfo, { withPassword = true } = {}) {
   const email = parentEmail(info.parallelIndex);
-  await getDatabase().delete(user).where(eq(user.email, email));
+  await deleteUsers(eq(user.email, email));
   const signedUp = await auth.api.signUpEmail({
     body: { email, password: "end-to-end sign-up password", name: "Test Parent" },
     returnHeaders: true,

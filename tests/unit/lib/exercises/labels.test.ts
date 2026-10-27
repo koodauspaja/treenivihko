@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LABEL_KEYS, LABELS, labelOf, labelsIn } from "@/lib/exercises/labels";
+import { inListOrder, LABEL_KEYS, LABELS, labelOf, labelsIn, nameOf } from "@/lib/exercises/labels";
 
 describe("the label list", () => {
   it("has 11 skills, 3 places and 7 equipment items, each key once", () => {
@@ -65,5 +65,20 @@ describe("the label list", () => {
   it("finds a label by key, and none for a key not on the list", () => {
     expect(labelOf("goal")).toMatchObject({ group: "equipment", name: "Maali" });
     expect(labelOf("heading")).toBeUndefined();
+  });
+
+  it("puts keys in the list's order, dropping any not on it", () => {
+    expect(inListOrder(["cones", "field", "nothing", "dribbling"])).toEqual([
+      "dribbling",
+      "field",
+      "cones",
+    ]);
+    expect(inListOrder([])).toEqual([]);
+  });
+
+  it("names every key in Finnish", () => {
+    expect(nameOf("field")).toBe("Kenttä");
+    expect(nameOf("jump_rope")).toBe("Hyppynaru");
+    expect(LABEL_KEYS.map(nameOf)).toEqual(LABELS.map((label) => label.name));
   });
 });

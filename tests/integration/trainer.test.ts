@@ -21,6 +21,7 @@ import {
   touchUnlock,
   tryPassword,
 } from "@/lib/trainer/store";
+import { deleteUsers } from "../support/users.ts";
 
 const PASSWORD = "the trainer password";
 const NOW = new Date("2026-10-27T12:00:00.000Z");
@@ -69,13 +70,13 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await database().delete(user);
+  await deleteUsers();
   lines = [];
   await addParent("u1", ["s1", "s2"]);
 });
 
 afterAll(async () => {
-  await database().delete(user);
+  await deleteUsers();
   await closeDatabase();
 });
 
@@ -123,7 +124,7 @@ describe("the child's profile", () => {
   it("goes with the parent", async () => {
     await ensureChild("u1", report);
     await setTrainerPassword("u1", PASSWORD, report);
-    await database().delete(user).where(eq(user.id, "u1"));
+    await deleteUsers(eq(user.id, "u1"));
     expect(await database().select().from(child)).toEqual([]);
     expect(await database().select().from(trainerPassword)).toEqual([]);
   });

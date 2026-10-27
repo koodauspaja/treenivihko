@@ -119,6 +119,18 @@ const byKey = new Map<string, Label>(LABELS.map((label) => [label.key, label]));
 /** The label with `key`, or undefined for a key not on the list. */
 export const labelOf = (key: string): Label | undefined => byKey.get(key);
 
+const names = Object.fromEntries(LABELS.map((label) => [label.key, label.name])) as Record<
+  LabelKey,
+  string
+>;
+
+/** The Finnish name of a key known to be on the list. */
+export const nameOf = (key: LabelKey): string => names[key];
+
+/** `keys` in the list's order, which a set read from Postgres does not keep. */
+export const inListOrder = (keys: readonly string[]): LabelKey[] =>
+  LABEL_KEYS.filter((key) => keys.includes(key));
+
 /** The group's labels, in the list's order. */
 export const labelsIn = (group: LabelGroup): readonly Label[] =>
   LABELS.filter((label) => label.group === group);

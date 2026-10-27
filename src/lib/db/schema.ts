@@ -6,12 +6,14 @@
  * decisions/029-sign-in.md
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
  */
 
 import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   index,
   integer,
   pgTable,
@@ -20,7 +22,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { LABEL_KEYS } from "../exercises/labels";
+import { LABEL_KEYS, labelsIn } from "../exercises/labels";
 import { WHITESPACE_SQL } from "../text";
 
 const timestamps = {
@@ -197,6 +199,125 @@ export const exerciseLabel = pgTable(
     check(
       "exercise_label_known",
       sql.raw(`label in (${LABEL_KEYS.map((key) => "'" + key + "'").join(", ")})`)
+    ),
+  ]
+);
+
+const keysIn = (group: "place" | "equipment") =>
+  labelsIn(group)
+    .map((label) => `'${label.key}'`)
+    .join(", ");
+
+// Overlaps and orders are held by the custom migration 0004, which drizzle's
+// schema cannot express: an exclusion on a period's days, and positions
+// unique within their parent, checked at commit so two can swap.
+
+/** A period of training, the parent's own, 1 to 4 weeks from its start. */
+export const period = pgTable(
+  "period",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    startsOn: date("starts_on", { mode: "string" }).notNull(),
+    weeks: integer("weeks").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("period_user_id_idx").on(table.userId),
+    check("period_weeks", sql`${table.weeks} between 1 and 4`),
+  ]
+);
+
+/** A session of a period, in its order; `session` is Better Auth's sign-in table. */
+export const trainingSession = pgTable(
+  "training_session",
+  {
+    id: text("id").primaryKey(),
+    periodId: text("period_id")
+      .notNull()
+      .references(() => period.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    place: text("place").notNull(),
+    targetMinutes: integer("target_minutes").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    check("training_session_position", sql`${table.position} >= 1`),
+    check("training_session_place", sql.raw(`place in (${keysIn("place")})`)),
+    check(
+      "training_session_target",
+      sql`${table.targetMinutes} between 5 and 120 and ${table.targetMinutes} % 5 = 0`
+    ),
+  ]
+);
+
+/** The equipment at hand for a session, by the list's keys. */
+export const trainingSessionEquipment = pgTable(
+  "training_session_equipment",
+  {
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => trainingSession.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.sessionId, table.label] }),
+    check("training_session_equipment_known", sql.raw(`label in (${keysIn("equipment")})`)),
+  ]
+);
+
+/** A block of a session, in its order, under a theme the parent names. */
+export const block = pgTable(
+  "block",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => trainingSession.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    theme: text("theme").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    check("block_position", sql`${table.position} >= 1`),
+    check("block_theme_length", sql`char_length(${table.theme}) between 1 and 30`),
+    check(
+      "block_theme_trimmed",
+      sql`${table.theme} = btrim(${table.theme}, ${sql.raw(WHITESPACE_SQL)})`
+    ),
+  ]
+);
+
+/**
+ * A library exercise in a block, in its order, with the kind and amount it
+ * was given. Its exercise is never deleted while it is here. Migration 0004
+ * makes that key deferrable, which deleting a whole account needs: the
+ * account's exercises and periods go by two cascades.
+ */
+export const blockExercise = pgTable(
+  "block_exercise",
+  {
+    id: text("id").primaryKey(),
+    blockId: text("block_id")
+      .notNull()
+      .references(() => block.id, { onDelete: "cascade" }),
+    exerciseId: text("exercise_id")
+      .notNull()
+      .references(() => exercise.id),
+    position: integer("position").notNull(),
+    amountKind: text("amount_kind").notNull(),
+    // Times for a count, seconds for a time, as an exercise's own amount.
+    amount: integer("amount").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("block_exercise_exercise_id_idx").on(table.exerciseId),
+    check("block_exercise_position", sql`${table.position} >= 1`),
+    check(
+      "block_exercise_amount",
+      sql`(${table.amountKind} = 'count' and ${table.amount} between 1 and 100) or (${table.amountKind} = 'time' and ${table.amount} between 5 and 600 and ${table.amount} % 5 = 0)`
     ),
   ]
 );

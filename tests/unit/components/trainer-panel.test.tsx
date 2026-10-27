@@ -25,8 +25,12 @@ afterEach(() => {
 });
 
 describe("TrainerPanel", () => {
-  it("is the menu: the library, the nickname, Lukitse ja palaa and sign-out", async () => {
+  it("is the menu: the periods first, the library, the nickname, Lukitse ja palaa and sign-out", async () => {
     render(await TrainerPanel());
+    const links = screen.getAllByRole("link");
+    expect(links[0]?.textContent).toBe("Jaksot");
+    expect(links[0]?.getAttribute("href")).toBe("/valmentaja/jaksot");
+    expect(links[1]?.textContent).toBe("Harjoitteet");
     expect(screen.getByRole("link", { name: "Harjoitteet" }).getAttribute("href")).toBe(
       "/valmentaja/harjoitteet"
     );

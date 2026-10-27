@@ -2,19 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { type ExerciseFormState, saveExercise } from "@/app/trainer/exercises/actions";
+import { Refusal } from "@/components/refusal";
 import { type LabelGroup, labelsIn } from "@/lib/exercises/labels";
 import { FIELD, GROUP_HEADING, LEVEL_NAMES, SAVE } from "@/lib/exercises/messages";
 import type { AmountKind, ExerciseValues } from "@/lib/exercises/rules";
 
 type Errors = ExerciseFormState["errors"];
-
-function Refusal({ message }: Readonly<{ message: string | undefined }>) {
-  return message === undefined ? null : (
-    <p role="alert" className="text-red-700">
-      {message}
-    </p>
-  );
-}
 
 const inputClass = "rounded border px-3 py-2";
 

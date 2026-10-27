@@ -35,8 +35,6 @@ export const SAVED = "Tallennettu.";
 export const added = (name: string) => `Lisätty: ${name}.`;
 export const DELETE_EXERCISE = "Poista harjoite";
 export const confirmDelete = (name: string) => `Poistetaanko harjoite ${name}?`;
-export const DELETE = "Poista";
-export const CANCEL = "Peruuta";
 
 export const REFUSAL = {
   name: "Nimessä on oltava 1–40 merkkiä.",

@@ -129,23 +129,45 @@ describe("saveExercise", () => {
 });
 
 describe("removeExercise", () => {
+  const ASKED = { version: 2, error: null };
+
   it("deletes the parent's exercise and shows the library", async () => {
-    await expect(removeExercise(form({ id: "e1" }))).rejects.toThrow(
+    deleteExercise.mockResolvedValue({ kind: "deleted" });
+    await expect(removeExercise(ASKED, form({ id: "e1" }))).rejects.toThrow(
       "redirect /valmentaja/harjoitteet"
     );
     expect(deleteExercise).toHaveBeenCalledWith("u1", "e1");
   });
 
-  it("deletes nothing without an id", async () => {
-    await expect(removeExercise(new FormData())).rejects.toThrow(
+  it("shows the library when the exercise is already gone", async () => {
+    deleteExercise.mockResolvedValue({ kind: "missing" });
+    await expect(removeExercise(ASKED, new FormData())).rejects.toThrow(
       "redirect /valmentaja/harjoitteet"
     );
-    expect(deleteExercise).not.toHaveBeenCalled();
+    expect(deleteExercise).toHaveBeenCalledWith("u1", "");
+  });
+
+  it("refuses an exercise a period uses, naming the periods, and stays on its page", async () => {
+    deleteExercise.mockResolvedValue({
+      kind: "inUse",
+      periods: [
+        { startsOn: "2026-11-03", weeks: 2 },
+        { startsOn: "2026-12-29", weeks: 2 },
+      ],
+    });
+    expect(await removeExercise(ASKED, form({ id: "e1" }))).toEqual({
+      version: 3,
+      error:
+        "Harjoite on käytössä jaksoissa: 3.11.–16.11.2026, 29.12.2026–11.1.2027. Poista se ensin niiden treeneistä.",
+    });
+    expect(redirect).not.toHaveBeenCalled();
   });
 
   it("needs an unlock", async () => {
     requireTrainer.mockRejectedValue(new Error("redirect /valmentaja/avaa"));
-    await expect(removeExercise(form({ id: "e1" }))).rejects.toThrow("redirect /valmentaja/avaa");
+    await expect(removeExercise(ASKED, form({ id: "e1" }))).rejects.toThrow(
+      "redirect /valmentaja/avaa"
+    );
     expect(deleteExercise).not.toHaveBeenCalled();
   });
 });

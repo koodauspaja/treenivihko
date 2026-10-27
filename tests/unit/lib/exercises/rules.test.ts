@@ -10,6 +10,7 @@ import {
   formatDuration,
   passes,
   readExercise,
+  summaryOf,
   valuesFrom,
   valuesOf,
   wholeNumber,
@@ -299,6 +300,15 @@ describe("the display", () => {
 
   it("shows a duration in minutes", () => {
     expect(formatDuration(5)).toBe("5 min");
+  });
+
+  it("shows an exercise's line in a list: its level, amount and duration", () => {
+    expect(summaryOf({ level: 1, amountKind: "count", amount: 10, durationMinutes: 5 })).toBe(
+      "Taso Helppo, 10 kertaa, 5 min"
+    );
+    expect(summaryOf({ level: 3, amountKind: "time", amount: 90, durationMinutes: 10 })).toBe(
+      "Taso Vaikea, 1 min 30 s, 10 min"
+    );
   });
 
   it("sorts names in Finnish order, å, ä and ö after z", () => {
