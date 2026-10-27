@@ -5,9 +5,10 @@
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
  */
 
-import { characterCount, hasNul, storedLength, tidy } from "@/lib/text";
+import { characterCount, storedLength, tidy, unstorable } from "@/lib/text";
 import { LABEL_KEYS, type LabelGroup, type LabelKey, labelOf, labelsIn } from "./labels";
 import { REFUSAL } from "./messages";
 
@@ -146,7 +147,7 @@ function videoUrlFrom(input: string): string | null | undefined {
     !trimmed.startsWith("https://") ||
     // Counted as stored, since it is never normalised: the database counts the same.
     storedLength(trimmed) > VIDEO_URL_MAX_LENGTH ||
-    hasNul(trimmed)
+    unstorable(trimmed)
   ) {
     return undefined;
   }
@@ -158,7 +159,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
   const errors: Partial<Record<ExerciseField, string>> = {};
   const name = tidy(values.name);
   const nameLength = characterCount(name);
-  if (nameLength < 1 || nameLength > NAME_MAX_LENGTH || hasNul(name)) {
+  if (nameLength < 1 || nameLength > NAME_MAX_LENGTH || unstorable(name)) {
     errors.name = REFUSAL.name;
   }
   const instructions = tidy(values.instructions);
@@ -166,7 +167,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
   if (
     instructionsLength < 1 ||
     instructionsLength > INSTRUCTIONS_MAX_LENGTH ||
-    hasNul(instructions)
+    unstorable(instructions)
   ) {
     errors.instructions = REFUSAL.instructions;
   }

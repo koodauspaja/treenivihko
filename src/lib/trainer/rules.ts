@@ -5,9 +5,10 @@
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
  */
 
-import { characterCount, hasNul, tidy } from "@/lib/text";
+import { characterCount, tidy, unstorable } from "@/lib/text";
 
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
@@ -43,7 +44,7 @@ export function nicknameFrom(input: unknown): string | null {
   }
   const nickname = tidy(input);
   const length = characterCount(nickname);
-  return length >= 1 && length <= NICKNAME_MAX_LENGTH && !hasNul(nickname) ? nickname : null;
+  return length >= 1 && length <= NICKNAME_MAX_LENGTH && !unstorable(nickname) ? nickname : null;
 }
 
 /** When an unlock made or used at `now` ends. */

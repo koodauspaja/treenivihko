@@ -118,6 +118,18 @@ describe("readExercise", () => {
     );
   });
 
+  it("refuses a lone surrogate, which Postgres would save as U+FFFD, in every text field", () => {
+    expect(errorsOf({ name: "Tik\ud800kaat" })).toEqual({
+      name: "Nimessä on oltava 1–40 merkkiä.",
+    });
+    expect(errorsOf({ instructions: "Tee\udc00" })).toEqual({
+      instructions: "Ohjeessa on oltava 1–1000 merkkiä.",
+    });
+    expect(errorsOf({ videoUrl: "https://example.com/\ud800" })).toEqual({
+      videoUrl: "Videolinkin on oltava https-osoite.",
+    });
+  });
+
   it("refuses U+0000, which Postgres cannot store, in every text field", () => {
     expect(errorsOf({ name: "Tik\u0000kaat" })).toEqual({
       name: "Nimessä on oltava 1–40 merkkiä.",

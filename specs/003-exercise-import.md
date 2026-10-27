@@ -194,7 +194,7 @@ text field; a chosen file has to be chosen again, as browsers allow.
 | Not an object | `Harjoite ei ole oikeaa muotoa.` |
 | A field not in *The format* | `Tuntematon kenttä: ‹field›.` |
 | A field's value of the wrong type, missing, or breaking Feature 002's rule | Feature 002's refusal for that field, such as `Nimessä on oltava 1–40 merkkiä.` or `Valitse taso.` |
-| Both `kertaa` and `sekuntia`, or neither | `Anna joko kertaa tai sekuntia, ei molempia.` |
+| Both `kertaa` and `sekuntia`, or neither | `Anna joko kertaa tai sekuntia, ei molempia.`; with both, also each one's own refusal when it breaks its rule |
 | `lammittely` not `true` or `false` | `Lämmittelyn on oltava true tai false.` |
 | A label list that is not a list of texts | `‹Taidot/Paikat/Välineet› on annettava listana.` |
 | A label name not on the list, or in another group | `Tuntematon taito: ‹name›.`, `Tuntematon paikka: ‹name›.` or `Tuntematon väline: ‹name›.` |

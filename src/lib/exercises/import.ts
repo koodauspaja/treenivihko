@@ -135,6 +135,26 @@ function labelsFrom(group: LabelGroup, value: unknown, reasons: string[]): strin
   return keys;
 }
 
+/**
+ * Why an exercise's amount fails: exactly one of the two is needed, and each
+ * given also has to meet its own rule, which the form checks one at a time.
+ */
+function amountReasons(
+  values: ExerciseValues,
+  hasCount: boolean,
+  hasSeconds: boolean,
+  errors: Partial<Record<string, string>>
+): (string | undefined)[] {
+  if (!hasCount && !hasSeconds) {
+    return [EXERCISE_REASON.amount];
+  }
+  if (!(hasCount && hasSeconds)) {
+    return [errors.count, errors.time];
+  }
+  const asTime = readExercise({ ...values, amountKind: "time" });
+  return [EXERCISE_REASON.amount, errors.count, asTime.ok ? undefined : asTime.errors.time];
+}
+
 /** One exercise of the import, by Feature 002's rules and the format's own. */
 function readOne(item: unknown): Reading {
   if (!isObject(item)) {
@@ -182,7 +202,7 @@ function readOne(item: unknown): Reading {
   const after = present([
     errors.instructions,
     typeof video === "string" ? errors.videoUrl : REFUSAL.videoUrl,
-    ...(hasCount === hasSeconds ? [EXERCISE_REASON.amount] : [errors.count, errors.time]),
+    ...amountReasons(values, hasCount, hasSeconds, errors),
     errors.duration,
     errors.level,
     typeof warmUp === "boolean" ? undefined : EXERCISE_REASON.warmUp,

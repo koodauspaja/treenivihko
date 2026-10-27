@@ -5,6 +5,7 @@
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
  */
 
 /**
@@ -48,8 +49,11 @@ export const characterCount = (text: string) => [...text.normalize("NFC")].lengt
 /** The characters `text` holds exactly as it is, as Postgres's `char_length` counts what is stored. */
 export const storedLength = (text: string) => [...text].length;
 
-/** Postgres cannot store U+0000 in text. */
-export const hasNul = (text: string) => text.includes("\u0000");
+/**
+ * Whether `text` holds what Postgres cannot keep as typed: U+0000, which it
+ * refuses, or a lone surrogate, which it would save as U+FFFD.
+ */
+export const unstorable = (text: string) => text.includes("\u0000") || /\p{Cs}/u.test(text);
 
 /** `WHITESPACE` as a Postgres escape-string literal, for a check written in SQL. */
 export const WHITESPACE_SQL = `E'${WHITESPACE.map(

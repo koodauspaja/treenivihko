@@ -25,15 +25,19 @@ export type SaveResult =
 
 const NAME_INDEX = "exercise_user_name_idx";
 
-/** Whether a failure is the unique index refusing a name already in the library. */
+/**
+ * Whether a failure is a name already in the library: the unique index
+ * refusing it, or a deadlock with another write claiming the same names,
+ * which these writes can meet only on that index. Postgres aborts one of the
+ * two, and the other commits the name, so for the one aborted it is in use.
+ */
 function isNameInUse(error: unknown): boolean {
   const cause = error instanceof Error ? error.cause : undefined;
-  return (
-    typeof cause === "object" &&
-    cause !== null &&
-    (cause as { code?: unknown }).code === "23505" &&
-    (cause as { constraint_name?: unknown }).constraint_name === NAME_INDEX
-  );
+  if (typeof cause !== "object" || cause === null) {
+    return false;
+  }
+  const { code, constraint_name } = cause as { code?: unknown; constraint_name?: unknown };
+  return (code === "23505" && constraint_name === NAME_INDEX) || code === "40P01";
 }
 
 type Row = typeof exercise.$inferSelect;
@@ -201,7 +205,7 @@ export function updateExercise(
 /**
  * Adds an import's exercises and labels within `tx`, in two statements, rows
  * in one order by name, so two imports at once sharing names wait on each
- * other rather than deadlock.
+ * other; a deadlock with a rename is refused as the name in use.
  */
 async function insertImport(
   tx: Transaction,

@@ -2,8 +2,11 @@
 
 Spec: `specs/003-exercise-import.md`. Issue: #36.
 
-Changes one thing of `decisions/f002-exercise-library.md`: the labels'
-meanings in `src/lib/exercises/labels.ts` are Finnish, not English.
+Changes two things of `decisions/f002-exercise-library.md`: the labels'
+meanings in `src/lib/exercises/labels.ts` are Finnish, not English, and an
+exercise's text refuses a lone surrogate as it refuses U+0000. The second
+applies to `decisions/f001-trainer-side.md`'s nickname too, by the same
+check in `src/lib/text.ts`.
 
 ## Context
 
@@ -49,10 +52,12 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
 | An unknown field refused | A typo in an optional field, such as `välineet`, would otherwise drop the equipment without a word |
 | `null` refused where a field may only be left out | `null` is a value the tool chose to write; reading it as the default would hide a misunderstanding of the format |
 | Names compared by JavaScript's lowercase before the save | It folds as the index's ICU `lower` does for the letters a name uses; where the two could differ, the index refuses the whole import with its own message, and nothing is half saved |
+| A lone surrogate refused, as U+0000 is | Only a JSON escape such as `\ud800` writes one, as a browser's form cannot; Postgres would save it as U+FFFD, a different text from the one checked |
 | Labels matched ignoring case and spaces | Labels are unique by name in any case, so this reads `jalkatyö` as meant and never as another label |
 | An empty file counts as none chosen | A file field with nothing chosen still sends an empty file |
 | Size checked in the browser too, file and text together | A body over Next's 1 MB is refused before the action runs, and the parent would see the error page rather than the size refusal |
-| Rows inserted in one order by name | Two imports at once that share names would otherwise check the unique index in different orders and could deadlock; in one order, the later waits and is refused by name |
+| Rows inserted in one order by name | Two imports at once that share names would otherwise check the unique index in different orders and could deadlock; in one order, the later waits, then gets the import's refusal for a name saved meanwhile |
+| A deadlock refused as the name in use, in every write of an exercise | These writes can deadlock only on the name index, and Postgres lets one of the two commit, so the name is then in use for the other; the refusal is true, where the error page would not say what happened |
 | The labels' meanings in Finnish | The prompt shows them to the parent, and what a user sees is Finnish; one list keeps the import, the parent and Feature 009's AI labelling by the same words |
 | A prompt built from the list | It always names exactly the labels the import accepts |
 | `exercises/store.ts` still excluded from unit coverage | As `decisions/f002-exercise-library.md`; `importExercises` is a query, and `tests/integration/exercises.test.ts` runs it |
@@ -65,7 +70,11 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
 - **An import never changes an exercise** already in the library.
 - **An import and a rename at once can deadlock**, when they claim the same
   names in opposite orders; it takes one parent's own two requests in the same
-  instant. Postgres aborts one, nothing is half saved, the parent sees the
-  error page, and doing it again succeeds.
+  instant. Postgres aborts one, nothing is half saved, and the one aborted is
+  refused as the name in use, as the other has saved it.
+- **A deadlock is read as the name in use** because each write of an exercise
+  touches its own row and its own labels besides the name index. A write that
+  later takes another lock, such as on a session using an exercise
+  (Feature 004), has to revisit `isNameInUse` in `src/lib/exercises/store.ts`.
 - **A size refused in the browser is not logged**: nothing reached the server.
   The server's `size` line is for a request that skips the page.
