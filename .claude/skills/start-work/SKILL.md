@@ -11,6 +11,13 @@ description: Open an issue for a feature, chore or bug, and take an agreed one f
    keep its sections. Read the title and body before creating it, and again
    after any edit: an issue is public, and no review rule sees it, so it holds
    no secret and no real person's data.
+
+   **Every acceptance criterion can be checked before the pull request
+   opens**, because its boxes are ticked then, and Sourcery reads them when it
+   reviews. A criterion about the pull request's own review, its CI run, its
+   merge or what happens on `main` afterwards cannot be: it goes in the pull
+   request's **How to verify**, or, when it matters later, in a section the
+   issue calls *Observed after the merge*, without a box.
 2. Create it with its kind label and no assignee:
 
    ```bash

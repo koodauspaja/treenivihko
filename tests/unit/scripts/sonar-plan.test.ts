@@ -14,6 +14,11 @@ const recorded: unknown = JSON.parse(
   readFileSync("tests/fixtures/sonar/pull-request-measures.json", "utf8")
 );
 
+/** SonarCloud's real answer for a pull request that changed no analysed file. */
+const recordedNoAnalysedLines: unknown = JSON.parse(
+  readFileSync("tests/fixtures/sonar/pull-request-no-analysed-lines.json", "utf8")
+);
+
 const answer = (measures: unknown[]) => ({ component: { measures } });
 /** A new-code measure, in the shape SonarCloud answers with. */
 const newCode = (metric: string, value: unknown) => ({ metric, periods: [{ index: 1, value }] });
@@ -140,8 +145,19 @@ describe("judgeMeasures", () => {
     });
   });
 
-  it("fails a missing duplicated-line count when new lines were not measured either", () => {
-    expect(judgeMeasures({ new_duplicated_lines: 0 }, answer([])).passed).toBe(false);
+  it("passes SonarCloud's recorded answer for a pull request that changed no analysed file", () => {
+    expect(judgeMeasures(pullRequestLimits, recordedNoAnalysedLines)).toEqual({
+      passed: true,
+      lines: [
+        "new_violations: 0",
+        "new_duplicated_lines: not measured, no new lines",
+        "new_security_hotspots: 0",
+      ],
+    });
+  });
+
+  it("still fails an empty answer, on the metrics Sonar always sends", () => {
+    expect(judgeMeasures(pullRequestLimits, answer([])).passed).toBe(false);
   });
 
   it("fails a missing duplicated-line count when there are new lines", () => {
