@@ -34,7 +34,9 @@ check either.
   which carries the query's values: a password's hash, or a nickname. The
   error passed on carries the same line, since Next logs it too.
 - **Better Auth reads the client's address from `X-Real-IP`**, which
-  Railway's edge sets on every request.
+  Railway's edge sets on every request, and keeps none of it: a hook empties
+  `session.ip_address` before a session row is written, as the spec stores no
+  address.
 - **The end-to-end tests sign in for real**: a Better Auth instance with
   email sign-up, on the test database and the server's test secret, creates
   the session and its cookie. Each browser project has its own parent. The
@@ -49,6 +51,7 @@ check either.
 | Wrong tries counted per profile only | Only a signed-in browser reaches the lock page, and only the parent's devices are signed in: a per-client count would add nothing |
 | The unlock in the database, keyed by session | Signing out deletes the session, and the unlock with it; a cookie of its own could outlive both |
 | The nickname normalised to NFC, counted by code point | The same name typed two ways is the same nickname, and its length is what Postgres's `char_length` counts |
+| The address dropped from the session row | Once Better Auth can read it, it stores it with every session; rate limiting needs it only for the request |
 | `X-Real-IP` rather than `X-Forwarded-For` | Railway's `X-Forwarded-For` holds more than one address, which Better Auth refuses without trusted proxies, and Railway's proxy ranges are not stable enough to list |
 | `store.ts` excluded from unit coverage | Each function is a query whose point is what Postgres does with it; `tests/integration/trainer.test.ts` runs them, races included |
 

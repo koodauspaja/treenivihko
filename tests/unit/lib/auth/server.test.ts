@@ -71,6 +71,17 @@ describe("authOptions", () => {
   );
 
   it.each(["create", "update"] as const)(
+    "drops the client's address before a session %s is written",
+    async (write) => {
+      const hook = options().databaseHooks.session[write].before;
+      expect(await hook({ id: "s1", ipAddress: "203.0.113.7" } as never)).toEqual({
+        data: { id: "s1", ipAddress: null },
+      });
+      expect(await hook({ id: "s1" } as never)).toEqual({ data: { id: "s1" } });
+    }
+  );
+
+  it.each(["create", "update"] as const)(
     "drops Google's tokens before an account %s is written",
     async (write) => {
       const hook = options().databaseHooks.account[write].before;

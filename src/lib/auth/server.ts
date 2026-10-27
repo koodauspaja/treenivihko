@@ -14,6 +14,7 @@ import { getDatabase } from "@/lib/db/index";
 import { account, session, user, verification } from "@/lib/db/schema";
 import { reportUserCreated, signInRefusal } from "./allowlist";
 import { withoutPicture, withoutTokens } from "./google-data";
+import { withoutAddress } from "./session-row";
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
@@ -88,6 +89,11 @@ export function authOptions(env: Environment = process.env) {
       account: {
         create: { before: (row) => Promise.resolve({ data: withoutTokens(row) }) },
         update: { before: (row) => Promise.resolve({ data: withoutTokens(row) }) },
+      },
+      // The client's address is read for rate limiting, never kept with the session.
+      session: {
+        create: { before: (row) => Promise.resolve({ data: withoutAddress(row) }) },
+        update: { before: (row) => Promise.resolve({ data: withoutAddress(row) }) },
       },
     },
     // Railway's edge sets X-Real-IP to the client's address on every request, replacing
