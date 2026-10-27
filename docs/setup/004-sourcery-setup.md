@@ -73,6 +73,14 @@ why its paths are what they are.
 - Decision records are never edited. A chore's or a bug's record has no spec, and a spec corrected later is interpreted by the later issue's decision record, which names the record it overrides. Do not flag either as a missing or drifted counterpart.
 ```
 
+**Block 4**: `**`
+```
+This repository has one writer, who opens every pull request against main from a branch of this repository and merges them one at a time. Do not report risks that need a second person with write access, a pull request from a fork, overlapping merges or pushes to main, or a pull request retargeted from another branch.
+```
+
+Block 4 is context rather than a check. A clone with more than one writer
+leaves it out, or rewrites it to say how that repository is run.
+
 ## Step 5 — Test with a pull request
 
 Open a pull request. Within a few minutes Sourcery posts a review whose body
@@ -119,7 +127,7 @@ The merge gate in `.claude/skills/open-pr/SKILL.md` reads these.
 
 - [ ] Sourcery is installed on the repository
 - [ ] The repository has its own settings, as in Step 3
-- [ ] The three blocks are in the dashboard, each with its paths
+- [ ] The four blocks are in the dashboard, each with its paths
 - [ ] Sourcery posted a full review on a pull request
 
 ## Next

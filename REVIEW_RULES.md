@@ -19,9 +19,17 @@ them.
 | 1 | No secrets, and no real person's data | `**` | A secret arrives in a workflow or a config file as often as in code, and personal data in a fixture or a doc as often as in source |
 | 2 | What a user sees is Finnish, and AI output is checked against the library | `src/**` `.ts` and `.tsx` | Both happen only in the app's code |
 | 3 | A decision record matches its spec | `specs/**`, `decisions/**` | The rule compares two documents, so it is shown both |
+| 4 | How the repository is run, and the risks that need someone it does not have | `**` | Context for every file, since such findings land on workflows, scripts and docs alike |
 
 **Block 1's privacy rule** exists because the repository is public and the
 user is a child. The real data is the parent's, and it stays in the database.
+
+**Block 4 is context, not a check.** On the first six pull requests,
+13 of the 25 findings answered without a change assumed a second writer, a
+fork's pull request, overlapping merges or a retargeted pull request, none of
+which this repository has, and they came back in every round
+(`decisions/018-sourcery-repository-context.md`). A risk that needs only the
+one writer is still reported.
 
 **Block 2's AI rule** is the code-level half of "the AI chooses, it never
 invents" (`CLAUDE.md`). A model's answer that names an exercise outside the
