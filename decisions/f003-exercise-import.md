@@ -27,6 +27,7 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
   text, so `2.0` and `1e1` are refused as the form refuses them.
 - **A field not in the format is refused**, and so is `null` where the format
   allows only leaving a field out.
+- **An import's rows inserted in one order by name**, in two statements.
 - **A name in the library, or earlier in the import, is refused before the
   save**, compared by its lowercase; the unique index still decides a name
   saved meanwhile, which refuses the whole import.
@@ -34,7 +35,7 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
   copy button.
 - **The labels' meanings in Finnish**, in the one list, since the prompt
   shows them to the parent.
-- **The size checked in the browser too**, of the file or the text, before it is sent.
+- **The size checked in the browser too**, of the file and the text together, before they are sent.
 
 ## Why
 
@@ -50,7 +51,8 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
 | Names compared by JavaScript's lowercase before the save | It folds as the index's ICU `lower` does for the letters a name uses; where the two could differ, the index refuses the whole import with its own message, and nothing is half saved |
 | Labels matched ignoring case and spaces | Labels are unique by name in any case, so this reads `jalkatyö` as meant and never as another label |
 | An empty file counts as none chosen | A file field with nothing chosen still sends an empty file |
-| Size checked in the browser too, file and text | A body over Next's 1 MB is refused before the action runs, and the parent would see the error page rather than the size refusal |
+| Size checked in the browser too, file and text together | A body over Next's 1 MB is refused before the action runs, and the parent would see the error page rather than the size refusal |
+| Rows inserted in one order by name | Two imports at once that share names would otherwise check the unique index in different orders and could deadlock; in one order, the later waits and is refused by name |
 | The labels' meanings in Finnish | The prompt shows them to the parent, and what a user sees is Finnish; one list keeps the import, the parent and Feature 009's AI labelling by the same words |
 | A prompt built from the list | It always names exactly the labels the import accepts |
 | `exercises/store.ts` still excluded from unit coverage | As `decisions/f002-exercise-library.md`; `importExercises` is a query, and `tests/integration/exercises.test.ts` runs it |
@@ -61,3 +63,5 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
   they are refused by name, and nothing is saved.
 - **The prompt's wording may change** after use, without changing the format.
 - **An import never changes an exercise** already in the library.
+- **A size refused in the browser is not logged**: nothing reached the server.
+  The server's `size` line is for a request that skips the page.
