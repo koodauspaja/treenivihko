@@ -59,6 +59,8 @@ export async function ExerciseLibrary({ query }: Readonly<{ query: Promise<Query
   const filters = filtersFrom(await query);
   const library = await listExercises(user.id);
   const shown = library.filter((exercise) => passes(exercise.labels, filters)).sort(byFinnishName);
+  // An empty library shows nothing whatever the filters, so it is told apart first.
+  const none = library.length === 0 ? EMPTY_LIBRARY : NOTHING_FITS;
   return (
     <>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
@@ -71,10 +73,8 @@ export async function ExerciseLibrary({ query }: Readonly<{ query: Promise<Query
           {SHOW_BUTTON}
         </button>
       </form>
-      {library.length === 0 ? (
-        <p className="mt-6">{EMPTY_LIBRARY}</p>
-      ) : shown.length === 0 ? (
-        <p className="mt-6">{NOTHING_FITS}</p>
+      {shown.length === 0 ? (
+        <p className="mt-6">{none}</p>
       ) : (
         <>
           <p className="mt-6">{exerciseCount(shown.length)}</p>
