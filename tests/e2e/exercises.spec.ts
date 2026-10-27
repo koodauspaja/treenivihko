@@ -4,6 +4,7 @@ import { getDatabase } from "../../src/lib/db/index.ts";
 import { user } from "../../src/lib/db/schema.ts";
 import { type Exercise, readExercise, valuesFrom } from "../../src/lib/exercises/rules.ts";
 import { createExercise } from "../../src/lib/exercises/store.ts";
+import { deleteUsers } from "../support/users.ts";
 import { signInParent, unlockTrainer } from "./support/parent.ts";
 
 const quiet = () => {};
@@ -167,7 +168,7 @@ test("an address that does not exist, and another parent's exercise, are not fou
 
   // A real exercise of another parent, so only the store's owner filter keeps it out.
   const other = `other-parent-${info.parallelIndex}`;
-  await getDatabase().delete(user).where(eq(user.id, other));
+  await deleteUsers(eq(user.id, other));
   await getDatabase()
     .insert(user)
     .values({ id: other, name: "Other Parent", email: `${other}@example.com` });

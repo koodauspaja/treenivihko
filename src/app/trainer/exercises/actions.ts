@@ -6,6 +6,7 @@
  * own exercises.
  *
  * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
  */
 
 import { refresh } from "next/cache";
@@ -20,7 +21,10 @@ import {
   valuesOf,
 } from "@/lib/exercises/rules";
 import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/store";
+import { type ActionState, formText } from "@/lib/forms";
 import { NOT_FOUND } from "@/lib/messages";
+import { spanOf } from "@/lib/periods/dates";
+import { exerciseInUse } from "@/lib/periods/messages";
 import { requireTrainer } from "@/lib/trainer/access";
 import { EXERCISES_PATH } from "@/lib/trainer/paths";
 
@@ -63,12 +67,12 @@ export async function saveExercise(
   return { version, message: added(reading.exercise.name), errors: {}, values: EMPTY_VALUES };
 }
 
-/** Deletes an exercise, then shows the library. */
-export async function removeExercise(form: FormData): Promise<void> {
+/** Deletes an exercise, then shows the library; or says which periods use it. */
+export async function removeExercise(previous: ActionState, form: FormData): Promise<ActionState> {
   const { user } = await requireTrainer();
-  const id = form.get("id");
-  if (typeof id === "string" && id !== "") {
-    await deleteExercise(user.id, id);
+  const result = await deleteExercise(user.id, formText(form, "id"));
+  if (result.kind === "inUse") {
+    return { version: previous.version + 1, error: exerciseInUse(result.periods.map(spanOf)) };
   }
   redirect(EXERCISES_PATH);
 }

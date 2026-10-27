@@ -3,8 +3,8 @@ import { lockTrainerSide } from "@/app/trainer/actions";
 import { SignOutButton } from "@/components/sign-out-button";
 import { TrainerTimeout } from "@/components/trainer-timeout";
 import { requireTrainer } from "@/lib/trainer/access";
-import { EXERCISES_LINK, LOCK_BUTTON, NICKNAME_LINK } from "@/lib/trainer/messages";
-import { EXERCISES_PATH, NICKNAME_PATH } from "@/lib/trainer/paths";
+import { EXERCISES_LINK, LOCK_BUTTON, NICKNAME_LINK, PERIODS_LINK } from "@/lib/trainer/messages";
+import { EXERCISES_PATH, NICKNAME_PATH, PERIODS_PATH } from "@/lib/trainer/paths";
 
 /**
  * The trainer side's menu, only behind an unlock. Leaving it for the child's
@@ -12,6 +12,7 @@ import { EXERCISES_PATH, NICKNAME_PATH } from "@/lib/trainer/paths";
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
  */
 export async function TrainerPanel() {
   const { expiresAt } = await requireTrainer();
@@ -19,6 +20,9 @@ export async function TrainerPanel() {
     <>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <nav className="mt-6 flex flex-col gap-3">
+        <Link href={PERIODS_PATH} className="underline">
+          {PERIODS_LINK}
+        </Link>
         <Link href={EXERCISES_PATH} className="underline">
           {EXERCISES_LINK}
         </Link>

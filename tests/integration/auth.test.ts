@@ -15,6 +15,7 @@ import {
   sqlFilesIn,
 } from "@/lib/db/migrations";
 import { account, session, user } from "@/lib/db/schema";
+import { deleteUsers } from "../support/users.ts";
 
 // Test-only values: nothing here reaches Google. decisions/029-sign-in.md
 const ENV = {
@@ -52,11 +53,11 @@ beforeAll(async () => {
   } finally {
     await migration.close();
   }
-  await getDatabase().delete(user);
+  await deleteUsers();
 });
 
 afterAll(async () => {
-  await getDatabase().delete(user);
+  await deleteUsers();
   delete process.env.AUTH_ALLOWED_EMAILS;
   await closeDatabase();
 });
@@ -102,7 +103,7 @@ describe("sign-in against the test database", () => {
   });
 
   it("keeps no client address with a session, though rate limiting reads it", async () => {
-    await getDatabase().delete(user).where(eq(user.email, ALLOWED));
+    await deleteUsers(eq(user.email, ALLOWED));
     await auth.api.signUpEmail({
       body: { email: ALLOWED, password: PASSWORD, name: "Test Parent" },
       headers: new Headers({ "x-real-ip": "203.0.113.7" }),
@@ -114,7 +115,7 @@ describe("sign-in against the test database", () => {
       .where(eq(session.userId, created?.id ?? ""));
     expect(sessions).toHaveLength(1);
     expect(sessions[0]?.ipAddress).toBeNull();
-    await getDatabase().delete(user).where(eq(user.email, ALLOWED));
+    await deleteUsers(eq(user.email, ALLOWED));
   });
 
   it("stores none of Google's tokens when an account is written", async () => {

@@ -6,7 +6,12 @@ import {
   exercisePath,
   IMPORT_PATH,
   NEW_EXERCISE_PATH,
+  NEW_PERIOD_PATH,
   NICKNAME_PATH,
+  PERIODS_PATH,
+  periodPath,
+  pickerPath,
+  sessionPath,
   TRAINER_PATH,
   UNLOCK_PATH,
 } from "@/lib/trainer/paths";
@@ -37,6 +42,28 @@ describe("the route table", () => {
       addresses.indexOf("/valmentaja/harjoitteet/:id")
     );
     expect(exercisePath("a b/c")).toBe("/valmentaja/harjoitteet/a%20b%2Fc");
+  });
+
+  it("serves the periods, a new period before a period's id, a session and its picker", () => {
+    const addresses = ROUTES.map(([address]) => address);
+    expect(ROUTES).toContainEqual([PERIODS_PATH, "/trainer/periods"]);
+    expect(ROUTES).toContainEqual([NEW_PERIOD_PATH, "/trainer/periods/new"]);
+    expect(ROUTES).toContainEqual(["/valmentaja/jaksot/:id", "/trainer/periods/:id"]);
+    expect(ROUTES).toContainEqual(["/valmentaja/treenit/:id", "/trainer/sessions/:id"]);
+    expect(ROUTES).toContainEqual([
+      "/valmentaja/treenit/:id/lisaa/:blockId",
+      "/trainer/sessions/:id/add/:blockId",
+    ]);
+    expect([PERIODS_PATH, NEW_PERIOD_PATH]).toEqual([
+      "/valmentaja/jaksot",
+      "/valmentaja/jaksot/uusi",
+    ]);
+    expect(addresses.indexOf(NEW_PERIOD_PATH)).toBeLessThan(
+      addresses.indexOf("/valmentaja/jaksot/:id")
+    );
+    expect(periodPath("a b/c")).toBe("/valmentaja/jaksot/a%20b%2Fc");
+    expect(sessionPath("a b/c")).toBe("/valmentaja/treenit/a%20b%2Fc");
+    expect(pickerPath("s/1", "b 2")).toBe("/valmentaja/treenit/s%2F1/lisaa/b%202");
   });
 
   it("rewrites each Finnish address to its folder", () => {

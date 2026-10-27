@@ -6,7 +6,6 @@ import {
   EQUIPMENT_FILTER,
   exerciseCount,
   GROUP_HEADING,
-  LEVEL_NAMES,
   NOTHING_FITS,
   SHOW_BUTTON,
   WARM_UP_BADGE,
@@ -16,9 +15,8 @@ import {
   EXERCISE_FILTER,
   type Filters,
   filtersFrom,
-  formatAmount,
-  formatDuration,
   passes,
+  summaryOf,
 } from "@/lib/exercises/rules";
 import { listExercises } from "@/lib/exercises/store";
 import { requireTrainer } from "@/lib/trainer/access";
@@ -85,7 +83,7 @@ export async function ExerciseLibrary({ query }: Readonly<{ query: Promise<Query
                   {exercise.name}
                 </Link>
                 <p className="text-sm">
-                  {`Taso ${LEVEL_NAMES[exercise.level]}, ${formatAmount(exercise.amountKind, exercise.amount)}, ${formatDuration(exercise.durationMinutes)}`}
+                  {summaryOf(exercise)}
                   {exercise.warmUp ? `, ${WARM_UP_BADGE}` : ""}
                 </p>
               </li>

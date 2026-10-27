@@ -27,6 +27,7 @@ import {
   listExercises,
   updateExercise,
 } from "@/lib/exercises/store";
+import { deleteUsers } from "../support/users.ts";
 
 let lines: string[] = [];
 const report = (line: string) => {
@@ -83,7 +84,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await database().delete(user);
+  await deleteUsers();
   lines = [];
   for (const id of ["u1", "u2"]) {
     await database()
@@ -93,7 +94,7 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  await database().delete(user);
+  await deleteUsers();
   await closeDatabase();
 });
 
@@ -122,7 +123,7 @@ describe("adding and reading", () => {
     expect(await updateExercise("u2", id, checked({ ...LADDER, name: "Vieras" }), report)).toEqual({
       kind: "missing",
     });
-    expect(await deleteExercise("u2", id, report)).toBe(false);
+    expect(await deleteExercise("u2", id, report)).toEqual({ kind: "missing" });
     expect((await getExercise("u1", id, report))?.name).toBe(LADDER.name);
   });
 
@@ -147,7 +148,7 @@ describe("an id the store could not have made", () => {
     async (id) => {
       expect(await getExercise("u1", id, report)).toBeNull();
       expect(await updateExercise("u1", id, checked(LADDER), report)).toEqual({ kind: "missing" });
-      expect(await deleteExercise("u1", id, report)).toBe(false);
+      expect(await deleteExercise("u1", id, report)).toEqual({ kind: "missing" });
       expect(lines).toEqual([]);
     }
   );
@@ -246,16 +247,16 @@ describe("saving and deleting", () => {
 
   it("deletes an exercise with its labels", async () => {
     const id = await saved("u1", LADDER);
-    expect(await deleteExercise("u1", id, report)).toBe(true);
+    expect(await deleteExercise("u1", id, report)).toEqual({ kind: "deleted" });
     expect(await getExercise("u1", id, report)).toBeNull();
     expect(await database().select().from(exerciseLabel)).toEqual([]);
     expect(lines.at(-1)).toBe(`exercise deleted: user u1, exercise ${id}`);
-    expect(await deleteExercise("u1", id, report)).toBe(false);
+    expect(await deleteExercise("u1", id, report)).toEqual({ kind: "missing" });
   });
 
   it("goes with the parent", async () => {
     await saved("u1", LADDER);
-    await database().delete(user).where(eq(user.id, "u1"));
+    await deleteUsers(eq(user.id, "u1"));
     expect(await database().select().from(exercise)).toEqual([]);
   });
 });

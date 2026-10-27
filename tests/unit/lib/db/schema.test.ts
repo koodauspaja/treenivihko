@@ -1,18 +1,33 @@
-import { getTableConfig } from "drizzle-orm/pg-core";
+import { getTableConfig, PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import {
   account,
+  block,
+  blockExercise,
   child,
   exercise,
   exerciseLabel,
+  period,
   session,
   trainerPassword,
   trainerUnlock,
+  trainingSession,
+  trainingSessionEquipment,
   user,
   verification,
 } from "@/lib/db/schema";
 
 const config = (table: Parameters<typeof getTableConfig>[0]) => getTableConfig(table);
+const checkSql = (table: Parameters<typeof getTableConfig>[0], name: string) => {
+  const found = config(table).checks.find((each) => each.name === name);
+  return found === undefined ? undefined : new PgDialect().sqlToQuery(found.value).sql;
+};
+const deletes = (table: Parameters<typeof getTableConfig>[0]) =>
+  config(table).foreignKeys.map((key) => [
+    key.reference().foreignColumns[0]?.name,
+    getTableConfig(key.reference().foreignTable).name,
+    key.onDelete,
+  ]);
 const columns = (table: Parameters<typeof getTableConfig>[0]) =>
   config(table).columns.map((column) => column.name);
 
@@ -96,5 +111,43 @@ describe("the schema", () => {
       "exercise_user_name_idx",
     ]);
     expect(config(exerciseLabel).checks.map((each) => each.name)).toEqual(["exercise_label_known"]);
+  });
+
+  it("checks each column rule of a period, its sessions and blocks in the database too", () => {
+    expect(config(period).checks.map((each) => each.name)).toEqual(["period_weeks"]);
+    expect(config(trainingSession).checks.map((each) => each.name)).toEqual([
+      "training_session_position",
+      "training_session_place",
+      "training_session_target",
+    ]);
+    expect(config(block).checks.map((each) => each.name)).toEqual([
+      "block_position",
+      "block_theme_length",
+      "block_theme_trimmed",
+    ]);
+    expect(config(blockExercise).checks.map((each) => each.name)).toEqual([
+      "block_exercise_position",
+      "block_exercise_amount",
+    ]);
+    expect(checkSql(trainingSession, "training_session_place")).toBe(
+      "place in ('field', 'indoors', 'gym')"
+    );
+    expect(checkSql(trainingSessionEquipment, "training_session_equipment_known")).toBe(
+      "label in ('ball', 'ladder', 'hurdles', 'cones', 'goal', 'wall', 'jump_rope')"
+    );
+  });
+
+  it("deletes a period's rows with it, and never an exercise a block uses", () => {
+    expect(deletes(period)).toEqual([["id", "user", "cascade"]]);
+    expect(deletes(trainingSession)).toEqual([["id", "period", "cascade"]]);
+    expect(deletes(trainingSessionEquipment)).toEqual([["id", "training_session", "cascade"]]);
+    expect(deletes(block)).toEqual([["id", "training_session", "cascade"]]);
+    expect(deletes(blockExercise)).toEqual([
+      ["id", "block", "cascade"],
+      ["id", "exercise", "no action"],
+    ]);
+    expect(config(blockExercise).indexes.map((index) => index.config.name)).toEqual([
+      "block_exercise_exercise_id_idx",
+    ]);
   });
 });

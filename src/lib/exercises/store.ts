@@ -5,15 +5,18 @@
  *
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
+ * decisions/f004-periods-and-sessions.md
  */
 
 import { randomUUID } from "node:crypto";
 import { and, eq, type SQL, sql } from "drizzle-orm";
 import { toStderr } from "@/lib/auth/allowlist";
+import { isRowId } from "@/lib/db/ids";
 import { type Database, getDatabase } from "@/lib/db/index";
 import { logged, type Report } from "@/lib/db/logged";
 import { exercise, exerciseLabel } from "@/lib/db/schema";
-import { LABEL_KEYS, type LabelKey } from "./labels";
+import { type PeriodRow, periodsUsing } from "@/lib/periods/store";
+import { inListOrder, type LabelKey } from "./labels";
 import type { AmountKind, CheckedExercise, Exercise, Level } from "./rules";
 
 export type StoredExercise = Exercise & { id: string };
@@ -66,18 +69,6 @@ const columnsOf = (values: Exercise) => ({
   warmUp: values.warmUp,
 });
 
-/**
- * Whether `id` is one this store could have made. Anything else, such as a
- * crafted address holding U+0000, which Postgres cannot even compare, is no
- * exercise of anyone's.
- */
-const isExerciseId = (id: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id);
-
-/** Labels in the list's order, as readExercise gives them: Postgres promises no order. */
-const inListOrder = (labels: readonly string[]): LabelKey[] =>
-  LABEL_KEYS.filter((key) => labels.includes(key));
-
 /** Exercises with their labels, in one statement, so a save cannot land between them. */
 async function readExercises(where: SQL | undefined): Promise<StoredExercise[]> {
   const rows = await getDatabase()
@@ -103,7 +94,7 @@ export function listExercises(userId: string, report: Report = toStderr) {
 
 /** One of the parent's exercises, or null when it is not theirs or not there. */
 export function getExercise(userId: string, id: string, report: Report = toStderr) {
-  if (!isExerciseId(id)) {
+  if (!isRowId(id)) {
     return Promise.resolve(null);
   }
   return logged("exercise read", `user ${userId}, exercise ${id}`, report, async () => {
@@ -176,7 +167,7 @@ export function updateExercise(
   values: CheckedExercise,
   report: Report = toStderr
 ): Promise<SaveResult> {
-  if (!isExerciseId(id)) {
+  if (!isRowId(id)) {
     return Promise.resolve({ kind: "missing" });
   }
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {
@@ -258,19 +249,57 @@ export function importExercises(
   });
 }
 
-/** Deletes one of the parent's exercises; false when it was not theirs or not there. */
-export function deleteExercise(userId: string, id: string, report: Report = toStderr) {
-  if (!isExerciseId(id)) {
-    return Promise.resolve(false);
+export type DeleteResult =
+  | { kind: "deleted" }
+  | { kind: "missing" }
+  | { kind: "inUse"; periods: PeriodRow[] };
+
+/** Whether a failure is a block exercise's key refusing to lose its exercise. */
+const isInUse = (error: unknown) =>
+  error instanceof Error && (error.cause as { code?: unknown } | undefined)?.code === "23503";
+
+/**
+ * Deletes one of the parent's exercises, or says which periods use it, as
+ * read before the delete; a period taking it meanwhile is refused by the
+ * key, and told the same way.
+ */
+export function deleteExercise(
+  userId: string,
+  id: string,
+  report: Report = toStderr
+): Promise<DeleteResult> {
+  if (!isRowId(id)) {
+    return Promise.resolve({ kind: "missing" });
   }
   return logged("exercise deleted", `user ${userId}, exercise ${id}`, report, async () => {
-    const removed = await getDatabase()
-      .delete(exercise)
-      .where(and(eq(exercise.userId, userId), eq(exercise.id, id)))
-      .returning({ id: exercise.id });
-    if (removed.length > 0) {
-      report(`exercise deleted: user ${userId}, exercise ${id}`);
+    const inUse = async (periods: PeriodRow[]) => {
+      report(`exercise refused, in use: user ${userId}, exercise ${id}`);
+      return { kind: "inUse", periods } as const;
+    };
+    try {
+      const result = await getDatabase().transaction(async (tx) => {
+        const periods = await periodsUsing(tx, userId, id);
+        if (periods.length > 0) {
+          return { kind: "inUse", periods } as const;
+        }
+        const removed = await tx
+          .delete(exercise)
+          .where(and(eq(exercise.userId, userId), eq(exercise.id, id)))
+          .returning({ id: exercise.id });
+        return { kind: removed.length > 0 ? "deleted" : "missing" } as const;
+      });
+      if (result.kind === "inUse") {
+        return inUse(result.periods);
+      }
+      if (result.kind === "deleted") {
+        report(`exercise deleted: user ${userId}, exercise ${id}`);
+      }
+      return result;
+    } catch (error) {
+      if (!isInUse(error)) {
+        throw error;
+      }
+      return inUse(await periodsUsing(getDatabase(), userId, id));
     }
-    return removed.length > 0;
   });
 }

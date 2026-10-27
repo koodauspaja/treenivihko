@@ -8,9 +8,10 @@
  * decisions/f003-exercise-import.md
  */
 
+import { formText as text } from "@/lib/forms";
 import { characterCount, storedLength, tidy, unstorable } from "@/lib/text";
 import { LABEL_KEYS, type LabelGroup, type LabelKey, labelOf, labelsIn } from "./labels";
-import { REFUSAL } from "./messages";
+import { LEVEL_NAMES, REFUSAL } from "./messages";
 
 export const NAME_MAX_LENGTH = 40;
 export const INSTRUCTIONS_MAX_LENGTH = 1000;
@@ -72,11 +73,6 @@ export type ExerciseValues = {
 export type ExerciseReading =
   | { ok: true; exercise: CheckedExercise }
   | { ok: false; errors: Partial<Record<ExerciseField, string>> };
-
-const text = (form: FormData, field: string) => {
-  const value = form.get(field);
-  return typeof value === "string" ? value : "";
-};
 
 /** A whole number written in digits only, within the range, or null. */
 export function wholeNumber(input: string, min: number, max: number): number | null {
@@ -238,6 +234,12 @@ export function formatAmount(kind: AmountKind, amount: number): string {
 }
 
 export const formatDuration = (minutes: number) => `${minutes} min`;
+
+/** An exercise's line in a list: `Taso Helppo, 10 kertaa, 5 min`. */
+export const summaryOf = (
+  exercise: Readonly<Pick<Exercise, "level" | "amountKind" | "amount" | "durationMinutes">>
+) =>
+  `Taso ${LEVEL_NAMES[exercise.level]}, ${formatAmount(exercise.amountKind, exercise.amount)}, ${formatDuration(exercise.durationMinutes)}`;
 
 /** What the library's filters let through. */
 export type Filters = {
