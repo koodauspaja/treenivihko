@@ -378,6 +378,36 @@ describe("an import", () => {
     expect(lines).toEqual(["exercise import refused, name in use: user u1"]);
   });
 
+  it("refuses a deadlock with another write of the same names as the name in use", async () => {
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const raw = (name: string) => ({
+      id: randomUUID(),
+      userId: "u1",
+      name,
+      instructions: "Tee näin.",
+      amountKind: "count",
+      amount: 5,
+      durationMinutes: 5,
+      level: 1,
+    });
+    // The import takes Lähdöt, then waits on Tikkaat, which this holds; this
+    // then claims Lähdöt. The import waited first, so it is the one aborted.
+    const other = database().transaction(async (tx) => {
+      await tx.insert(exercise).values(raw(LADDER.name));
+      await pause(300);
+      await tx.insert(exercise).values(raw(SPRINT.name));
+    });
+    await pause(50);
+    const result = await importExercises("u1", [checked(LADDER), checked(SPRINT)], report);
+    await other;
+    expect(result).toEqual({ kind: "nameInUse" });
+    expect(lines).toEqual(["exercise import refused, name in use: user u1"]);
+    expect((await listExercises("u1", report)).map((each) => each.name).sort()).toEqual(
+      [SPRINT.name, LADDER.name].sort()
+    );
+    expect(await database().select().from(exerciseLabel)).toEqual([]);
+  });
+
   it("logs a failure with the user's id and no text, and passes it on", async () => {
     await expect(importExercises("nobody", [checked(LADDER)], report)).rejects.toThrow(
       /^exercises imported failed: user nobody: /

@@ -197,6 +197,30 @@ describe("readImport, an exercise's fields", () => {
     expect(reasonsOf({ ...without("kertaa"), sekuntia: 30 })).toBeNull();
   });
 
+  it("names each amount's own rule too, when both are given", () => {
+    const both = "Anna joko kertaa tai sekuntia, ei molempia.";
+    expect(reasonsOf({ ...VALID, kertaa: 0, sekuntia: 7 })).toEqual([
+      both,
+      "Kertoja on oltava 1–100.",
+      "Ajan on oltava 5 s – 10 min, 5 sekunnin välein.",
+    ]);
+    expect(reasonsOf({ ...VALID, kertaa: 10, sekuntia: 7 })).toEqual([
+      both,
+      "Ajan on oltava 5 s – 10 min, 5 sekunnin välein.",
+    ]);
+    expect(reasonsOf({ ...VALID, kertaa: 0, sekuntia: 30 })).toEqual([
+      both,
+      "Kertoja on oltava 1–100.",
+    ]);
+  });
+
+  it("refuses a lone surrogate, written as a JSON escape, rather than save it changed", () => {
+    const escaped = JSON.stringify([VALID]).replace('"nimi":"Tikkaat', '"nimi":"\\ud800Tikkaat');
+    expect(readImport(escaped, [])).toMatchObject({
+      failing: [{ position: 1, reasons: ["Nimessä on oltava 1–40 merkkiä."] }],
+    });
+  });
+
   it("refuses a value of the wrong type in the fields Feature 002 never sees as such", () => {
     expect(reasonsOf({ ...VALID, videolinkki: 5 })).toEqual([
       "Videolinkin on oltava https-osoite.",

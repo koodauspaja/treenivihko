@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { characterCount, hasNul, storedLength, tidy, WHITESPACE, WHITESPACE_SQL } from "@/lib/text";
+import {
+  characterCount,
+  storedLength,
+  tidy,
+  unstorable,
+  WHITESPACE,
+  WHITESPACE_SQL,
+} from "@/lib/text";
 
 describe("text as a person counts it", () => {
   it("lists exactly the whitespace JavaScript's trim removes", () => {
@@ -27,9 +34,13 @@ describe("text as a person counts it", () => {
     expect(storedLength("\u{1f600}")).toBe(1);
   });
 
-  it("finds U+0000, which Postgres cannot store", () => {
-    expect(hasNul("a\u0000b")).toBe(true);
-    expect(hasNul("ab")).toBe(false);
+  it("finds U+0000, which Postgres refuses, and a lone surrogate, which it would replace", () => {
+    expect(unstorable("a\u0000b")).toBe(true);
+    expect(unstorable("a\ud800b")).toBe(true);
+    expect(unstorable("a\udfffb")).toBe(true);
+    expect(unstorable("ab")).toBe(false);
+    // A pair is one character, kept as it is.
+    expect(unstorable("a\ud83d\ude00b")).toBe(false);
   });
 
   it("writes the list as a Postgres escape string", () => {

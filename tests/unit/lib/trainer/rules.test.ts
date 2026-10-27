@@ -56,8 +56,9 @@ describe("nicknameFrom", () => {
     expect(nicknameFrom(`${decomposed}x`)).toBeNull();
   });
 
-  it("refuses U+0000, which Postgres cannot store", () => {
+  it("refuses U+0000, which Postgres cannot store, and a lone surrogate, which it would replace", () => {
     expect(nicknameFrom("Ab\u0000")).toBeNull();
+    expect(nicknameFrom("Ab\ud800")).toBeNull();
   });
 
   it("refuses what is not text", () => {
