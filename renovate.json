@@ -18,10 +18,10 @@
     {
       "customType": "regex",
       "description": [
-        "CI installs an exact npm, because Node 24's bundled npm is older than .npmrc's engine-strict accepts.",
-        "tests/unit/config/renovate.test.ts checks this pattern matches every npm@<version> in ci.yml."
+        "CI and Railway's build install an exact npm, because Node 24's bundled npm is older than .npmrc's engine-strict accepts.",
+        "tests/unit/config/renovate.test.ts checks this pattern matches every npm@<version> in ci.yml and .railway/railway.ts."
       ],
-      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/", "/^\\.railway/railway\\.ts$/"],
       "matchStrings": ["npm@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
       "depNameTemplate": "npm",
       "datasourceTemplate": "npm"
