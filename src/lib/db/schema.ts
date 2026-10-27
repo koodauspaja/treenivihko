@@ -19,7 +19,7 @@ export const user = pgTable("user", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
-  // Google's profile picture, a link Better Auth fills; nothing shows it.
+  // Better Auth checks for it; a hook keeps Google's picture out, so it stays empty.
   image: text("image"),
   ...timestamps,
 });

@@ -23,10 +23,10 @@ trainer side asks for a password of its own, which is the next feature's.
   of the parent's. No sign-out button yet: the trainer side puts one behind its
   password.
 - **A session lasts 90 days and renews on use**, at most once a day.
-- **Google's tokens are never stored.** A `databaseHooks` hook empties them
-  before any account row is written.
-- **Better Auth's four tables as it asks**, `password` and `image` included,
-  in the first migration, `create_auth_tables`.
+- **Google's tokens and profile picture are never stored.** `databaseHooks`
+  empty them before any account or user row is written.
+- **Better Auth's four tables as it asks**, `password` and `image` included
+  and both always empty, in the first migration, `create_auth_tables`.
 - **A request without a session cookie never reaches the auth server**, so a
   signed-out page needs no variables and no database.
 - **Public addresses are Finnish, folders English.** `src/lib/routes.ts` is
@@ -46,7 +46,8 @@ trainer side asks for a password of its own, which is the next feature's.
 | 90 days, renewed on use | The child's device stays signed in between uses a few times a week; the parent signs in there once |
 | No sign-out on the child's side | The child would sign the parent out; signing out belongs behind the trainer side's password |
 | No tokens stored | Nothing calls Google after sign-in, and the ID token is the parent's name, address and picture, readable; `encryptOAuthTokens` covers the access and refresh tokens but not it |
-| `password` and `image` kept | Measured: Better Auth 1.7 checks the Drizzle schema at start-up and refuses ("Drizzle schema mismatch") without them. `password` stays empty; `image` holds Google's picture link |
+| No picture | Nothing shows one, and it is the parent's |
+| `password` and `image` kept as columns | Measured: Better Auth 1.7 checks the Drizzle schema at start-up and refuses ("Drizzle schema mismatch") without them. Both stay empty |
 | The cookie check first | CI's end-to-end job then needs no auth variables and no database, and a signed-out visit costs no lookup |
 | Finnish addresses, English folders | CLAUDE.md: Finnish only where a reader sees it. The table keeps the two in one place, and the redirect keeps an English path from becoming a second address |
 | IP addresses kept | `disableIpTracking` also switches off Better Auth's rate limiting on sign-in, which is worth more than leaving the address out of a session row |

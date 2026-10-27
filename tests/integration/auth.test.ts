@@ -74,12 +74,17 @@ describe("sign-in against the test database", () => {
 
   it("lets the allowed address in, and signing out ends its session", async () => {
     const signedUp = await auth.api.signUpEmail({
-      body: { email: ALLOWED, password: PASSWORD, name: "Test Parent" },
+      body: {
+        email: ALLOWED,
+        password: PASSWORD,
+        name: "Test Parent",
+        image: "https://example.com/p.png",
+      },
       returnHeaders: true,
     });
     const cookies = convertSetCookieToCookie(signedUp.headers);
     const [created] = await usersWithEmail(ALLOWED);
-    expect(created).toBeDefined();
+    expect(created).toMatchObject({ email: ALLOWED, image: null });
     expect(await auth.api.getSession({ headers: cookies })).toMatchObject({
       user: { email: ALLOWED },
     });
