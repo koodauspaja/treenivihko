@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   account,
   child,
+  exercise,
+  exerciseLabel,
   session,
   trainerPassword,
   trainerUnlock,
@@ -59,6 +61,8 @@ describe("the schema", () => {
     ["child", child, "user_id", "user"],
     ["trainer_password", trainerPassword, "user_id", "user"],
     ["trainer_unlock", trainerUnlock, "session_id", "session"],
+    ["exercise", exercise, "user_id", "user"],
+    ["exercise_label", exerciseLabel, "exercise_id", "exercise"],
   ] as const)("deletes each %s row with its %s's owner", (name, table, column, owner) => {
     expect(config(table).name).toBe(name);
     const [foreignKey] = config(table).foreignKeys;
@@ -75,5 +79,22 @@ describe("the schema", () => {
     expect(config(trainerPassword).checks.map((each) => each.name)).toEqual([
       "trainer_password_failed_attempts",
     ]);
+  });
+
+  it("checks every exercise rule in the database too, and the label against the list", () => {
+    expect(config(exercise).checks.map((each) => each.name)).toEqual([
+      "exercise_name_length",
+      "exercise_name_trimmed",
+      "exercise_instructions_trimmed",
+      "exercise_instructions_length",
+      "exercise_video_url",
+      "exercise_amount",
+      "exercise_duration",
+      "exercise_level",
+    ]);
+    expect(config(exercise).indexes.map((index) => index.config.name)).toEqual([
+      "exercise_user_name_idx",
+    ]);
+    expect(config(exerciseLabel).checks.map((each) => each.name)).toEqual(["exercise_label_known"]);
   });
 });

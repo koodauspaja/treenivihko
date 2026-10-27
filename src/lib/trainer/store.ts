@@ -4,6 +4,7 @@
  * leaves one line in the log, with ids only.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -11,35 +12,9 @@ import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { and, eq, gt, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { toStderr } from "@/lib/auth/allowlist";
 import { getDatabase } from "@/lib/db/index";
+import { logged, type Report } from "@/lib/db/logged";
 import { child, session, trainerPassword, trainerUnlock } from "@/lib/db/schema";
 import { isLockedOut, LOCKOUT_ATTEMPTS, lockoutEnd, unlockExpiry } from "./rules";
-
-type Report = (line: string) => void;
-
-/**
- * Postgres's reason for a failure, without the query: Drizzle's own message
- * carries the query's values, such as a password's hash or a nickname.
- */
-function reasonOf(error: unknown): string {
-  if (error instanceof Error && error.cause instanceof Error) {
-    return error.cause.message;
-  }
-  return error instanceof Error ? error.message : String(error);
-}
-
-/**
- * Runs `work`; on a failure, logs the event, its ids and the reason, and
- * passes on an error that carries no more than that, since Next logs it too.
- */
-async function logged<T>(event: string, ids: string, report: Report, work: () => Promise<T>) {
-  try {
-    return await work();
-  } catch (error) {
-    const line = `${event} failed: ${ids}: ${reasonOf(error)}`;
-    report(line);
-    throw new Error(line);
-  }
-}
 
 /** An unlock's end moved to 15 minutes from `now`, or kept, when it is already later. */
 const laterEnd = (now: Date) =>

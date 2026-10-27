@@ -4,7 +4,10 @@
  * password, and how long an unlock lasts.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
+
+import { characterCount, hasNul, tidy } from "@/lib/text";
 
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
@@ -21,12 +24,9 @@ export const UNLOCK_MINUTES = 15;
 
 const MINUTE_MS = 60_000;
 
-/** Characters as a person counts them: an emoji is one, not two UTF-16 units. */
-const characters = (text: string) => [...text.normalize("NFC")].length;
-
 /** Why the command refuses a password, in English since it is a tool, or null. */
 export function passwordRefusal(password: string, repeated: string): string | null {
-  const length = characters(password);
+  const length = characterCount(password);
   if (length < PASSWORD_MIN_LENGTH || length > PASSWORD_MAX_LENGTH) {
     return `a password is ${PASSWORD_MIN_LENGTH} to ${PASSWORD_MAX_LENGTH} characters`;
   }
@@ -41,10 +41,9 @@ export function nicknameFrom(input: unknown): string | null {
   if (typeof input !== "string") {
     return null;
   }
-  // One form of each character, so "Äijä" is 4 whichever way it was typed.
-  const nickname = input.trim().normalize("NFC");
-  const length = characters(nickname);
-  return length >= 1 && length <= NICKNAME_MAX_LENGTH ? nickname : null;
+  const nickname = tidy(input);
+  const length = characterCount(nickname);
+  return length >= 1 && length <= NICKNAME_MAX_LENGTH && !hasNul(nickname) ? nickname : null;
 }
 
 /** When an unlock made or used at `now` ends. */
