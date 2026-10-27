@@ -101,6 +101,22 @@ describe("sign-in against the test database", () => {
     ).toEqual([]);
   });
 
+  it("keeps no client address with a session, though rate limiting reads it", async () => {
+    await getDatabase().delete(user).where(eq(user.email, ALLOWED));
+    await auth.api.signUpEmail({
+      body: { email: ALLOWED, password: PASSWORD, name: "Test Parent" },
+      headers: new Headers({ "x-real-ip": "203.0.113.7" }),
+    });
+    const [created] = await usersWithEmail(ALLOWED);
+    const sessions = await getDatabase()
+      .select()
+      .from(session)
+      .where(eq(session.userId, created?.id ?? ""));
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.ipAddress).toBeNull();
+    await getDatabase().delete(user).where(eq(user.email, ALLOWED));
+  });
+
   it("stores none of Google's tokens when an account is written", async () => {
     const [created] = await getDatabase()
       .insert(user)
