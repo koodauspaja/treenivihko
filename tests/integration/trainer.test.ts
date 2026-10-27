@@ -219,6 +219,7 @@ describe("the unlock", () => {
   it("moves on with each use, and ends 15 minutes after the last", async () => {
     expect(await touchUnlock("s1", minutes(10))).toEqual(minutes(25));
     expect(await touchUnlock("s1", minutes(24))).toEqual(minutes(39));
+    expect(await touchUnlock("s1", minutes(5))).toEqual(minutes(39));
     expect(await touchUnlock("s1", minutes(39))).toBeNull();
     expect(await touchUnlock("s2", minutes(1))).toBeNull();
   });

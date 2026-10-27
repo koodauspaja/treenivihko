@@ -21,9 +21,13 @@ export const UNLOCK_MINUTES = 15;
 
 const MINUTE_MS = 60_000;
 
+/** Characters as a person counts them: an emoji is one, not two UTF-16 units. */
+const characters = (text: string) => [...text.normalize("NFC")].length;
+
 /** Why the command refuses a password, in English since it is a tool, or null. */
 export function passwordRefusal(password: string, repeated: string): string | null {
-  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
+  const length = characters(password);
+  if (length < PASSWORD_MIN_LENGTH || length > PASSWORD_MAX_LENGTH) {
     return `a password is ${PASSWORD_MIN_LENGTH} to ${PASSWORD_MAX_LENGTH} characters`;
   }
   if (password !== repeated) {
@@ -37,10 +41,10 @@ export function nicknameFrom(input: unknown): string | null {
   if (typeof input !== "string") {
     return null;
   }
-  const nickname = input.trim();
-  // Characters as a person counts them, so "Äijä" is 4 whichever way it is encoded.
-  const length = [...nickname.normalize("NFC")].length;
-  return length >= 1 && length <= NICKNAME_MAX_LENGTH ? nickname.normalize("NFC") : null;
+  // One form of each character, so "Äijä" is 4 whichever way it was typed.
+  const nickname = input.trim().normalize("NFC");
+  const length = characters(nickname);
+  return length >= 1 && length <= NICKNAME_MAX_LENGTH ? nickname : null;
 }
 
 /** When an unlock made or used at `now` ends. */
