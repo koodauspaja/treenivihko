@@ -31,12 +31,17 @@ close it if it does, since the committed file is the configuration.
 | `npm@<version>` in `ci.yml` | a custom manager | CI installs an exact npm; Renovate bumps it like a dependency |
 | `typescript` | below 7 | Next's plugin and build type check need TypeScript's JS API, which 7 does not ship |
 | `@types/node` | below 25 | The types follow the Node line `.nvmrc` names |
-| A Node major in `.nvmrc` | waits for approval in the Dependency Dashboard | The `@types/node` hold has to move with it, by hand |
+| A Node major in `.nvmrc` | waits for approval in the Dependency Dashboard, and only even-numbered lines are proposed | The `@types/node` hold has to move with it, by hand, and `engines` refuses 25 |
+| `SonarSource/sonarqube-scan-action` | waits for approval in the Dependency Dashboard | It is the one third-party code that runs beside `SONAR_TOKEN`, so its release is looked at before it runs |
 
 The GitHub Actions pins (`@<sha> # v<version>`) and `.nvmrc` are updated by
 Renovate's own managers. `tests/unit/config/renovate.test.ts` checks that the
 npm manager's pattern matches every `npm@<version>` in `ci.yml`, and that the
 `@types/node` hold follows `.nvmrc`.
+
+**Approving a held update**: open the Dependency Dashboard issue, read the
+release (for the scan action, its changes and its commit), then tick its box.
+Renovate opens the pull request on its next run.
 
 To check a change to the configuration before pushing it:
 

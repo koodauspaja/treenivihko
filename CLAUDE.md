@@ -50,7 +50,7 @@ Two things hold for every feature:
   `- [ ] The criterion — **not ticked: why**`. Boxes are ticked before the
   pull request opens, because nothing fails when they are skipped.
 - **A pull request links its issue with a closing keyword**: `Closes #N`,
-  never a bare `#N`. GitHub also reads the keyword in a squash commit body,
+  never a bare `#N`. Renovate's pull requests have no issue to link. GitHub also reads the keyword in a squash commit body,
   backticks and all, so a merge that must not close the issue does not
   contain the phrase in any form.
 - **The repository is public, and the user is a child.** No name, age, photo,
