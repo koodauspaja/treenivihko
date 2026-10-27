@@ -19,7 +19,7 @@ them.
 | 1 | No secrets, and no real person's data | `**` | A secret arrives in a workflow or a config file as often as in code, and personal data in a fixture or a doc as often as in source |
 | 2 | What a user sees is Finnish, and AI output is checked against the library | `src/**` `.ts` and `.tsx` | Both happen only in the app's code |
 | 3 | A decision record matches its spec | `specs/**`, `decisions/**` | The rule compares two documents, so it is shown both |
-| 4 | How the repository is run, and the risks that need someone it does not have | `**` | Context for every file, since such findings land on workflows, scripts and docs alike |
+| 4 | How the repository is run and the app is used, and the risks that need someone it does not have | `**` | Context for every file, since such findings land on workflows, scripts and docs alike |
 
 **Block 1's privacy rule** exists because the repository is public and the
 user is a child. The real data is the parent's, and it stays in the database.
@@ -31,9 +31,21 @@ which this repository has, and they came back in every round
 (`decisions/018-sourcery-repository-context.md`). A risk that needs only the
 one writer is still reported.
 
+Block 4 also says how the app is used: only the app writes the database, and
+one parent uses it. On the first three feature pull requests, #46, #48 and
+#49, 33 of 57 findings led to a fix and 24 were answered without a change;
+14 of the 24 were what Blocks 2 and 4 now say, and 8 of those were a write
+from outside the app or two of the parent's own requests at once
+(`decisions/050-sourcery-calibration.md`). A path inside the app that skips
+its checks is still reported: three such findings on #46 were answered at
+first, came back, and were right.
+
 **Block 2's AI rule** is the code-level half of "the AI chooses, it never
 invents" (`CLAUDE.md`). A model's answer that names an exercise outside the
-library, or a value outside its limits, is rejected before anyone sees it.
+library, or a value outside its limits, is rejected before anyone sees it. It
+is about the app's own calls to the Claude API: on #49, an import the parent
+wrote with an AI tool of their own, shown back to them in a refusal, drew 6
+findings across two rounds, so the rule says that text is the parent's input.
 
 ## What a rule sees
 

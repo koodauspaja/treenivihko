@@ -63,7 +63,7 @@ why its paths are what they are.
 **Block 2**: `src/**/*.ts,src/**/*.tsx`
 ```
 - Every string a user sees must be Finnish: labels, messages, errors, empty states and alt text.
-- An answer from the Claude API reaches a user only after it has been checked against the exercise library: every exercise it names must exist in the library, and every value it adjusts must be within the limits the code defines. Flag code that shows, stores or returns the model's output without that check, and code that lets the model add an exercise to the library.
+- An answer from the Claude API reaches a user only after it has been checked against the exercise library: every exercise it names must exist in the library, and every value it adjusts must be within the limits the code defines. Flag code that shows, stores or returns the model's output without that check, and code that lets the model add an exercise to the library. Text the parent pastes or uploads, such as an import written with an AI tool of their own, is the parent's input, not the app's model output: showing it back to the parent in a refusal is not a finding. This rule is about the app's own calls to the Claude API.
 ```
 
 **Block 3**: `specs/**,decisions/**`
@@ -74,11 +74,12 @@ why its paths are what they are.
 
 **Block 4**: `**`
 ```
-This repository has one writer, who opens every pull request against main from a branch of this repository and merges them one at a time. Do not report risks that need a second person with write access, a pull request from a fork, overlapping merges or pushes to main, or a pull request retargeted from another branch.
+This repository has one writer, who opens every pull request against main from a branch of this repository and merges them one at a time. Do not report risks that need a second person with write access, a pull request from a fork, overlapping merges or pushes to main, or a pull request retargeted from another branch. The database is written only by the app, and whoever holds its credentials is the owner: do not report a write from outside the app that skips the app's checks. A path inside the app that skips them is still a finding. One parent uses the app, so two of their requests at the same instant are rare: report a race between them only when it can lose data or leave it half saved, not when the worst outcome is an error page or a refusal that doing it again fixes.
 ```
 
-Block 4 is context rather than a check. A clone with more than one writer
-leaves it out, or rewrites it to say how that repository is run.
+Block 4 is context rather than a check. A clone with more than one writer,
+or whose app has more than one user at a time or a writer besides the app,
+leaves it out, or rewrites it to say how that repository and its app are run.
 
 ## Step 5 — Test with a pull request
 
