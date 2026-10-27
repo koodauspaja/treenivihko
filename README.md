@@ -14,16 +14,16 @@ and adapts the next period: longer or shorter, easier or harder.
 
 Every user-facing string is Finnish; code, comments and documents are English.
 
-**Status:** being set up. The application is a skeleton with a placeholder
-home page; `docs/setup/` is written step by step as the infrastructure is
-stood up, and features follow as specs.
+**Status:** being set up. The parent signs in with Google and lands on a
+placeholder for the child's side; `docs/setup/` is written step by step as the
+infrastructure is stood up, and features follow as specs.
 
 ```bash
 nvm use                # Node 24, from .nvmrc
 npm install -g npm@12  # once; .npmrc refuses an older npm
 npm ci
 npm run test:e2e:browser
-cp .env.example .env   # and fill in a password
+cp .env.example .env   # fill it in: docs/setup/009 and 011
 npm run db:up          # Postgres, in Docker
 npm run dev            # http://localhost:3000
 npm run verify         # every check, as CI runs them
