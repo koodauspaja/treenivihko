@@ -21,6 +21,13 @@ export const STATEMENT_TIMEOUT_MS = 10_000;
 export const MIGRATION_STATEMENT_TIMEOUT_MS = 0;
 
 /**
+ * How long a migration waits for any lock, the migration lock included, before
+ * it fails. Without it, a run stuck behind another would wait forever, and so
+ * would every deploy after it.
+ */
+export const MIGRATION_LOCK_TIMEOUT_MS = 300_000;
+
+/**
  * How long a connection may sit idle before it is closed. Open, the driver sends
  * a keepalive every minute, and Railway lets nothing sleep that still sends.
  */
@@ -34,17 +41,23 @@ export const APPLICATION_CONNECTIONS = 10;
 /** One, so the migration lock is taken and released in the same session. */
 export const MIGRATION_CONNECTIONS = 1;
 
-/** The driver's options for a client of `connections` whose statements time out after `statementTimeoutMs`. */
-export function clientOptions(statementTimeoutMs: number, connections: number) {
+/**
+ * The driver's options for a client of `connections`, whose statements time out
+ * after `statementTimeoutMs` and whose lock waits after `lockTimeoutMs`; 0 is none.
+ */
+export function clientOptions(statementTimeoutMs: number, connections: number, lockTimeoutMs = 0) {
   return {
     max: connections,
     idle_timeout: IDLE_TIMEOUT_SECONDS,
-    connection: { statement_timeout: statementTimeoutMs },
+    connection: { statement_timeout: statementTimeoutMs, lock_timeout: lockTimeoutMs },
   };
 }
 
-function open(statementTimeoutMs: number, connections: number): Connection {
-  const client = postgres(requireDatabaseUrl(), clientOptions(statementTimeoutMs, connections));
+function open(statementTimeoutMs: number, connections: number, lockTimeoutMs = 0): Connection {
+  const client = postgres(
+    requireDatabaseUrl(),
+    clientOptions(statementTimeoutMs, connections, lockTimeoutMs)
+  );
   return { database: drizzle(client, { schema }), close: () => client.end({ timeout: 2 }) };
 }
 
@@ -62,7 +75,10 @@ export async function closeDatabase(): Promise<void> {
   shared = undefined;
 }
 
-/** A client for running migrations, on one connection without the statement timeout; the caller closes it. */
+/**
+ * A client for running migrations, on one connection, without the statement
+ * timeout but with the lock timeout; the caller closes it.
+ */
 export function openMigrationDatabase(): Connection {
-  return open(MIGRATION_STATEMENT_TIMEOUT_MS, MIGRATION_CONNECTIONS);
+  return open(MIGRATION_STATEMENT_TIMEOUT_MS, MIGRATION_CONNECTIONS, MIGRATION_LOCK_TIMEOUT_MS);
 }

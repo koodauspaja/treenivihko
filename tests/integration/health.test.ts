@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { closeDatabase } from "@/lib/db/index";
 
-// Outside a Next request there is no request scope to wait for.
+// Outside a Next request there is no request scope to wait for. decisions/026-railway.md
 vi.mock("next/server", () => ({ connection: async () => {} }));
 
 const { GET } = await import("@/app/api/health/route");

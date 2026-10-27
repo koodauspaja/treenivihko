@@ -94,6 +94,9 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
   the working tree. If the upload changes only files outside the watch paths,
   Railway skips it; redeploy it from the dashboard, which ignores them. The
   next deploy of `main` replaces it.
+- **A deploy whose migration fails on `lock timeout`** waited five minutes
+  for a lock: another migration run, or the app's own lock on a table. The
+  previous version keeps serving. Find what holds it before deploying again.
 - **A deploy that waits for CI and CI fails** is skipped, and the previous
   version keeps serving. Rerun the failed job; if Railway has not deployed by
   the time it passes, redeploy that commit.
