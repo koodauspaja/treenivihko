@@ -10,11 +10,14 @@ afterEach(() => {
 });
 
 describe("the library page", () => {
-  it("is headed Harjoitteet, with a new exercise's link, the library and a way back", () => {
+  it("is headed Harjoitteet, with links to a new exercise and the import, the library and a way back", () => {
     render(<ExercisesPage params={Promise.resolve({})} searchParams={Promise.resolve({})} />);
     expect(screen.getByRole("heading", { level: 1, name: "Harjoitteet" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Uusi harjoite" }).getAttribute("href")).toBe(
       "/valmentaja/harjoitteet/uusi"
+    );
+    expect(screen.getByRole("link", { name: "Tuo harjoitteita" }).getAttribute("href")).toBe(
+      "/valmentaja/harjoitteet/tuonti"
     );
     expect(screen.getByText("the library")).toBeDefined();
     expect(screen.getByRole("link", { name: "Takaisin" }).getAttribute("href")).toBe("/valmentaja");

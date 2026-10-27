@@ -23,6 +23,7 @@ import {
   createExercise,
   deleteExercise,
   getExercise,
+  importExercises,
   listExercises,
   updateExercise,
 } from "@/lib/exercises/store";
@@ -337,6 +338,51 @@ describe("the database's own checks", () => {
       /^exercise created failed: user nobody: /
     );
     expect(lines).toEqual([expect.stringMatching(/^exercise created failed: user nobody: /)]);
+    expect(lines.join("\n")).not.toContain("Tikkaat");
+  });
+});
+
+describe("an import", () => {
+  const SPRINT: Exercise = {
+    ...LADDER,
+    name: "Lähdöt",
+    videoUrl: null,
+    amountKind: "count",
+    amount: 6,
+    warmUp: false,
+    labels: ["speed", "gym"],
+  };
+
+  it("adds every exercise with its labels in one go, and logs the count only", async () => {
+    expect(await importExercises("u1", [checked(LADDER), checked(SPRINT)], report)).toEqual({
+      kind: "imported",
+      count: 2,
+    });
+    const library = await listExercises("u1", report);
+    expect(
+      library.map(({ id: _, ...rest }) => rest).sort((a, b) => a.name.localeCompare(b.name))
+    ).toEqual([SPRINT, LADDER]);
+    expect(lines).toEqual(["exercises imported: user u1, 2 exercises"]);
+    expect(await listExercises("u2", report)).toEqual([]);
+  });
+
+  it("saves none of it when the library took one of its names meanwhile", async () => {
+    await saved("u1", { ...SPRINT, name: "LÄHDÖT" });
+    lines = [];
+    expect(await importExercises("u1", [checked(LADDER), checked(SPRINT)], report)).toEqual({
+      kind: "nameInUse",
+    });
+    expect((await listExercises("u1", report)).map((exercise) => exercise.name)).toEqual([
+      "LÄHDÖT",
+    ]);
+    expect(lines).toEqual(["exercise import refused, name in use: user u1"]);
+  });
+
+  it("logs a failure with the user's id and no text, and passes it on", async () => {
+    await expect(importExercises("nobody", [checked(LADDER)], report)).rejects.toThrow(
+      /^exercises imported failed: user nobody: /
+    );
+    expect(lines).toEqual([expect.stringMatching(/^exercises imported failed: user nobody: /)]);
     expect(lines.join("\n")).not.toContain("Tikkaat");
   });
 });

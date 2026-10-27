@@ -4,6 +4,7 @@
  * two saves at once cannot both pass.
  *
  * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -112,8 +113,20 @@ type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 const insertLabels = (tx: Transaction, id: string, labels: readonly LabelKey[]) =>
   tx.insert(exerciseLabel).values(labels.map((label) => ({ exerciseId: id, label })));
 
-/** Runs a write, turning the name index's refusal into `nameInUse`, logged; any other failure passes on. */
+/** Adds one exercise and its labels within `tx`, under a new id. */
+async function insertExercise(tx: Transaction, userId: string, values: CheckedExercise) {
+  const id = randomUUID();
+  await tx.insert(exercise).values({ id, userId, ...columnsOf(values) });
+  await insertLabels(tx, id, values.labels);
+  return id;
+}
+
+/**
+ * Runs a write, turning the name index's refusal into `nameInUse`, logged as
+ * `event`; any other failure passes on.
+ */
 async function refusingNameInUse<T>(
+  event: string,
   userId: string,
   report: Report,
   write: () => Promise<T>
@@ -122,7 +135,7 @@ async function refusingNameInUse<T>(
     return await write();
   } catch (error) {
     if (isNameInUse(error)) {
-      report(`exercise refused, name in use: user ${userId}`);
+      report(`${event}: user ${userId}`);
       return { kind: "nameInUse" };
     }
     throw error;
@@ -140,16 +153,13 @@ export function createExercise(
   report: Report = toStderr
 ): Promise<SaveResult> {
   return logged("exercise created", `user ${userId}`, report, async () => {
-    const id = randomUUID();
-    const result = await refusingNameInUse(userId, report, () =>
-      getDatabase().transaction(async (tx) => {
-        await tx.insert(exercise).values({ id, userId, ...columnsOf(values) });
-        await insertLabels(tx, id, values.labels);
-        return { kind: "saved", id } as const;
-      })
+    const result = await refusingNameInUse("exercise refused, name in use", userId, report, () =>
+      getDatabase().transaction(
+        async (tx) => ({ kind: "saved", id: await insertExercise(tx, userId, values) }) as const
+      )
     );
     if (result.kind === "saved") {
-      report(`exercise created: user ${userId}, exercise ${id}`);
+      report(`exercise created: user ${userId}, exercise ${result.id}`);
     }
     return result;
   });
@@ -166,7 +176,7 @@ export function updateExercise(
     return Promise.resolve({ kind: "missing" });
   }
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {
-    const result = await refusingNameInUse(userId, report, () =>
+    const result = await refusingNameInUse("exercise refused, name in use", userId, report, () =>
       getDatabase().transaction(async (tx) => {
         const [updated] = await tx
           .update(exercise)
@@ -183,6 +193,37 @@ export function updateExercise(
     );
     if (result.kind === "saved") {
       report(`exercise updated: user ${userId}, exercise ${id}`);
+    }
+    return result;
+  });
+}
+
+export type ImportResult = { kind: "imported"; count: number } | { kind: "nameInUse" };
+
+/**
+ * Adds every exercise of an import in one transaction, or none: a name the
+ * library took meanwhile refuses the whole import.
+ */
+export function importExercises(
+  userId: string,
+  exercises: readonly CheckedExercise[],
+  report: Report = toStderr
+): Promise<ImportResult> {
+  return logged("exercises imported", `user ${userId}`, report, async () => {
+    const result = await refusingNameInUse(
+      "exercise import refused, name in use",
+      userId,
+      report,
+      () =>
+        getDatabase().transaction(async (tx) => {
+          for (const values of exercises) {
+            await insertExercise(tx, userId, values);
+          }
+          return { kind: "imported", count: exercises.length } as const;
+        })
+    );
+    if (result.kind === "imported") {
+      report(`exercises imported: user ${userId}, ${result.count} exercises`);
     }
     return result;
   });

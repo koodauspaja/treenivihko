@@ -36,6 +36,19 @@ describe("the label list", () => {
     );
   });
 
+  it("gives each label its meaning in Finnish, as the import's prompt shows it", () => {
+    expect(labelOf("footwork")?.meaning).toBe(
+      "Nopea, rytminen askelkuvio toistettuna, kuten tikkailla"
+    );
+    expect(labelOf("gym")?.meaning).toBe(
+      "Talon kuntosali: tilaa liikkua ja hypätä, ei kovia potkuja"
+    );
+    // No English left: every meaning is one of the spec's Finnish sentences.
+    expect(LABELS.filter((label) => /\b(the|and|or|a|an|to|with)\b/.test(label.meaning))).toEqual(
+      []
+    );
+  });
+
   it("finds a label by key, and none for a key not on the list", () => {
     expect(labelOf("goal")).toMatchObject({ group: "equipment", name: "Maali" });
     expect(labelOf("heading")).toBeUndefined();
