@@ -26,6 +26,7 @@ between two others.
 | 7 | [007-ci-and-sonarcloud.md](007-ci-and-sonarcloud.md) | CI and SonarCloud on every pull request, and their required checks |
 | 8 | [008-renovate.md](008-renovate.md) | Dependency updates as pull requests |
 | 9 | [009-database.md](009-database.md) | Postgres, Drizzle, named migrations and the integration tests |
+| 10 | [010-railway.md](010-railway.md) | The Railway project from `.railway/railway.ts`: Postgres, the web service and its health check |
 
 The steps after these are written as the infrastructure is stood up.
 

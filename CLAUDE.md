@@ -117,7 +117,10 @@ any one of them leads to the others.
 ## Reference
 
 - Setting the infrastructure up from zero: `docs/setup/`, in the order its
-  README gives. It is a procedure, not a description of the running system.
+  README gives. It is a procedure, not a description of the running system;
+  that is `docs/infrastructure.md`.
+- Railway is `.railway/railway.ts`, applied by hand: a merged change to it
+  does nothing until `railway config apply` (`docs/setup/010-railway.md`).
 - Specs: `specs/`. Decision records: `decisions/`.
 - The code: `src/app` for routes, `src/components` for UI, `src/lib/<domain>`
   for the rest (`decisions/012-project-init.md`). Tests mirror it under

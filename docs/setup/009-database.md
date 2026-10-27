@@ -5,7 +5,7 @@
 Postgres runs locally for development and for the integration tests, Drizzle
 manages the schema through named migrations, and CI runs the integration tests
 against a Postgres of its own. There are no tables yet: each arrives with its
-feature's spec. Railway's database comes with the Railway step.
+feature's spec. Railway's database comes with setup 010.
 
 ---
 
@@ -97,4 +97,4 @@ migrations yet", and so is a SQL file the journal does not list.
 
 ## Next
 
-→ `010`, Railway, once it is written.
+→ `010-railway.md`
