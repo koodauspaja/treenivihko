@@ -65,7 +65,10 @@ Two things hold for every feature:
 - **Every migration is named** `<verb>_<what>`: `npm run db:generate --
   --name=create_exercises`. `db:generate` refuses an unnamed one and a unit
   test fails on one that exists. **An applied migration is never edited**; a
-  change is a new migration (`docs/setup/009-database.md`).
+  change is a new migration. **A migration works with the version still
+  serving**, which runs until the new one takes traffic: add a column in one
+  deploy, drop or rename it only once nothing reads it
+  (`docs/setup/009-database.md`).
 - **Decision records are added, never edited.** A later record names the one
   it overrides, and the earlier one stays as it was.
 - **A comment says what a thing is for**, in one to three lines, or names a

@@ -39,10 +39,25 @@ describe("GET /api/health", () => {
     });
   });
 
-  it("runs at request time and is never cached", async () => {
+  it("asks the database only once connection() has resolved, so it is never prerendered", async () => {
+    let requestTime = () => {};
+    connection.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          requestTime = resolve;
+        })
+    );
     execute.mockResolvedValue([]);
-    const response = await GET();
-    expect(connection).toHaveBeenCalledOnce();
-    expect(response.headers.get("cache-control")).toBe("no-store");
+    const pending = GET();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(execute).not.toHaveBeenCalled();
+    requestTime();
+    expect((await pending).status).toBe(200);
+    expect(execute).toHaveBeenCalledOnce();
+  });
+
+  it("is never cached", async () => {
+    execute.mockResolvedValue([]);
+    expect((await GET()).headers.get("cache-control")).toBe("no-store");
   });
 });

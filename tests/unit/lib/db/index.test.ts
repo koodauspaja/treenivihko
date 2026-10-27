@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  APPLICATION_CONNECTIONS,
   clientOptions,
   closeDatabase,
   getDatabase,
+  MIGRATION_CONNECTIONS,
   MIGRATION_STATEMENT_TIMEOUT_MS,
   openMigrationDatabase,
   STATEMENT_TIMEOUT_MS,
@@ -10,11 +12,19 @@ import {
 
 describe("clientOptions", () => {
   it("closes a connection idle for twenty seconds, so the server can sleep", () => {
-    expect(clientOptions(STATEMENT_TIMEOUT_MS).idle_timeout).toBe(20);
+    expect(clientOptions(STATEMENT_TIMEOUT_MS, APPLICATION_CONNECTIONS).idle_timeout).toBe(20);
   });
 
-  it("sets the statement timeout it is given", () => {
-    expect(clientOptions(1234).connection).toEqual({ statement_timeout: 1234 });
+  it("sets the statement timeout and the pool size it is given", () => {
+    expect(clientOptions(1234, 3)).toMatchObject({
+      max: 3,
+      connection: { statement_timeout: 1234 },
+    });
+  });
+
+  it("gives migrations one connection, so the lock stays in one session", () => {
+    expect(MIGRATION_CONNECTIONS).toBe(1);
+    expect(APPLICATION_CONNECTIONS).toBe(10);
   });
 });
 

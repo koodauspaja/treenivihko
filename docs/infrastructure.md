@@ -22,7 +22,7 @@ Project `treenivihko`, in the Koodauspaja workspace, with one environment,
 | Waits for CI | Yes: a deploy waits for the checks on its commit, and is skipped if any fail |
 | Install | `npx --yes npm@12.2.1 ci --ignore-scripts` |
 | Build | `npm run build` |
-| Before traffic | `npm run db:migrate` |
+| Before traffic | `npm run db:migrate`, under a Postgres advisory lock, so two overlapping deploys migrate one after the other |
 | Start | `node node_modules/next/dist/bin/next start` |
 | Health check | `/api/health`, up to 60 s |
 | Restarts | On failure, at most 3 times |

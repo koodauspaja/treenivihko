@@ -1,8 +1,10 @@
 /**
  * `npm run db:migrate`: applies the migrations to `DATABASE_URL`'s database,
- * over a client without the application's statement timeout.
+ * over a client without the application's statement timeout, under the
+ * migration lock.
  *
  * decisions/023-database.md
+ * decisions/026-railway.md
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -12,6 +14,7 @@ import {
   journalTagsIn,
   MIGRATION_JOURNAL,
   MIGRATIONS_FOLDER,
+  migrationLock,
   runMigrations,
   sqlFilesIn,
 } from "../src/lib/db/migrations.ts";
@@ -27,6 +30,7 @@ try {
     sqlFiles: () => sqlFilesIn(existsSync(MIGRATIONS_FOLDER) ? readdirSync(MIGRATIONS_FOLDER) : []),
     journalTags: () => journalTagsIn(readFileSync(MIGRATION_JOURNAL, "utf8")),
     migrate: (folder) => migrate(connection.database, { migrationsFolder: folder }),
+    ...migrationLock(connection.database),
   });
   process.stdout.write(run === "none" ? "No migrations yet.\n" : "Migrations applied.\n");
 } catch (error) {
