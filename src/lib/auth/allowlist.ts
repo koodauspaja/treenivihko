@@ -29,21 +29,29 @@ export const toStderr = (line: string) => {
   process.stderr.write(`${line}\n`);
 };
 
+/** The identity Better Auth is about to let in, and how it arrived. */
+export type Identity = { email?: unknown; emailVerified?: unknown; method: string };
+
 /**
  * Better Auth's `user.validateUserInfo` answer: nothing to let the identity in,
  * `{ error }` to refuse it. It runs before a user is created, before an account
- * is linked, and on every Google sign-in.
+ * is linked, and on every Google sign-in. An address Google has not verified
+ * is refused too: anyone can put an address on a Google account.
  */
 export function signInRefusal(
-  email: unknown,
+  identity: Identity,
   configured: string | undefined,
   report: (line: string) => void = toStderr
 ): { error: string } | undefined {
-  if (isAllowed(email, configured)) {
-    return undefined;
+  if (!isAllowed(identity.email, configured)) {
+    report("sign-in refused: the address is not on the allowlist");
+    return { error: SIGN_IN_NOT_ALLOWED };
   }
-  report("sign-in refused: the address is not on the allowlist");
-  return { error: SIGN_IN_NOT_ALLOWED };
+  if (identity.method === "oauth" && identity.emailVerified !== true) {
+    report("sign-in refused: the provider has not verified the address");
+    return { error: SIGN_IN_NOT_ALLOWED };
+  }
+  return undefined;
 }
 
 /** The record of a user being created: its id, and nothing that names the person. */

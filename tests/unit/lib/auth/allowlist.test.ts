@@ -47,24 +47,57 @@ describe("isAllowed", () => {
 });
 
 describe("signInRefusal", () => {
-  it("lets an address on the list through, and records nothing", () => {
+  const google = (email: string, emailVerified: unknown = true) => ({
+    email,
+    emailVerified,
+    method: "oauth",
+  });
+
+  it("lets a verified Google address on the list through, and records nothing", () => {
     const report = vi.fn();
-    expect(signInRefusal("parent@example.com", "parent@example.com", report)).toBeUndefined();
+    expect(
+      signInRefusal(google("parent@example.com"), "parent@example.com", report)
+    ).toBeUndefined();
     expect(report).not.toHaveBeenCalled();
   });
 
-  it("refuses with the code the sign-in page reads, and records it without the address", () => {
+  it("refuses an address not on the list, and records it without the address", () => {
     const report = vi.fn();
-    expect(signInRefusal("stranger@example.com", "parent@example.com", report)).toEqual({
+    expect(signInRefusal(google("stranger@example.com"), "parent@example.com", report)).toEqual({
       error: SIGN_IN_NOT_ALLOWED,
     });
     expect(report).toHaveBeenCalledWith("sign-in refused: the address is not on the allowlist");
     expect(JSON.stringify(report.mock.calls)).not.toContain("stranger");
   });
 
+  it.each([false, undefined, "true"])(
+    "refuses a listed Google address whose verification is %j",
+    (emailVerified) => {
+      const report = vi.fn();
+      // Built in full: the helper's default would turn undefined into true.
+      const identity = { email: "parent@example.com", emailVerified, method: "oauth" };
+      expect(signInRefusal(identity, "parent@example.com", report)).toEqual({
+        error: SIGN_IN_NOT_ALLOWED,
+      });
+      expect(report).toHaveBeenCalledWith(
+        "sign-in refused: the provider has not verified the address"
+      );
+      expect(JSON.stringify(report.mock.calls)).not.toContain("parent@");
+    }
+  );
+
+  it("asks for a provider's verification only of a provider's sign-in", () => {
+    const identity = {
+      email: "parent@example.com",
+      emailVerified: false,
+      method: "email-password",
+    };
+    expect(signInRefusal(identity, "parent@example.com", vi.fn())).toBeUndefined();
+  });
+
   it("records on stderr by default", () => {
     const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-    signInRefusal("stranger@example.com", "");
+    signInRefusal(google("stranger@example.com"), "");
     expect(write).toHaveBeenCalledWith("sign-in refused: the address is not on the allowlist\n");
     write.mockRestore();
   });

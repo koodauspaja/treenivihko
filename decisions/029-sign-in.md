@@ -15,8 +15,11 @@ trainer side asks for a password of its own, which is the next feature's.
   comma-separated, compared without case or surrounding spaces. It is checked
   in Better Auth's `user.validateUserInfo`, which runs before a user is
   created, before an account is linked, and on every Google sign-in. An empty
-  list lets nobody in. A refusal returns `sign_in_not_allowed`, which the
-  sign-in page shows in Finnish, and logs one line without the address.
+  list lets nobody in. A Google sign-in also needs Google to have verified the
+  address. A refusal returns `sign_in_not_allowed`, which the sign-in page
+  shows in Finnish, and logs one line without the address.
+- **The list is checked again on every request.** A session whose address has
+  left the list counts as signed out, though Better Auth would renew it.
 - **One Google Cloud project, its consent screen in Testing**, with one OAuth
   client for localhost and Railway.
 - **Sign-in lands on the child's side**, `/`, a placeholder that shows nothing
@@ -41,6 +44,8 @@ trainer side asks for a password of its own, which is the next feature's.
 |---|---|
 | The app's own allowlist | Google's test-user list restricts nobody for an app that asks only for `openid`, `email` and `profile`: measured on the earlier project, any Google account signed in to an app in Testing |
 | An empty list refuses everyone | A missing variable must not open the app to every Google account |
+| Google's verification required | Anyone can create a Google account carrying an address they do not own; until Google verifies it, the address proves nothing |
+| The list on every request | Sessions last 90 days and renew on use, so one checked only at sign-in would outlive the address's removal for as long as the device is used |
 | Checked in `validateUserInfo` | It gates creation and every Google sign-in, so an address taken off the list cannot sign in again. Better Auth fails closed if the check throws |
 | Testing, not published | Publishing needs a privacy policy page and a domain Google can verify, which a `railway.app` address is not. Testing's seven-day limit applies to Google's tokens, which nothing keeps |
 | 90 days, renewed on use | The child's device stays signed in between uses a few times a week; the parent signs in there once |
@@ -58,8 +63,8 @@ trainer side asks for a password of its own, which is the next feature's.
 - **A second adult** is one more address in `AUTH_ALLOWED_EMAILS`, on Railway
   and in `.env`, and a Google test user. A changed variable reaches the running
   app only through a redeploy.
-- **Removing an address** stops that account signing in again once the app has
-  redeployed; a session it already has lasts until it expires or is deleted.
+- **Removing an address** stops that account signing in, and its sessions
+  working, at the next request after the app has redeployed.
 - **A new page** gets an English folder and, if a reader sees its address, a
   row in `src/lib/routes.ts`.
 - **The first migration is applied**, on Railway as well, so a change to these
