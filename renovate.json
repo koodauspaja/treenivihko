@@ -7,6 +7,7 @@
   "prConcurrentLimit": 10,
   "prHourlyLimit": 5,
   "labels": ["dependencies"],
+  "minimumReleaseAge": "14 days",
   "lockFileMaintenance": {
     "enabled": true
   },
@@ -40,6 +41,15 @@
       ],
       "matchPackageNames": ["@types/node"],
       "allowedVersions": "<25"
+    },
+    {
+      "description": [
+        "A new Node major in .nvmrc waits for approval in the Dependency Dashboard.",
+        "Moving lines also means raising the @types/node hold, which tests/unit/config/renovate.test.ts ties to .nvmrc, so the two change together by hand."
+      ],
+      "matchManagers": ["nvm"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
     }
   ]
 }
