@@ -9,24 +9,28 @@ first migration applied on Railway, nothing enforced the rule.
 
 ## Decision
 
-- **`npm run db:check-history -- <ref>`** compares `drizzle/migrations` in
-  the working tree with the same folder at `<ref>`, `origin/main` by default.
-  Every file there must be here and unchanged: each `.sql` file and snapshot
+- **`npm run db:check-history`** compares `drizzle/migrations` at `HEAD`
+  with the same folder at `origin/main`, both read through git. Every file
+  on `main` must be at `HEAD` and unchanged: each `.sql` file and snapshot
   byte for byte, and the journal's existing entries in the same order, with
   new ones only after them. New migrations pass.
-- **CI runs it on every pull request**, in the unit job, against the pull
-  request's base branch, so it sits behind a check `main` already requires.
+- **CI runs it on every pull request**, in the unit job, after fetching
+  `main` into `origin/main`, so it sits behind a check `main` already
+  requires.
 - **The rule is a pure function**, `scripts/migration-history-plan.ts`, unit
-  tested; the script around it only reads files and sets the exit code.
+  tested; the script around it only reads the two commits and sets the exit
+  code.
 
 ## Why
 
 | Decision | Why |
 |---|---|
-| Against the base branch's tip, not a merge base | "A migration `main` has" is exactly the rule, and the tip needs no history: CI fetches one commit |
+| Against `main`'s tip, not a pull request's base branch or a merge base | "A migration `main` has" is exactly the rule, since `main` is what deploys, and the tip needs no history: CI fetches one commit |
+| `main` fixed, not an argument | Nothing from outside reaches the git command line |
+| Both sides through git, not one from disk | Line-ending conversion on checkout and uncommitted edits cannot make an unchanged file look edited; CI checks the commit anyway |
 | A missing file fails | Deleted, renamed and left behind look the same from here; each is wrong, and the message says to rebase or restore |
 | The journal by entry, not by text | drizzle-kit rewrites the whole file when it appends an entry |
-| A journal that cannot be read fails, on either side | A check that cannot classify its input does not pass it |
+| A journal that cannot be read, or holds an entry that is not an object, fails, on either side | A check that cannot classify its input does not pass it |
 
 ## Consequences
 

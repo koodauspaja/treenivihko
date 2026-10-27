@@ -85,17 +85,24 @@ describe("checkMigrationHistory", () => {
   });
 
   it.each([
-    ["not JSON", "{"],
+    ["text that is not JSON", "{"],
     ["no entries", '{"version":"7"}'],
-  ])("refuses a journal on the branch that is %s", (_case, broken) => {
+    ["an entry that is null", '{"version":"7","entries":[null]}'],
+    ["an entry that is a list", '{"version":"7","entries":[["0000_create_a"]]}'],
+  ])("refuses a journal on the branch with %s", (_case, broken) => {
     const head = new Map(main);
     head.set(JOURNAL, broken);
-    expect(problemsOf(head)).toEqual([`${JOURNAL} is not a journal: it has no list of entries`]);
+    expect(problemsOf(head)).toEqual([
+      `${JOURNAL} is not a journal: it has no list of entries, or one is not an object`,
+    ]);
   });
 
-  it("refuses when main's own journal cannot be read, rather than pass it", () => {
+  it.each([
+    ["not JSON", "{"],
+    ["an entry that is null", '{"version":"7","entries":[null]}'],
+  ])("refuses when main's own journal is %s, rather than pass it", (_case, journalText) => {
     const broken = new Map(main);
-    broken.set(JOURNAL, "{");
+    broken.set(JOURNAL, journalText);
     const result = checkMigrationHistory(broken, new Map(main));
     expect(result).toEqual({
       ok: false,

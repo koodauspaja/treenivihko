@@ -18,12 +18,15 @@ export const JOURNAL = "meta/_journal.json";
 
 type Entry = Record<string, unknown>;
 
-/** The journal's entries, or null when the text is not a journal. */
+const isEntry = (value: unknown): value is Entry =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** The journal's entries, or null when the text is not a journal of objects. */
 function entriesOf(journal: string): Entry[] | null {
   try {
     const parsed: unknown = JSON.parse(journal);
     const entries = (parsed as { entries?: unknown }).entries;
-    return Array.isArray(entries) ? (entries as Entry[]) : null;
+    return Array.isArray(entries) && entries.every(isEntry) ? entries : null;
   } catch {
     return null;
   }
@@ -37,7 +40,7 @@ function journalProblems(base: string, head: string): string[] {
     return [`${JOURNAL} on main is not a journal, so nothing can be compared with it`];
   }
   if (headEntries === null) {
-    return [`${JOURNAL} is not a journal: it has no list of entries`];
+    return [`${JOURNAL} is not a journal: it has no list of entries, or one is not an object`];
   }
   return baseEntries.flatMap((entry, index) =>
     JSON.stringify(headEntries[index]) === JSON.stringify(entry)

@@ -84,7 +84,7 @@ migrations yet", and so is a SQL file the journal does not list.
 | Rule | Why |
 |---|---|
 | A name is `<verb>_<what>`, the verb one of `add`, `create`, `alter`, `drop`, `rename`, `backfill` | Without one, drizzle-kit names a migration with two random words, which says nothing when it is read back during an incident. `db:generate` refuses, and a unit test fails on any unnamed file |
-| An applied migration is never edited | A database runs each migration once. An edit never reaches the databases it already ran on, so their schema and the repository's quietly differ; a change is a new migration. CI fails a pull request that edits, deletes or renames one `main` has: `npm run db:check-history` runs the same check locally (`decisions/025-migration-history.md`) |
+| An applied migration is never edited | A database runs each migration once. An edit never reaches the databases it already ran on, so their schema and the repository's quietly differ; a change is a new migration. CI fails a pull request that edits, deletes or renames one `main` has: `git fetch origin main && npm run db:check-history` runs the same check locally, on what is committed (`decisions/025-migration-history.md`) |
 | A migration works with the version still serving | On Railway it runs before the new version takes traffic, while the old one still serves (setup 010). A column is added in one deploy and used in the next; it is dropped or renamed only once no serving version reads it |
 
 ---
