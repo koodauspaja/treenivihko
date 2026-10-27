@@ -86,6 +86,13 @@ describe(".railway/railway.ts", () => {
           type: "literal",
           value: "npx --yes npm@12.2.1 ci --ignore-scripts",
         },
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: Railway's reference syntax.
+        BETTER_AUTH_URL: { type: "literal", value: "https://${{RAILWAY_PUBLIC_DOMAIN}}" },
+        // Names only: their values are set on Railway, and an apply keeps them.
+        BETTER_AUTH_SECRET: { type: "preserve" },
+        GOOGLE_CLIENT_ID: { type: "preserve" },
+        GOOGLE_CLIENT_SECRET: { type: "preserve" },
+        AUTH_ALLOWED_EMAILS: { type: "preserve" },
       },
     });
   });

@@ -34,7 +34,12 @@ const entries = readFileSync(".env.example", "utf8")
 describe(".env.example", () => {
   it("finds the variables the code reads", () => {
     expect(required).toEqual([
+      "AUTH_ALLOWED_EMAILS",
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_URL",
       "DATABASE_URL",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
       "TEST_DATABASE_URL",
       "TREENIVIHKO_POSTGRES_PASSWORD",
     ]);
@@ -49,6 +54,10 @@ describe(".env.example", () => {
       expect(value).toBe("");
       return;
     }
-    expect(decodeURIComponent(new URL(value).password)).toBe("<password>");
+    // A URL with no credential holds no secret; one with a credential holds the placeholder.
+    const { username, password } = new URL(value);
+    if (username !== "" || password !== "") {
+      expect(decodeURIComponent(password)).toBe("<password>");
+    }
   });
 });
