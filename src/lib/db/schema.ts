@@ -5,10 +5,22 @@
  * decisions/023-database.md
  * decisions/029-sign-in.md
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, check, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { LABEL_KEYS } from "../exercises/labels";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -117,3 +129,60 @@ export const trainerUnlock = pgTable("trainer_unlock", {
     .references(() => session.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
+
+/** The library: the exercises every session is built from, the parent's own. */
+export const exercise = pgTable(
+  "exercise",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    instructions: text("instructions").notNull(),
+    videoUrl: text("video_url"),
+    amountKind: text("amount_kind").notNull(),
+    // Times for a count, seconds for a time.
+    amount: integer("amount").notNull(),
+    durationMinutes: integer("duration_minutes").notNull(),
+    level: integer("level").notNull(),
+    warmUp: boolean("warm_up").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("exercise_user_name_idx").on(table.userId, sql`lower(${table.name})`),
+    check("exercise_name_length", sql`char_length(${table.name}) between 1 and 40`),
+    check(
+      "exercise_instructions_length",
+      sql`char_length(${table.instructions}) between 1 and 1000`
+    ),
+    check(
+      "exercise_video_url",
+      sql`${table.videoUrl} is null or (${table.videoUrl} like 'https://%' and char_length(${table.videoUrl}) <= 500)`
+    ),
+    check(
+      "exercise_amount",
+      sql`(${table.amountKind} = 'count' and ${table.amount} between 1 and 100) or (${table.amountKind} = 'time' and ${table.amount} between 5 and 600 and ${table.amount} % 5 = 0)`
+    ),
+    check("exercise_duration", sql`${table.durationMinutes} between 1 and 30`),
+    check("exercise_level", sql`${table.level} between 1 and 3`),
+  ]
+);
+
+/** An exercise's labels, by the list's keys; the database refuses any other. */
+export const exerciseLabel = pgTable(
+  "exercise_label",
+  {
+    exerciseId: text("exercise_id")
+      .notNull()
+      .references(() => exercise.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.exerciseId, table.label] }),
+    check(
+      "exercise_label_known",
+      sql.raw(`label in (${LABEL_KEYS.map((key) => `'${key}'`).join(", ")})`)
+    ),
+  ]
+);
