@@ -2,10 +2,10 @@
 
 ## Goal
 
-Every pull request to `main`, and every push to it, runs the checks
-`npm run verify` runs, and SonarCloud analyses the code with its unit coverage.
-All of them must pass before a merge. The workflow and its configuration arrive
-with the clone.
+Every pull request to `main` from the people named in setup 001, and every
+push to `main`, runs the checks `npm run verify` runs, and SonarCloud analyses
+the code with its unit coverage. All of them must pass before a merge. The
+workflow and its configuration arrive with the clone.
 
 This project: SonarCloud organisation `koodauspaja`, project key
 `koodauspaja_treenivihko`.
