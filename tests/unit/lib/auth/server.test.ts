@@ -57,6 +57,16 @@ describe("authOptions", () => {
   });
 
   it.each(["create", "update"] as const)(
+    "drops Google's picture before a user %s is written",
+    async (write) => {
+      const hook = options().databaseHooks.user[write].before;
+      expect(await hook({ id: "u1", image: "https://example.com/p.png" } as never)).toEqual({
+        data: { id: "u1", image: null },
+      });
+    }
+  );
+
+  it.each(["create", "update"] as const)(
     "drops Google's tokens before an account %s is written",
     async (write) => {
       const hook = options().databaseHooks.account[write].before;

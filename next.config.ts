@@ -10,9 +10,9 @@ import type { NextConfig } from "next";
 import { routeRedirects, routeRewrites } from "./src/lib/routes.ts";
 
 const nextConfig: NextConfig = {
-  rewrites: async () => routeRewrites(),
+  rewrites: () => Promise.resolve(routeRewrites()),
   // Checked before the rewrites, which is what makes the pair safe.
-  redirects: async () => routeRedirects(),
+  redirects: () => Promise.resolve(routeRedirects()),
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

@@ -12,7 +12,7 @@ import { nextCookies } from "better-auth/next-js";
 import { getDatabase } from "@/lib/db/index";
 import { account, session, user, verification } from "@/lib/db/schema";
 import { reportUserCreated, signInRefusal } from "./allowlist";
-import { withoutTokens } from "./tokens";
+import { withoutPicture, withoutTokens } from "./google-data";
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
@@ -66,12 +66,18 @@ export function authOptions(env: Environment = process.env) {
     },
     // The child's device stays signed in: each use renews the 90 days, at most once a day.
     session: { expiresIn: SESSION_DAYS * DAY_SECONDS, updateAge: DAY_SECONDS },
-    // Google's tokens are dropped before an account row is written, on every sign-in.
+    // Google's tokens and picture are dropped before a row is written, on every sign-in.
     databaseHooks: {
-      user: { create: { after: async (created) => reportUserCreated(created.id) } },
+      user: {
+        create: {
+          before: (row) => Promise.resolve({ data: withoutPicture(row) }),
+          after: (created) => Promise.resolve(reportUserCreated(created.id)),
+        },
+        update: { before: (row) => Promise.resolve({ data: withoutPicture(row) }) },
+      },
       account: {
-        create: { before: async (row) => ({ data: withoutTokens(row) }) },
-        update: { before: async (row) => ({ data: withoutTokens(row) }) },
+        create: { before: (row) => Promise.resolve({ data: withoutTokens(row) }) },
+        update: { before: (row) => Promise.resolve({ data: withoutTokens(row) }) },
       },
     },
     telemetry: { enabled: false },

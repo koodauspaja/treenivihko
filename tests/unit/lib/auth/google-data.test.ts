@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TOKEN_FIELDS, withoutTokens } from "@/lib/auth/tokens";
+import { TOKEN_FIELDS, withoutPicture, withoutTokens } from "@/lib/auth/google-data";
 
 describe("withoutTokens", () => {
   it("empties every token field a row carries, and keeps the rest", () => {
@@ -45,5 +45,18 @@ describe("withoutTokens", () => {
       "accessTokenExpiresAt",
       "refreshTokenExpiresAt",
     ]);
+  });
+});
+
+describe("withoutPicture", () => {
+  it("empties the picture a user row carries, and keeps the rest", () => {
+    expect(withoutPicture({ name: "Test Parent", image: "https://example.com/p.png" })).toEqual({
+      name: "Test Parent",
+      image: null,
+    });
+  });
+
+  it("adds no picture field to a row without one", () => {
+    expect(withoutPicture({ name: "Test Parent" })).toEqual({ name: "Test Parent" });
   });
 });

@@ -5,7 +5,7 @@
  * answer while the session is read: Finnish, with a retry, in place of Next's
  * English default. decisions/029-sign-in.md
  */
-export default function ErrorPage({ retry }: { error: unknown; retry: () => void }) {
+export default function ErrorPage({ retry }: Readonly<{ retry: () => void }>) {
   return (
     <main className="mx-auto max-w-xl px-4 py-12">
       <h1 className="text-3xl font-bold">Treenivihko</h1>

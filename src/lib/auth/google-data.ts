@@ -1,7 +1,7 @@
 /**
- * Google's tokens are never stored. Nothing here calls Google after sign-in,
- * and the ID token holds the parent's name, address and picture, which the
- * user row already has what it needs of. decisions/029-sign-in.md
+ * What Google sends that is never stored: its tokens and the profile picture.
+ * Nothing here calls Google after sign-in, the ID token holds the parent's name,
+ * address and picture, and nothing shows a picture. decisions/029-sign-in.md
  */
 
 /** The account columns Better Auth fills from Google's token response. */
@@ -22,4 +22,9 @@ export function withoutTokens<Row extends Record<string, unknown>>(row: Row): Ro
     }
   }
   return kept as Row;
+}
+
+/** A user row as it is about to be written, without Google's picture if it carries one. */
+export function withoutPicture<Row extends Record<string, unknown>>(row: Row): Row {
+  return "image" in row ? { ...row, image: null } : row;
 }
