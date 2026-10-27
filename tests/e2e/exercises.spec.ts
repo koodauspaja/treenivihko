@@ -1,4 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
+import { eq } from "drizzle-orm";
+import { getDatabase } from "../../src/lib/db/index.ts";
+import { user } from "../../src/lib/db/schema.ts";
 import { type Exercise, readExercise, valuesFrom } from "../../src/lib/exercises/rules.ts";
 import { createExercise } from "../../src/lib/exercises/store.ts";
 import { signInParent, unlockTrainer } from "./support/parent.ts";
@@ -129,9 +132,13 @@ test("the filters pass exactly the exercises that fit, and stay in the address",
   await page.getByRole("button", { name: "Näytä" }).click();
   await expect(main(page).getByRole("listitem").getByRole("link")).toHaveText(["Ärrä"]);
   await expect(page).toHaveURL(/taito=dribbling/);
+  await expect(page).toHaveURL(/paikka=gym/);
 
   await page.reload();
+  await expect(page.getByLabel("Kuljetus", { exact: true })).toBeChecked();
+  await expect(page.getByLabel("Kuntosali", { exact: true })).toBeChecked();
   await expect(page.getByLabel("Maali", { exact: true })).not.toBeChecked();
+  await expect(main(page).getByRole("listitem").getByRole("link")).toHaveText(["Ärrä"]);
   await page.getByLabel("Kuntosali", { exact: true }).uncheck();
   await page.getByLabel("Pallo", { exact: true }).uncheck();
   await page.getByRole("button", { name: "Näytä" }).click();
@@ -157,4 +164,18 @@ test("an address that does not exist, and another parent's exercise, are not fou
   await expect(page.getByRole("link", { name: "Etusivulle" })).toHaveAttribute("href", "/");
   await page.goto("/valmentaja/harjoitteet/not-an-exercise");
   await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();
+
+  // A real exercise of another parent, so only the store's owner filter keeps it out.
+  const other = `other-parent-${info.parallelIndex}`;
+  await getDatabase().delete(user).where(eq(user.id, other));
+  await getDatabase()
+    .insert(user)
+    .values({ id: other, name: "Other Parent", email: `${other}@example.com` });
+  const theirs = await seed(other, { name: "Toisen harjoite" });
+  if (theirs.kind !== "saved") {
+    throw new Error(`expected a save, got ${theirs.kind}`);
+  }
+  await page.goto(`/valmentaja/harjoitteet/${theirs.id}`);
+  await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();
+  await expect(main(page).getByText("Toisen harjoite")).toHaveCount(0);
 });
