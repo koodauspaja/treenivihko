@@ -37,7 +37,9 @@ Two things hold for every feature:
   sentence it is acting on, in the same message. The quote is evidence, not a
   password: it has to read plainly as an instruction.
 - **Every change goes through an issue, a branch and a pull request.** Nothing
-  is committed to `main` directly, setup documents included.
+  is committed to `main` directly, setup documents included. The one exception
+  is Renovate's dependency pull requests, which have no issue: they pass the
+  same checks, and a human merges them.
 - **Every issue has its kind label and the Issue Type that pairs with it**:
   `enhancement` → Feature, `chore` → Task, `bug` → Bug. `gh issue create` cannot
   set the type, so it is set right after: `gh api

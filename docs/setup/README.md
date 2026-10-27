@@ -24,6 +24,7 @@ between two others.
 | 5 | [005-branch-protection.md](005-branch-protection.md) | The ruleset that protects `main`, and the merge settings |
 | 6 | [006-project-init.md](006-project-init.md) | Node, the install, and `npm run verify` |
 | 7 | [007-ci-and-sonarcloud.md](007-ci-and-sonarcloud.md) | CI and SonarCloud on every pull request, and their required checks |
+| 8 | [008-renovate.md](008-renovate.md) | Dependency updates as pull requests |
 
 The steps after these are written as the infrastructure is stood up.
 
