@@ -5,6 +5,7 @@ import {
   closeDatabase,
   getDatabase,
   MIGRATION_CONNECTIONS,
+  MIGRATION_LOCK_TIMEOUT_MS,
   MIGRATION_STATEMENT_TIMEOUT_MS,
   openMigrationDatabase,
   STATEMENT_TIMEOUT_MS,
@@ -15,11 +16,19 @@ describe("clientOptions", () => {
     expect(clientOptions(STATEMENT_TIMEOUT_MS, APPLICATION_CONNECTIONS).idle_timeout).toBe(20);
   });
 
-  it("sets the statement timeout and the pool size it is given", () => {
+  it("sets the statement timeout and the pool size it is given, and no lock timeout by default", () => {
     expect(clientOptions(1234, 3)).toMatchObject({
       max: 3,
-      connection: { statement_timeout: 1234 },
+      connection: { statement_timeout: 1234, lock_timeout: 0 },
     });
+  });
+
+  it("sets the lock timeout it is given", () => {
+    expect(clientOptions(0, 1, 5678).connection.lock_timeout).toBe(5678);
+  });
+
+  it("lets a migration wait five minutes for a lock", () => {
+    expect(MIGRATION_LOCK_TIMEOUT_MS).toBe(300_000);
   });
 
   it("gives migrations one connection, so the lock stays in one session", () => {

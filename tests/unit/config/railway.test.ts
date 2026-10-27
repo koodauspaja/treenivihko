@@ -59,6 +59,7 @@ describe(".railway/railway.ts", () => {
       build: {
         watchPatterns: [
           "src/**",
+          "public/**",
           "drizzle/**",
           "scripts/migrate.ts",
           "package.json",

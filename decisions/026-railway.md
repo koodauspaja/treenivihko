@@ -23,7 +23,8 @@ the app is used a few times a week.
 - **Migrations run in the pre-deploy step**, `npm run db:migrate`, in the new
   container before it takes traffic. That is the one place they run, and each
   run applies them under a Postgres advisory lock, over a client of one
-  connection.
+  connection. That client waits at most five minutes for any lock, the
+  migration lock included.
 - **A migration works with the version still serving.** A column is added in
   one deploy and used in the next, and dropped or renamed only once nothing
   serving reads it.
@@ -50,6 +51,7 @@ the app is used a few times a week.
 | Wait for CI | Merging starts CI's push run and Railway's deploy at the same moment. Waiting holds the deploy until the checks on that commit pass, and skips it if any fail, so a commit CI rejected never serves. The cost is a few minutes per deploy, and a skipped deploy is redeployed by hand once CI is green |
 | Migrations before traffic | A version that needs a new column never serves without it; a failed migration stops the deploy and the old version keeps serving |
 | The advisory lock | Two merges in quick succession can overlap their deploys, and both pre-deploy steps would see the same migration as pending and run it. The lock makes the second wait, and then find nothing left to do. A session's lock is released only by that session, so the migration client has one connection |
+| Five minutes for a lock | The migration client has no statement timeout, since a migration may run long. Without a lock timeout, a run stuck behind another, or behind the app's own locks on a table, would wait forever, and every deploy after it with it. Postgres applies `lock_timeout` to advisory locks as to table locks (measured in the integration tests) |
 | Migrations that suit the serving version | The pre-deploy step commits before the old version stops serving: a dropped or renamed column fails the old version's requests until the new one takes over |
 | A three-second database timeout in the health check | Railway's check waits up to 60 seconds; a check that hangs as long as the driver's own 30-second connect timeout says nothing more |
 | Next started directly | `npm start` runs the script through `sh -c`, and that shell dies on Railway's SIGTERM while the server never receives it |

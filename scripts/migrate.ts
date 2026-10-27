@@ -34,7 +34,10 @@ try {
   });
   process.stdout.write(run === "none" ? "No migrations yet.\n" : "Migrations applied.\n");
 } catch (error) {
-  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+  // Drizzle's "Failed query" carries Postgres's reason, such as a lock timeout, as its cause.
+  const cause =
+    error instanceof Error && error.cause instanceof Error ? `: ${error.cause.message}` : "";
+  process.stderr.write(`${error instanceof Error ? error.message : String(error)}${cause}\n`);
   process.exitCode = 1;
 } finally {
   await connection.close();

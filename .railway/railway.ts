@@ -23,6 +23,7 @@ export const NPM_INSTALL = "npx --yes npm@12.2.1 ci --ignore-scripts";
 /** What redeploys the site: application code and its build configuration, nothing else. */
 export const WATCH_PATTERNS = [
   "src/**",
+  "public/**",
   "drizzle/**",
   "scripts/migrate.ts",
   "package.json",

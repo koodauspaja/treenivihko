@@ -73,7 +73,10 @@ Two things hold for every feature:
   it overrides, and the earlier one stays as it was.
 - **A comment says what a thing is for**, in one to three lines, or names a
   constraint the code cannot show. Then come the paths of the decision records
-  behind it, oldest first. History (how it used to work, what a reviewer said)
+  behind it, oldest first: once per file, in its header comment, which names
+  every record the file's comments rest on. A comment inside the file adds a
+  path only for a record the header does not name, and a file with no header
+  puts the path on the comment itself. History (how it used to work, what a reviewer said)
   goes in the record. No comment cites an issue or a pull request.
 - **When behaviour changes, search for the old behaviour's words**, not only its
   code: the value, the name, the mechanism, across `specs/`, `decisions/`,

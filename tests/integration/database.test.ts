@@ -73,6 +73,34 @@ describe("the test database", () => {
     }
   });
 
+  it("gives a migration client the five-minute lock timeout", async () => {
+    const migration = openMigrationDatabase();
+    try {
+      const [row] = await migration.database.execute<{ lock_timeout: string }>(
+        sql`show lock_timeout`
+      );
+      expect(row?.lock_timeout).toBe("5min");
+    } finally {
+      await migration.close();
+    }
+  });
+
+  it("gives up waiting for the migration lock once the lock timeout passes", async () => {
+    const holder = openMigrationDatabase();
+    const waiter = openMigrationDatabase();
+    try {
+      await migrationLock(holder.database).lock();
+      await waiter.database.execute(sql`set lock_timeout = 100`);
+      await expect(migrationLock(waiter.database).lock()).rejects.toMatchObject({
+        cause: { message: expect.stringMatching(/lock timeout/) },
+      });
+      await migrationLock(holder.database).unlock();
+    } finally {
+      await holder.close();
+      await waiter.close();
+    }
+  });
+
   it("holds the migration lock against a second run until it lets go", async () => {
     const first = openMigrationDatabase();
     const second = openMigrationDatabase();

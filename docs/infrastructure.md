@@ -27,7 +27,7 @@ Project `treenivihko`, in the Koodauspaja workspace, with one environment,
 | Health check | `/api/health`, up to 60 s |
 | Restarts | On failure, at most 3 times |
 | Sleeps when idle | Yes; wakes on the next request |
-| Redeploys on | `src/**`, `drizzle/**`, `scripts/migrate.ts`, `package.json`, `package-lock.json`, `.nvmrc`, `.npmrc`, `next.config.ts`, `tsconfig.json` |
+| Redeploys on | `src/**`, `public/**`, `drizzle/**`, `scripts/migrate.ts`, `package.json`, `package-lock.json`, `.nvmrc`, `.npmrc`, `next.config.ts`, `tsconfig.json` |
 | Variables | `DATABASE_URL`, a reference to Postgres's; `RAILPACK_NODE_NPM_INSTALL`; and Railway's own `RAILWAY_*` |
 
 ### The health route
