@@ -19,11 +19,12 @@ moves fall behind without anyone noticing.
   because the `@types/node` hold must move with it, and a test that ties the
   two would fail a pull request that moved only one. Only even-numbered lines
   are proposed, since `engines` refuses 25.
-- **The SonarCloud scan action's updates wait for approval too.** `SONAR_TOKEN`
-  is set only on the scan step and the gate step, so the scan action is the one
-  third-party code that ever runs beside it. Fourteen days stops a compromise
+- **Every GitHub Actions update waits for approval too.** `SONAR_TOKEN` is set
+  only on the scan step and the gate step, but the job runs `checkout`,
+  `setup-node` and `download-artifact` before them on the same runner, where
+  any of them could reach what comes later. Fourteen days stops a compromise
   that is found quickly; approval, after reading the release, stops one that is
-  not.
+  not. A release with no timestamp is held rather than taken as old enough.
 - **No automerge.** An update is a change like any other: CI, SonarCloud,
   Sourcery and a human merge.
 - **No issue for Renovate's pull requests**, the one exception to `CLAUDE.md`'s

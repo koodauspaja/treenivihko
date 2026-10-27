@@ -7,7 +7,10 @@
   "prConcurrentLimit": 10,
   "prHourlyLimit": 5,
   "labels": ["dependencies"],
+  "dependencyDashboard": true,
+  "dependencyDashboardLabels": ["chore"],
   "minimumReleaseAge": "14 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
   "lockFileMaintenance": {
     "enabled": true
   },
@@ -60,9 +63,10 @@
     },
     {
       "description": [
-        "The SonarCloud scan action is the one third-party code that runs beside SONAR_TOKEN, so its updates wait for approval in the Dependency Dashboard, after its release has been looked at."
+        "Every GitHub Actions update waits for approval in the Dependency Dashboard, after its release has been read.",
+        "The SonarCloud job runs checkout, setup-node and download-artifact on the same runner before its scan and gate steps receive SONAR_TOKEN, so any of them could reach it; the 14-day age alone does not stop a compromise found late."
       ],
-      "matchPackageNames": ["SonarSource/sonarqube-scan-action"],
+      "matchManagers": ["github-actions"],
       "dependencyDashboardApproval": true
     }
   ]
