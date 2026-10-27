@@ -1,7 +1,7 @@
 /**
  * What an exercise may be, read from its form, and how the library shows and
- * filters it. Apart from the database, so each rule is tested on its own; the
- * database checks the same rules again.
+ * filters it. Every write goes through it; the database checks each column's
+ * rule again, not the rules across rows.
  *
  * decisions/f002-exercise-library.md
  */

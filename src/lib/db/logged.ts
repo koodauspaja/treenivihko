@@ -1,8 +1,7 @@
 /**
- * How a database write leaves its record when it fails: the event, its ids
- * and Postgres's reason, on one line, and nothing of the query's values, which
- * Drizzle's own message carries (a password's hash, a nickname, an exercise's
- * text).
+ * How a failed database write is logged: its event, ids and Postgres's reason
+ * on one line, never the query's values that Drizzle's own message carries,
+ * such as a password's hash or a nickname.
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md

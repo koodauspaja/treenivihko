@@ -1,8 +1,7 @@
 /**
  * The library's reads and writes, always within one parent's own exercises.
- * Each write leaves one line in the log, with ids only, and a name already in
- * use is decided by the database's unique index, so two saves at once cannot
- * both pass.
+ * Each write logs ids only; the unique index decides a name already in use, so
+ * two saves at once cannot both pass.
  *
  * decisions/f002-exercise-library.md
  */
@@ -13,7 +12,7 @@ import { toStderr } from "@/lib/auth/allowlist";
 import { getDatabase } from "@/lib/db/index";
 import { logged, type Report } from "@/lib/db/logged";
 import { exercise, exerciseLabel } from "@/lib/db/schema";
-import type { LabelKey } from "./labels";
+import { LABEL_KEYS, type LabelKey } from "./labels";
 import type { AmountKind, Exercise, Level } from "./rules";
 
 export type StoredExercise = Exercise & { id: string };
@@ -78,10 +77,15 @@ async function withLabels(reader: Reader, rows: Row[]): Promise<StoredExercise[]
         rows.map((row) => row.id)
       )
     );
+  // In the list's order, as readExercise gives them: Postgres promises no order of rows.
+  const order = (key: LabelKey) => LABEL_KEYS.indexOf(key);
   return rows.map((row) =>
     toExercise(
       row,
-      labels.filter((label) => label.exerciseId === row.id).map((label) => label.label as LabelKey)
+      labels
+        .filter((label) => label.exerciseId === row.id)
+        .map((label) => label.label as LabelKey)
+        .sort((a, b) => order(a) - order(b))
     )
   );
 }

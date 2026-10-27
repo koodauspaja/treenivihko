@@ -1,8 +1,7 @@
 /**
- * The one list of labels an exercise can carry, in three groups. Stored by
- * key, shown by Finnish name, and each with the meaning the parent, the import
- * and the AI all label by. The database refuses a key not here; changing the
- * list is a pull request and a migration.
+ * The one fixed list of labels, in three groups: stored by key, shown by
+ * Finnish name, each with the meaning the parent, the import and the AI all
+ * label by. The database refuses a key not here.
  *
  * decisions/f002-exercise-library.md
  */

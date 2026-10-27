@@ -87,6 +87,15 @@ describe("adding and reading", () => {
     expect(lines.join("\n")).not.toContain("Tikkaat");
   });
 
+  it("gives the labels back in the list's order, whatever order the rows come in", async () => {
+    const id = await saved("u1", { ...LADDER, labels: ["footwork", "field"] });
+    await database().delete(exerciseLabel).where(eq(exerciseLabel.exerciseId, id));
+    for (const label of ["ladder", "field", "footwork"]) {
+      await database().insert(exerciseLabel).values({ exerciseId: id, label });
+    }
+    expect((await getExercise("u1", id, report))?.labels).toEqual(["footwork", "field", "ladder"]);
+  });
+
   it("keeps one parent's library out of another's reach", async () => {
     const id = await saved("u1", LADDER);
     expect(await getExercise("u2", id, report)).toBeNull();
