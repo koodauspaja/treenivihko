@@ -1,0 +1,31 @@
+{
+  "component": {
+    "id": "AaF6xIWWN8EUzxr1NWE9",
+    "key": "koodauspaja_treenivihko",
+    "name": "treenivihko",
+    "qualifier": "TRK",
+    "measures": [
+      {
+        "metric": "new_security_hotspots",
+        "periods": [
+          {
+            "index": 1,
+            "value": "0",
+            "bestValue": true
+          }
+        ]
+      },
+      {
+        "metric": "new_violations",
+        "periods": [
+          {
+            "index": 1,
+            "value": "0",
+            "bestValue": true
+          }
+        ]
+      }
+    ],
+    "pullRequest": "19"
+  }
+}

@@ -73,15 +73,16 @@ function readMeasures(answer: unknown): Map<string, number> {
 
 /**
  * Judges an answer from the measures API against the limits. A metric that is
- * missing or unreadable fails, except a duplicated-line count Sonar leaves out
- * when it has measured the change's new lines and found none.
+ * missing or unreadable fails, except a duplicated-line count when the change
+ * has no new lines in analysed files: Sonar then leaves out both that count and
+ * `new_lines`, as a recorded answer shows.
  */
 export function judgeMeasures(
   limits: Readonly<Record<string, number>>,
   answer: unknown
 ): GateResult {
   const values = readMeasures(answer);
-  const nothingNew = values.get("new_lines") === 0;
+  const nothingNew = (values.get("new_lines") ?? 0) === 0;
   const lines: string[] = [];
   let passed = true;
   for (const [metric, limit] of Object.entries(limits)) {

@@ -50,6 +50,18 @@ was Critical.
 - **The rest stays as it is**: the three blocks, the risk levels and the three
   rounds.
 
+## Found along the way: a pull request with no analysed lines
+
+**Overrides `decisions/016-ci-and-sonarcloud.md` on one point.** 016 let the
+Sonar gate pass a missing duplicated-line count only when SonarCloud reported
+`new_lines` as 0. This pull request, which changes only Markdown, showed what
+SonarCloud actually sends then: `new_violations` and `new_security_hotspots`,
+and neither `new_lines` nor `new_duplicated_lines`. Under 016 every such pull
+request failed. A missing count now passes when `new_lines` is 0 or missing;
+an empty or broken answer still fails, on the two metrics SonarCloud always
+sends. The answer is recorded in
+`tests/fixtures/sonar/pull-request-no-analysed-lines.json`.
+
 ## Why
 
 The waste was not in how much Sourcery said but in what it kept saying: the
@@ -69,8 +81,19 @@ narrowing what it looks for.
   ```bash
   gh api graphql -F pr=<PR> -f query='query($pr: Int!) {
     repository(owner: "koodauspaja", name: "treenivihko") { pullRequest(number: $pr) {
-      reviewThreads(first: 100) { nodes { comments(first: 20) { nodes { author { login } body } } } } } } }' \
-    --jq '.data.repository.pullRequest.reviewThreads.nodes[]
-          | ([.comments.nodes[] | select(.author.login != "sourcery-ai") | .body] | last // "")
-          | split(" ")[0]'
+      reviewThreads(first: 100) { totalCount nodes {
+        comments(first: 50) { totalCount nodes { author { login } body } } } } } } }' \
+    --jq '.data.repository.pullRequest.reviewThreads
+          | if .totalCount > 100 or any(.nodes[]; .comments.totalCount > 50)
+            then error("more threads or replies than one page: page through them first")
+            else .nodes[]
+              | ([.comments.nodes[] | select(.author.login | test("^sourcery-ai") | not) | .body]
+                 | last // "")
+              | split(" ")[0]
+            end'
   ```
+
+  It stops, rather than counting part of a page, when a pull request has more
+  than 100 threads or a thread more than 50 comments. GitHub's GraphQL API
+  names Sourcery `sourcery-ai` where its REST API says `sourcery-ai[bot]`; the
+  filter matches both.
