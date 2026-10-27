@@ -30,11 +30,11 @@ description: Review your own diff, then open the pull request and hand it to a h
    A criterion that resists ticking usually means something was missed.
 4. **Check the size** of the diff Sourcery reviews, without the filtered
    lockfile: `git diff origin/main...HEAD -- . ':!package-lock.json' | wc -c`.
-   Sourcery skips a pull request over its plan's per-pull-request cap: read
-   the plan this repository is on, and that plan's cap, in
-   `docs/setup/004-sourcery-setup.md`, *The limits depend on the plan*. Stay
-   well under it, and otherwise split the work into pull requests merged one
-   after another.
+   Sourcery skips a pull request over its plan's per-pull-request cap: the
+   plan is in `docs/setup/004-sourcery-setup.md`'s *This project* line, and
+   its cap in the table under *The limits depend on the plan*. Stay well under
+   it, and otherwise split the work into pull requests merged one after
+   another.
 5. **Push and open the pull request** against `main`, filling in
    `.github/PULL_REQUEST_TEMPLATE.md`:
    - `Closes #N` on the first line. Only a closing keyword links the pull

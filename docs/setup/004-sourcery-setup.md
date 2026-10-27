@@ -4,8 +4,7 @@
 
 Sourcery reviews every pull request against this project's rules.
 
-This project: repository `koodauspaja/treenivihko`, on Sourcery's Open Source
-plan.
+This project: repository `koodauspaja/treenivihko`, on Sourcery's Team plan.
 
 ---
 
@@ -111,9 +110,8 @@ The merge gate in `.claude/skills/open-pr/SKILL.md` reads these.
   | Five automatic re-reviews on one PR | `@sourcery-ai review` resets the count |
 
 - **The limits depend on the plan.** A public repository starts on Open
-  Source. **This repository is on Team.** A clone on another plan reads its
-  own row, and the open-pr skill's size check uses whichever plan is named
-  here, so a change of plan is a change to this line.
+  Source; *This project*, under *Goal*, names the plan this one is on, and a
+  clone names its own there:
 
   | Plan | Per PR | Rolling 7 days |
   |---|---|---|
