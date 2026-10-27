@@ -12,6 +12,7 @@ type PackageRule = {
 
 const renovate = JSON.parse(readFileSync("renovate.json", "utf8")) as {
   minimumReleaseAge?: string;
+  minimumReleaseAgeBehaviour?: string;
   customManagers: CustomManager[];
   packageRules: PackageRule[];
 };
@@ -40,8 +41,13 @@ describe("Renovate's manager for the npm version CI installs", () => {
 });
 
 describe("Renovate's version holds", () => {
+  /** A package's hold, from a rule that applies to npm dependencies. */
   const hold = (name: string) =>
-    renovate.packageRules.find((rule) => rule.matchPackageNames?.includes(name))?.allowedVersions;
+    renovate.packageRules.find(
+      (rule) =>
+        rule.matchPackageNames?.includes(name) &&
+        (rule.matchManagers === undefined || rule.matchManagers.includes("npm"))
+    )?.allowedVersions;
 
   it("keeps TypeScript below 7", () => {
     expect(hold("typescript")).toBe("<7");
@@ -78,10 +84,12 @@ describe("Renovate's guards", () => {
     expect(regexFromSlashedPattern(rule?.allowedVersions ?? "/(?!)/").test(version)).toBe(allowed);
   });
 
-  it("asks before updating the one action that runs beside SONAR_TOKEN", () => {
-    const rule = renovate.packageRules.find((r) =>
-      r.matchPackageNames?.includes("SonarSource/sonarqube-scan-action")
-    );
+  it("asks before every GitHub Actions update", () => {
+    const rule = renovate.packageRules.find((r) => r.matchManagers?.includes("github-actions"));
     expect(rule?.dependencyDashboardApproval).toBe(true);
+  });
+
+  it("holds back a release with no timestamp, rather than taking it as old enough", () => {
+    expect(renovate.minimumReleaseAgeBehaviour).toBe("timestamp-required");
   });
 });
