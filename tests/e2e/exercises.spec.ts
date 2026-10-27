@@ -1,14 +1,17 @@
 import { expect, type Page, test } from "@playwright/test";
-import type { Exercise } from "../../src/lib/exercises/rules.ts";
+import { type Exercise, readExercise, valuesFrom } from "../../src/lib/exercises/rules.ts";
 import { createExercise } from "../../src/lib/exercises/store.ts";
 import { signInParent, unlockTrainer } from "./support/parent.ts";
 
 const quiet = () => {};
 
-const seed = (userId: string, overrides: Partial<Exercise>) =>
-  createExercise(
-    userId,
-    {
+/**
+ * An exercise saved through readExercise, as every write is; a fixture that fails it fails the test.
+ * decisions/f002-exercise-library.md
+ */
+const seed = (userId: string, overrides: Partial<Exercise>) => {
+  const reading = readExercise(
+    valuesFrom({
       name: "Harjoite",
       instructions: "Tee näin.",
       videoUrl: null,
@@ -19,9 +22,13 @@ const seed = (userId: string, overrides: Partial<Exercise>) =>
       warmUp: false,
       labels: ["dribbling", "field"],
       ...overrides,
-    },
-    quiet
+    })
   );
+  if (!reading.ok) {
+    throw new Error(`the fixture breaks a rule: ${JSON.stringify(reading.errors)}`);
+  }
+  return createExercise(userId, reading.exercise, quiet);
+};
 
 const main = (page: Page) => page.getByRole("main");
 

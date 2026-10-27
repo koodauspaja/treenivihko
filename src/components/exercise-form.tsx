@@ -23,7 +23,7 @@ function LabelChoices({
   values,
   errors,
 }: Readonly<{ group: LabelGroup; values: ExerciseValues; errors: Errors }>) {
-  const refusal = group === "skill" ? errors.skill : group === "place" ? errors.place : undefined;
+  const refusal = group === "equipment" ? undefined : errors[group];
   return (
     <fieldset className="flex flex-col gap-1">
       <legend className="font-semibold">{GROUP_HEADING[group]}</legend>
@@ -45,7 +45,8 @@ function LabelChoices({
 
 /** The form's fields, started from `values`; only the chosen amount's field is sent. */
 function Fields({ values, errors }: Readonly<{ values: ExerciseValues; errors: Errors }>) {
-  const [kind, setKind] = useState<AmountKind>(values.amountKind);
+  // A kind that is neither is refused on the count's field, so the form shows that one.
+  const [kind, setKind] = useState<AmountKind>(values.amountKind === "time" ? "time" : "count");
   return (
     <>
       <label htmlFor="exercise-name">{FIELD.name}</label>
@@ -171,7 +172,7 @@ export function ExerciseForm({
     <form action={action} className="mt-6 flex flex-col gap-3">
       {exerciseId === undefined ? null : <input type="hidden" name="id" value={exerciseId} />}
       <Fields key={state.version} values={state.values} errors={state.errors} />
-      {state.message === null ? null : <p role="status">{state.message}</p>}
+      {state.message === null ? null : <output>{state.message}</output>}
       <button
         type="submit"
         disabled={pending}

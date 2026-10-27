@@ -16,6 +16,7 @@ import {
   type ExerciseField,
   type ExerciseValues,
   readExercise,
+  valuesFrom,
   valuesOf,
 } from "@/lib/exercises/rules";
 import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/store";
@@ -57,7 +58,8 @@ export async function saveExercise(
   }
   if (typeof id === "string" && id !== "") {
     refresh();
-    return { version, message: SAVED, errors: {}, values };
+    // As saved, trimmed and tidied, not as typed.
+    return { version, message: SAVED, errors: {}, values: valuesFrom(reading.exercise) };
   }
   return { version, message: added(reading.exercise.name), errors: {}, values: EMPTY_VALUES };
 }
