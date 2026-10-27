@@ -63,5 +63,9 @@ for the tool as for the parent and, later, for the app's own AI (Feature 009).
   they are refused by name, and nothing is saved.
 - **The prompt's wording may change** after use, without changing the format.
 - **An import never changes an exercise** already in the library.
+- **An import and a rename at once can deadlock**, when they claim the same
+  names in opposite orders; it takes one parent's own two requests in the same
+  instant. Postgres aborts one, nothing is half saved, the parent sees the
+  error page, and doing it again succeeds.
 - **A size refused in the browser is not logged**: nothing reached the server.
   The server's `size` line is for a request that skips the page.

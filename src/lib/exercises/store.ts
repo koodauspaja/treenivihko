@@ -198,6 +198,33 @@ export function updateExercise(
   });
 }
 
+/**
+ * Adds an import's exercises and labels within `tx`, in two statements, rows
+ * in one order by name, so two imports at once sharing names wait on each
+ * other rather than deadlock.
+ */
+async function insertImport(
+  tx: Transaction,
+  userId: string,
+  exercises: readonly CheckedExercise[]
+) {
+  const added = [...exercises]
+    // The names as written break a tie, so distinct names never keep their input order.
+    .sort(
+      (a, b) =>
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase()) ||
+        (a.name < b.name ? -1 : Number(a.name > b.name))
+    )
+    .map((values) => ({ id: randomUUID(), values }));
+  await tx
+    .insert(exercise)
+    .values(added.map(({ id, values }) => ({ id, userId, ...columnsOf(values) })));
+  const labels = added.flatMap(({ id, values }) =>
+    values.labels.map((label) => ({ exerciseId: id, label }))
+  );
+  await tx.insert(exerciseLabel).values(labels);
+}
+
 export type ImportResult = { kind: "imported"; count: number } | { kind: "nameInUse" };
 
 /**
@@ -216,21 +243,7 @@ export function importExercises(
       report,
       () =>
         getDatabase().transaction(async (tx) => {
-          // Two statements for the whole import, rows in one order by name, so
-          // two imports at once sharing a name wait on each other, not deadlock.
-          const added = [...exercises]
-            .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
-            .map((values) => ({ id: randomUUID(), values }));
-          await tx
-            .insert(exercise)
-            .values(added.map(({ id, values }) => ({ id, userId, ...columnsOf(values) })));
-          await tx
-            .insert(exerciseLabel)
-            .values(
-              added.flatMap(({ id, values }) =>
-                values.labels.map((label) => ({ exerciseId: id, label }))
-              )
-            );
+          await insertImport(tx, userId, exercises);
           return { kind: "imported", count: exercises.length } as const;
         })
     );

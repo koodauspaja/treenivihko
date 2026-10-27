@@ -89,7 +89,7 @@ Example, as the page shows it:
 They replace Feature 002's English meanings in the label list; the keys and
 names stay as they are.
 
-| Group | Label | Merkitys |
+| Group | Label | Meaning, in Finnish |
 |---|---|---|
 | **Taito** | Kuljetus | Pallo liikkuu lapsen mukana: juoksu, käännökset ja kiihdytykset pallo lähellä |
 | | Harhautus | Harhautus tai liike, jolla ohitetaan vastustaja |
