@@ -18,9 +18,10 @@ a key to look after.
   stores the child's marks or the exercise library, when what it protects and
   how much it is worth is clearer.
 - **Until then, a dump by hand**, before any risky migration: `pg_dump`
-  inside the Postgres container through `railway ssh`, to a file on the
-  parent's machine, and `pg_restore` into the local database to check it.
-  Both are in setup 010, *Later*.
+  inside the Postgres container through `railway ssh`, to a file only the
+  parent can read, and `pg_restore` into a scratch local database, whose
+  every table's rows are compared with Railway's. Both are in setup 010,
+  *Later*.
 
 ## Why
 
@@ -29,7 +30,9 @@ a key to look after.
 | Postponed | There is nothing yet to lose: one user row, which a sign-in recreates |
 | Through `railway ssh` | Postgres has no public TCP proxy, and keeps none |
 | `--format=custom` | Measured: the binary dump comes through the SSH stream intact, and restored into a scratch database with every table's row count matching Railway's |
-| The dump outside the repository | It holds personal data; `*.dump` is git-ignored as a second guard |
+| The dump outside the repository, readable only by its owner | It holds personal data and live session tokens, which would let a reader sign in as the parent; `*.dump` is git-ignored as a second guard |
+| Written to `.partial`, renamed on success | A failed run must not destroy the last good dump |
+| Checked in a scratch database, every table counted | Restoring over the development database can leave its own objects behind, and one table's count can match while another's does not |
 
 ## Consequences
 

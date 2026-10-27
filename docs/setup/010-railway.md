@@ -86,27 +86,34 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
 
 - **A dump before a risky migration.** Railway's Postgres has no backups yet
   (`decisions/031-database-dump.md`), so before a migration that drops,
-  renames or rewrites anything, dump it to your machine. The file holds
-  personal data: keep it outside the repository and delete it when it is no
-  longer needed.
+  renames or rewrites anything, dump it to your machine. **The file holds
+  personal data and live session tokens**: anyone who can read it can sign in
+  as the parent until those sessions end. Only you can read it (`umask 077`);
+  keep it outside the repository, and delete it when it is no longer needed.
 
   ```bash
-  railway ssh -s Postgres -- pg_dump -U postgres --format=custom railway \
-    > ~/treenivihko-$(date +%Y-%m-%d).dump
+  f=~/treenivihko-$(date +%Y-%m-%d).dump
+  ( umask 077 &&
+    railway ssh -s Postgres -- pg_dump -U postgres --format=custom railway > "$f.partial" &&
+    mv "$f.partial" "$f" ) || rm -f "$f.partial"
   ```
 
-  To check it, or to look at it, restore it into the local development
-  database, which it replaces, and count the rows:
+  A failed run leaves the previous dump of that name as it was. To check a
+  dump, restore it into a scratch database and compare every table's rows with
+  Railway's, straight after the dump, since a sign-in in between changes
+  them; the two lists must be equal:
 
   ```bash
-  docker compose exec -T postgres pg_restore -U postgres --no-owner \
-    --clean --if-exists -d treenivihko < ~/treenivihko-<date>.dump
-  docker compose exec -T postgres psql -U postgres -d treenivihko \
-    -c 'select count(*) from "user"'
+  q="select table_schema || '.' || table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text::int from information_schema.tables where table_schema in ('public', 'drizzle') and table_type = 'BASE TABLE' order by 1"
+  db() { docker compose exec -T postgres "$@"; }
+  db psql -U postgres -c 'drop database if exists restore_check' &&
+    db psql -U postgres -c 'create database restore_check' &&
+    db pg_restore -U postgres --no-owner --exit-on-error -d restore_check < "$f" &&
+    db psql -U postgres -d restore_check -tA -F ' ' -c "$q"
+  railway ssh -s Postgres -- psql -U postgres -d railway -tA -F ' ' -c "$q"
+  db psql -U postgres -c 'drop database restore_check'
   ```
 
-  The same count on Railway: `railway ssh -s Postgres -- psql -U postgres
-  -d railway -c 'select count(*) from "user"'`.
 - **A change to `.railway/railway.ts` takes effect only when applied.**
   Merging it does nothing. After the merge: `railway config plan`, read it,
   then `railway config apply`. An apply removes whatever the file no longer
