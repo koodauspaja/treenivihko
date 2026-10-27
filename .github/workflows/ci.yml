@@ -58,6 +58,48 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          # A random value no person needs, from a secret rather than written here.
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: treenivihko_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d treenivihko_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/treenivihko_test
+    steps:
+      # A skipped job counts as passed, so anyone else gets a failure, not a skip.
+      - name: Only the people named in setup 001
+        env:
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ vars.OWNER_USERNAME }}
+          COLLABORATOR: ${{ vars.COLLABORATOR_USERNAME }}
+        run: |
+          case "$ACTOR" in
+            "$OWNER" | "$COLLABORATOR" | "renovate[bot]") ;;
+            *) echo "::error::CI runs only for the actors named in setup 001, and $ACTOR is not one"; exit 1 ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm install --global --ignore-scripts npm@12.2.1
+      - run: npm ci --ignore-scripts
+      - run: npm run test:integration
+
   e2e:
     name: Build and end-to-end
     runs-on: ubuntu-latest

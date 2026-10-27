@@ -62,6 +62,10 @@ Two things hold for every feature:
   as data is fine.
 - **Unit coverage is 100%, and the thresholds are never lowered.** An uncovered
   line gets a test, or its file gets an exclusion with a reason.
+- **Every migration is named** `<verb>_<what>`: `npm run db:generate --
+  --name=create_exercises`. `db:generate` refuses an unnamed one and a unit
+  test fails on one that exists. **An applied migration is never edited**; a
+  change is a new migration (`docs/setup/009-database.md`).
 - **Decision records are added, never edited.** A later record names the one
   it overrides, and the earlier one stays as it was.
 - **A comment says what a thing is for**, in one to three lines, or names a

@@ -23,8 +23,10 @@ nvm use                # Node 24, from .nvmrc
 npm install -g npm@12  # once; .npmrc refuses an older npm
 npm ci
 npm run test:e2e:browser
-npm run dev        # http://localhost:3000
-npm run verify     # every check, as CI will run them
+cp .env.example .env   # and fill in a password
+npm run db:up          # Postgres, in Docker
+npm run dev            # http://localhost:3000
+npm run verify         # every check, as CI runs them
 ```
 
 ---

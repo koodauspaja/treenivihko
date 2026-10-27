@@ -19,6 +19,10 @@ export const coverageExclusions: Readonly<Record<string, string>> = {
     "Reads the report from disk and sets the exit code; what it decides is in coverage-plan.ts, which is tested.",
   "scripts/sonar-gate.ts":
     "Calls SonarCloud's API and sets the exit code; what it decides is in sonar-plan.ts, which is tested.",
+  "scripts/generate-migration.ts":
+    "Spawns drizzle-kit and sets the exit code; what it decides is in migration-name.ts, which is tested.",
+  "scripts/migrate.ts":
+    "Connects to the database and sets the exit code; what it does is runMigrations, which is tested, and the integration tests run it against Postgres.",
 };
 
 const sourceFile = /^(src\/.+\.(ts|tsx|mts|cts)|scripts\/.+\.(ts|mts|cts))$/;

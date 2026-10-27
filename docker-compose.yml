@@ -1,0 +1,26 @@
+# Postgres for development and for the integration tests, on 5433 so another
+# project's Postgres can keep 5432.
+#
+# decisions/023-database.md
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      # From .env, never written here; `:?` makes a missing value an error.
+      POSTGRES_PASSWORD: ${TREENIVIHKO_POSTGRES_PASSWORD:?set TREENIVIHKO_POSTGRES_PASSWORD in .env, see .env.example}
+      POSTGRES_DB: treenivihko
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      # Runs once, when the volume is first created.
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d treenivihko"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  postgres-data:
