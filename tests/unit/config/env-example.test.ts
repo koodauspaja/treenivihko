@@ -1,8 +1,9 @@
 import { globSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-// Set by GitHub Actions (CI) or by the workflow (PR_NUMBER, SONAR_TOKEN), never in a local .env.
-const CI_ONLY = new Set(["CI", "PR_NUMBER", "SONAR_TOKEN"]);
+// Set by GitHub Actions (CI), by the workflow (PR_NUMBER, SONAR_TOKEN) or by Railway
+// (RAILWAY_GIT_COMMIT_SHA), never in a local .env.
+const NOT_LOCAL = new Set(["CI", "PR_NUMBER", "RAILWAY_GIT_COMMIT_SHA", "SONAR_TOKEN"]);
 
 const code = globSync([
   "*.config.ts",
@@ -19,7 +20,7 @@ const read = new Set([
   ),
 ]);
 const required = [...read]
-  .filter((name): name is string => !!name && !CI_ONLY.has(name))
+  .filter((name): name is string => !!name && !NOT_LOCAL.has(name))
   .sort((a, b) => a.localeCompare(b));
 
 const entries = readFileSync(".env.example", "utf8")

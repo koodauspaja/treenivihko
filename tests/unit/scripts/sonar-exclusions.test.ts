@@ -7,13 +7,18 @@ const sonarExclusions = readPropertyList(
   "sonar.coverage.exclusions"
 );
 
+/** Configuration no unit coverage measures: the root's `*.config.ts`, and Railway's. */
+const configs = [
+  ...readdirSync(".").filter((file) => /\.config\.(ts|mts|cts)$/.test(file)),
+  ...readdirSync(".railway").map((file) => `.railway/${file}`),
+];
+
 describe("SonarCloud's coverage exclusions", () => {
   it("include every file excluded from unit coverage", () => {
     expect(sonarExclusions).toEqual(expect.arrayContaining(Object.keys(coverageExclusions)));
   });
 
-  it("include every configuration file at the root, which no unit test runs", () => {
-    const configs = readdirSync(".").filter((file) => /\.config\.(ts|mts|cts)$/.test(file));
+  it("include every configuration file, at the root and Railway's, which no unit test runs", () => {
     expect(configs.length).toBeGreaterThan(0);
     expect(sonarExclusions).toEqual(expect.arrayContaining(configs));
   });
@@ -23,7 +28,6 @@ describe("SonarCloud's coverage exclusions", () => {
   });
 
   it("name nothing else", () => {
-    const configs = readdirSync(".").filter((file) => /\.config\.(ts|mts|cts)$/.test(file));
     const expected = new Set([...Object.keys(coverageExclusions), ...configs]);
     expect(sonarExclusions.filter((file) => !expected.has(file))).toEqual([]);
   });

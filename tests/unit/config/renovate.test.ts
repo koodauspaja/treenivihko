@@ -17,26 +17,34 @@ const renovate = JSON.parse(readFileSync("renovate.json", "utf8")) as {
   packageRules: PackageRule[];
 };
 const workflow = readFileSync(".github/workflows/ci.yml", "utf8");
+const railway = readFileSync(".railway/railway.ts", "utf8");
+const npmPinned = { ".github/workflows/ci.yml": workflow, ".railway/railway.ts": railway };
 
 const regexFromSlashedPattern = (pattern: string) => new RegExp(pattern.slice(1, -1));
 
-describe("Renovate's manager for the npm version CI installs", () => {
+describe("Renovate's manager for the npm version CI and Railway install", () => {
   const [manager] = renovate.customManagers;
 
-  it("applies to the CI workflow", () => {
+  it.each(Object.keys(npmPinned))("applies to %s", (file) => {
     expect(
-      manager?.managerFilePatterns
-        .map(regexFromSlashedPattern)
-        .some((re) => re.test(".github/workflows/ci.yml"))
+      manager?.managerFilePatterns.map(regexFromSlashedPattern).some((re) => re.test(file))
     ).toBe(true);
   });
 
-  it("matches every npm@<version> in the workflow, and nothing else in it", () => {
-    const pattern = new RegExp(manager?.matchStrings[0] ?? "(?!)", "g");
-    const matched = [...workflow.matchAll(pattern)].map((match) => match.groups?.currentValue);
-    const written = [...workflow.matchAll(/npm@(\S+)/g)].map((match) => match[1]);
-    expect(matched.length).toBeGreaterThan(0);
-    expect(matched).toEqual(written);
+  it.each(Object.entries(npmPinned))(
+    "matches every npm@<version> in %s, and nothing else in it",
+    (_file, text) => {
+      const pattern = new RegExp(manager?.matchStrings[0] ?? "(?!)", "g");
+      const matched = [...text.matchAll(pattern)].map((match) => match.groups?.currentValue);
+      const written = [...text.matchAll(/npm@(\S+)/g)].map((match) => match[1]);
+      expect(matched.length).toBeGreaterThan(0);
+      expect(matched).toEqual(written);
+    }
+  );
+
+  it("has CI and Railway install the same npm", () => {
+    const versions = (text: string) => [...new Set(text.match(/npm@\S+/g))];
+    expect(versions(railway)).toEqual(versions(workflow));
   });
 });
 
