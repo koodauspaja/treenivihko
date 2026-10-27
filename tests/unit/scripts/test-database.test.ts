@@ -30,6 +30,21 @@ describe("integrationDatabaseRefusal", () => {
       /not "x_test_real"/,
     ],
     ["something that is not a URL", "not a url", /not a connection string/],
+    [
+      "a query naming another host",
+      "postgresql://u:p@localhost/app_test?host=db.example.com",
+      /query string/,
+    ],
+    [
+      "a query naming another database",
+      "postgresql://u:p@localhost/app_test?db=app",
+      /query string/,
+    ],
+    [
+      "a malformed escape in the name",
+      "postgresql://u:p@localhost/app%E0%A4%A_test",
+      /not readable/,
+    ],
     ["nothing", undefined, /TEST_DATABASE_URL is not set/],
     ["an empty value", " ", /TEST_DATABASE_URL is not set/],
   ])("refuses %s", (_name, url, reason) => {

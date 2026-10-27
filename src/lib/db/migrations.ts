@@ -15,14 +15,16 @@ type Steps = {
   exists: (path: string) => boolean;
   /** The `.sql` files in the migrations folder, which is empty or absent before the first. */
   sqlFiles: () => string[];
+  /** The tags the journal lists, read only when it exists. */
+  journalTags: () => string[];
   /** Applies every migration not yet applied, from the folder. */
   migrate: (folder: string) => Promise<void>;
 };
 
 /**
- * Runs the migrations if there are any. Without a journal drizzle's migrator
- * fails, so "none" means no journal and no SQL file; SQL files without a
- * journal are an error, not nothing to do.
+ * Runs the migrations if there are any: "none" means no journal and no SQL
+ * file. A SQL file the journal does not list is an error, because drizzle's
+ * migrator would skip it.
  */
 export async function runMigrations(steps: Steps): Promise<MigrationRun> {
   if (!steps.exists(MIGRATION_JOURNAL)) {
@@ -34,8 +36,18 @@ export async function runMigrations(steps: Steps): Promise<MigrationRun> {
     }
     return "none";
   }
+  const listed = new Set(steps.journalTags());
+  const unlisted = steps.sqlFiles().filter((file) => !listed.has(file.replace(/\.sql$/, "")));
+  if (unlisted.length > 0) {
+    throw new Error(`${MIGRATION_JOURNAL} does not list: ${unlisted.join(", ")}`);
+  }
   await steps.migrate(MIGRATIONS_FOLDER);
   return "applied";
+}
+
+/** The tags in a drizzle-kit journal's text. */
+export function journalTagsIn(journal: string): string[] {
+  return (JSON.parse(journal) as { entries: { tag: string }[] }).entries.map((entry) => entry.tag);
 }
 
 /** The `.sql` files among a folder's entries. */
