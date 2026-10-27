@@ -123,16 +123,24 @@ export function valuesOf(form: FormData): ExerciseValues {
   };
 }
 
+/** Postgres cannot store U+0000 in text, so a field holding it is refused rather than failing the write. */
+const hasNul = (text: string) => text.includes("\u0000");
+
 /**
  * The video link as stored: null for none, or an address that starts with
  * `https://` exactly, as the database's check reads it, and parses.
  */
 function videoUrlFrom(input: string): string | null | undefined {
-  const trimmed = tidy(input);
+  // Trimmed only: normalising could turn the link into another address.
+  const trimmed = input.trim();
   if (trimmed === "") {
     return null;
   }
-  if (!trimmed.startsWith("https://") || characterCount(trimmed) > VIDEO_URL_MAX_LENGTH) {
+  if (
+    !trimmed.startsWith("https://") ||
+    characterCount(trimmed) > VIDEO_URL_MAX_LENGTH ||
+    hasNul(trimmed)
+  ) {
     return undefined;
   }
   return URL.canParse(trimmed) ? trimmed : undefined;
@@ -142,12 +150,16 @@ function videoUrlFrom(input: string): string | null | undefined {
 export function readExercise(values: ExerciseValues): ExerciseReading {
   const errors: Partial<Record<ExerciseField, string>> = {};
   const name = tidy(values.name);
-  if (characterCount(name) < 1 || characterCount(name) > NAME_MAX_LENGTH) {
+  if (characterCount(name) < 1 || characterCount(name) > NAME_MAX_LENGTH || hasNul(name)) {
     errors.name = REFUSAL.name;
   }
   const instructions = tidy(values.instructions);
   const instructionsLength = characterCount(instructions);
-  if (instructionsLength < 1 || instructionsLength > INSTRUCTIONS_MAX_LENGTH) {
+  if (
+    instructionsLength < 1 ||
+    instructionsLength > INSTRUCTIONS_MAX_LENGTH ||
+    hasNul(instructions)
+  ) {
     errors.instructions = REFUSAL.instructions;
   }
   const videoUrl = videoUrlFrom(values.videoUrl);

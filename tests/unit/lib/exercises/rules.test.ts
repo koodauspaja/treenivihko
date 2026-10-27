@@ -119,6 +119,24 @@ describe("readExercise", () => {
     );
   });
 
+  it("refuses U+0000, which Postgres cannot store, in every text field", () => {
+    expect(errorsOf({ name: "Tik\u0000kaat" })).toEqual({
+      name: "Nimessä on oltava 1–40 merkkiä.",
+    });
+    expect(errorsOf({ instructions: "Tee\u0000näin." })).toEqual({
+      instructions: "Ohjeessa on oltava 1–1000 merkkiä.",
+    });
+    expect(errorsOf({ videoUrl: "https://example.com/\u0000" })).toEqual({
+      videoUrl: "Videolinkin on oltava https-osoite.",
+    });
+  });
+
+  it("keeps a video link as typed, only trimmed, never normalised", () => {
+    const decomposed = "https://example.com/A\u0308";
+    const reading = readExercise({ ...VALID, videoUrl: ` ${decomposed} ` });
+    expect(reading.ok && reading.exercise.videoUrl).toBe(decomposed);
+  });
+
   it("stores no video link for an empty one", () => {
     const reading = readExercise({ ...VALID, videoUrl: "  " });
     expect(reading.ok && reading.exercise.videoUrl).toBeNull();
