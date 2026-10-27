@@ -28,16 +28,23 @@ export const IDLE_TIMEOUT_SECONDS = 20;
 
 type Connection = { database: Database; close: () => Promise<void> };
 
-/** The driver's options for a client whose statements time out after `statementTimeoutMs`. */
-export function clientOptions(statementTimeoutMs: number) {
+/** The application's pool: the driver's own default. */
+export const APPLICATION_CONNECTIONS = 10;
+
+/** One, so the migration lock is taken and released in the same session. */
+export const MIGRATION_CONNECTIONS = 1;
+
+/** The driver's options for a client of `connections` whose statements time out after `statementTimeoutMs`. */
+export function clientOptions(statementTimeoutMs: number, connections: number) {
   return {
+    max: connections,
     idle_timeout: IDLE_TIMEOUT_SECONDS,
     connection: { statement_timeout: statementTimeoutMs },
   };
 }
 
-function open(statementTimeoutMs: number): Connection {
-  const client = postgres(requireDatabaseUrl(), clientOptions(statementTimeoutMs));
+function open(statementTimeoutMs: number, connections: number): Connection {
+  const client = postgres(requireDatabaseUrl(), clientOptions(statementTimeoutMs, connections));
   return { database: drizzle(client, { schema }), close: () => client.end({ timeout: 2 }) };
 }
 
@@ -45,7 +52,7 @@ let shared: Connection | undefined;
 
 /** The application's database. Connects lazily: nothing is opened until the first query. */
 export function getDatabase(): Database {
-  shared ??= open(STATEMENT_TIMEOUT_MS);
+  shared ??= open(STATEMENT_TIMEOUT_MS, APPLICATION_CONNECTIONS);
   return shared.database;
 }
 
@@ -55,7 +62,7 @@ export async function closeDatabase(): Promise<void> {
   shared = undefined;
 }
 
-/** A client for running migrations, without the statement timeout; the caller closes it. */
+/** A client for running migrations, on one connection without the statement timeout; the caller closes it. */
 export function openMigrationDatabase(): Connection {
-  return open(MIGRATION_STATEMENT_TIMEOUT_MS);
+  return open(MIGRATION_STATEMENT_TIMEOUT_MS, MIGRATION_CONNECTIONS);
 }

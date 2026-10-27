@@ -21,7 +21,12 @@ the app is used a few times a week.
 - **`main` deploys after CI passes** (`checkSuites`), from the Railway GitHub
   app's access to this repository.
 - **Migrations run in the pre-deploy step**, `npm run db:migrate`, in the new
-  container before it takes traffic. That is the one place they run.
+  container before it takes traffic. That is the one place they run, and each
+  run applies them under a Postgres advisory lock, over a client of one
+  connection.
+- **A migration works with the version still serving.** A column is added in
+  one deploy and used in the next, and dropped or renamed only once nothing
+  serving reads it.
 - **`/api/health` is the health check**: `ok` when the database answers
   within three seconds, `503` when it does not, with the deployed commit. It
   calls `connection()`, so it is never prerendered: the build has no database.
@@ -44,6 +49,8 @@ the app is used a few times a week.
 | The region's stored name | Measured on the earlier project: with the short name the database is created in the same place, and every later plan shows a move, which the CLI counts as destructive |
 | Wait for CI | Merging starts CI's push run and Railway's deploy at the same moment. Waiting holds the deploy until the checks on that commit pass, and skips it if any fail, so a commit CI rejected never serves. The cost is a few minutes per deploy, and a skipped deploy is redeployed by hand once CI is green |
 | Migrations before traffic | A version that needs a new column never serves without it; a failed migration stops the deploy and the old version keeps serving |
+| The advisory lock | Two merges in quick succession can overlap their deploys, and both pre-deploy steps would see the same migration as pending and run it. The lock makes the second wait, and then find nothing left to do. A session's lock is released only by that session, so the migration client has one connection |
+| Migrations that suit the serving version | The pre-deploy step commits before the old version stops serving: a dropped or renamed column fails the old version's requests until the new one takes over |
 | A three-second database timeout in the health check | Railway's check waits up to 60 seconds; a check that hangs as long as the driver's own 30-second connect timeout says nothing more |
 | Next started directly | `npm start` runs the script through `sh -c`, and that shell dies on Railway's SIGTERM while the server never receives it |
 | Sleeping, and the idle timeout | Used a few times a week, so idle hours are most of the bill. Railway sleeps a service only after its last outbound packet; postgres.js keeps idle connections open and sends a keepalive on each every minute, so it would never sleep |
