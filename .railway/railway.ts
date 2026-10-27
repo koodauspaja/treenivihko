@@ -6,8 +6,9 @@
  *
  * decisions/023-database.md
  * decisions/026-railway.md
+ * decisions/029-sign-in.md
  */
-import { defineRailway, github, postgres, project, service } from "railway/iac";
+import { defineRailway, github, postgres, preserve, project, service } from "railway/iac";
 
 // Railway's stored name for europe-west4. With the short name, every later plan
 // shows a move, which the CLI counts as destructive.
@@ -40,7 +41,18 @@ export default defineRailway(() => {
   const web = service("treenivihko", {
     // A red CI run on main leaves the previous version serving.
     source: github("koodauspaja/treenivihko", { branch: "main", checkSuites: true }),
-    env: { DATABASE_URL: database.env.DATABASE_URL, RAILPACK_NODE_NPM_INSTALL: NPM_INSTALL },
+    env: {
+      DATABASE_URL: database.env.DATABASE_URL,
+      RAILPACK_NODE_NPM_INSTALL: NPM_INSTALL,
+      // Railway resolves it to the service's own domain.
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Railway's reference syntax, not a JavaScript template.
+      BETTER_AUTH_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+      // Set on Railway, never here; an apply keeps what is set.
+      BETTER_AUTH_SECRET: preserve(),
+      GOOGLE_CLIENT_ID: preserve(),
+      GOOGLE_CLIENT_SECRET: preserve(),
+      AUTH_ALLOWED_EMAILS: preserve(),
+    },
     replicas: { [REGION]: 1 },
     build: { watchPatterns: WATCH_PATTERNS },
     deploy: {
