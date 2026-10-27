@@ -152,6 +152,12 @@ export const exercise = pgTable(
   (table) => [
     uniqueIndex("exercise_user_name_idx").on(table.userId, sql`lower(${table.name})`),
     check("exercise_name_length", sql`char_length(${table.name}) between 1 and 40`),
+    // Trimmed at both ends, as readExercise stores them; line breaks inside are kept.
+    check("exercise_name_trimmed", sql`${table.name} = btrim(${table.name}, E' \\t\\n\\r')`),
+    check(
+      "exercise_instructions_trimmed",
+      sql`${table.instructions} = btrim(${table.instructions}, E' \\t\\n\\r')`
+    ),
     check(
       "exercise_instructions_length",
       sql`char_length(${table.instructions}) between 1 and 1000`

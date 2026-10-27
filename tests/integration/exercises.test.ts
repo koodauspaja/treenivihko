@@ -12,7 +12,12 @@ import {
   sqlFilesIn,
 } from "@/lib/db/migrations";
 import { exercise, exerciseLabel, user } from "@/lib/db/schema";
-import type { Exercise } from "@/lib/exercises/rules";
+import {
+  type CheckedExercise,
+  type Exercise,
+  readExercise,
+  valuesFrom,
+} from "@/lib/exercises/rules";
 import {
   createExercise,
   deleteExercise,
@@ -40,8 +45,17 @@ const LADDER: Exercise = {
   labels: ["footwork", "field", "ladder"],
 };
 
+/** The exercise through readExercise, as every write is; a fixture that fails it fails the test. */
+const checked = (values: Exercise): CheckedExercise => {
+  const reading = readExercise(valuesFrom(values));
+  if (!reading.ok) {
+    throw new Error(`the fixture breaks a rule: ${JSON.stringify(reading.errors)}`);
+  }
+  return reading.exercise;
+};
+
 const saved = async (userId: string, values: Exercise) => {
-  const result = await createExercise(userId, values, report);
+  const result = await createExercise(userId, checked(values), report);
   if (result.kind !== "saved") {
     throw new Error(`expected a save, got ${result.kind}`);
   }
@@ -100,7 +114,7 @@ describe("adding and reading", () => {
     const id = await saved("u1", LADDER);
     expect(await getExercise("u2", id, report)).toBeNull();
     expect(await listExercises("u2", report)).toEqual([]);
-    expect(await updateExercise("u2", id, { ...LADDER, name: "Vieras" }, report)).toEqual({
+    expect(await updateExercise("u2", id, checked({ ...LADDER, name: "Vieras" }), report)).toEqual({
       kind: "missing",
     });
     expect(await deleteExercise("u2", id, report)).toBe(false);
@@ -109,14 +123,14 @@ describe("adding and reading", () => {
 
   it("lets two parents use the same name", async () => {
     await saved("u1", LADDER);
-    expect((await createExercise("u2", LADDER, report)).kind).toBe("saved");
+    expect((await createExercise("u2", checked(LADDER), report)).kind).toBe("saved");
   });
 });
 
 describe("the name", () => {
   it("is refused when the library has it in any case, Finnish letters included", async () => {
     await saved("u1", { ...LADDER, name: "Äijä" });
-    expect(await createExercise("u1", { ...LADDER, name: "äIJÄ" }, report)).toEqual({
+    expect(await createExercise("u1", checked({ ...LADDER, name: "äIJÄ" }), report)).toEqual({
       kind: "nameInUse",
     });
     expect(lines.at(-1)).toBe("exercise refused, name in use: user u1");
@@ -124,8 +138,8 @@ describe("the name", () => {
 
   it("decides between two saves at once in the database", async () => {
     const results = await Promise.all([
-      createExercise("u1", LADDER, report),
-      createExercise("u1", { ...LADDER, name: LADDER.name.toUpperCase() }, report),
+      createExercise("u1", checked(LADDER), report),
+      createExercise("u1", checked({ ...LADDER, name: LADDER.name.toUpperCase() }), report),
     ]);
     expect(results.map((result) => result.kind).sort()).toEqual(["nameInUse", "saved"]);
     expect(await listExercises("u1", report)).toHaveLength(1);
@@ -134,11 +148,18 @@ describe("the name", () => {
   it("is refused on renaming to another exercise's, and kept on a change of case", async () => {
     const first = await saved("u1", LADDER);
     const second = await saved("u1", { ...LADDER, name: "Laukaus" });
-    expect(await updateExercise("u1", second, { ...LADDER, name: LADDER.name }, report)).toEqual({
+    expect(
+      await updateExercise("u1", second, checked({ ...LADDER, name: LADDER.name }), report)
+    ).toEqual({
       kind: "nameInUse",
     });
     expect(
-      await updateExercise("u1", first, { ...LADDER, name: LADDER.name.toUpperCase() }, report)
+      await updateExercise(
+        "u1",
+        first,
+        checked({ ...LADDER, name: LADDER.name.toUpperCase() }),
+        report
+      )
     ).toEqual({ kind: "saved", id: first });
   });
 });
@@ -157,13 +178,15 @@ describe("saving and deleting", () => {
       warmUp: false,
       labels: ["agility", "gym"],
     };
-    expect(await updateExercise("u1", id, changed, report)).toEqual({ kind: "saved", id });
+    expect(await updateExercise("u1", id, checked(changed), report)).toEqual({ kind: "saved", id });
     expect(await getExercise("u1", id, report)).toEqual({ id, ...changed });
     expect(lines.at(-1)).toBe(`exercise updated: user u1, exercise ${id}`);
   });
 
   it("says an exercise that is gone is missing, and changes nothing", async () => {
-    expect(await updateExercise("u1", "gone", LADDER, report)).toEqual({ kind: "missing" });
+    expect(await updateExercise("u1", "gone", checked(LADDER), report)).toEqual({
+      kind: "missing",
+    });
     expect(await listExercises("u1", report)).toEqual([]);
   });
 
@@ -202,6 +225,8 @@ describe("the database's own checks", () => {
   it.each([
     ["a name over 40 characters", { name: "x".repeat(41) }],
     ["empty instructions", { instructions: "" }],
+    ["a name with a space at its end", { name: "Raw " }],
+    ["instructions with a line break at their start", { instructions: "\nTee näin." }],
     ["an http video link", { videoUrl: "http://example.com" }],
     ["a count of 101", { amount: 101 }],
     ["a time of 7 seconds", { amountKind: "time", amount: 7 }],
@@ -220,7 +245,7 @@ describe("the database's own checks", () => {
   });
 
   it("log a failure with its ids and no text, and pass it on", async () => {
-    await expect(createExercise("nobody", LADDER, report)).rejects.toThrow(
+    await expect(createExercise("nobody", checked(LADDER), report)).rejects.toThrow(
       /^exercise created failed: user nobody: /
     );
     expect(lines).toEqual([expect.stringMatching(/^exercise created failed: user nobody: /)]);

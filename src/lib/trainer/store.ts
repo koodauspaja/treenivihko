@@ -4,6 +4,7 @@
  * leaves one line in the log, with ids only.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { randomUUID } from "node:crypto";

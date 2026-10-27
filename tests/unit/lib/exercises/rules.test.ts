@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   byFinnishName,
+  type CheckedExercise,
   EMPTY_VALUES,
+  type Exercise,
   type ExerciseValues,
   FILTERED_PARAM,
   filtersFrom,
@@ -13,6 +15,7 @@ import {
   valuesOf,
   wholeNumber,
 } from "@/lib/exercises/rules";
+import type { createExercise, updateExercise } from "@/lib/exercises/store";
 
 const VALID: ExerciseValues = {
   name: "Tikkaat",
@@ -296,5 +299,24 @@ describe("the filters", () => {
     const nothing = { ...none, equipment: [] };
     expect(passes(["speed", "field"], nothing)).toBe(true);
     expect(passes(["speed", "field", "cones"], nothing)).toBe(false);
+  });
+});
+
+describe("a checked exercise", () => {
+  it("is made by readExercise only: a plain one is not accepted where a checked one is", () => {
+    const reading = readExercise(VALID);
+    const plain: Exercise = reading.ok ? { ...reading.exercise } : (undefined as never);
+    // @ts-expect-error a plain Exercise has not passed readExercise
+    const unchecked: CheckedExercise = plain;
+    expect(reading.ok && unchecked.name).toBe("Tikkaat");
+  });
+
+  it("is what the store's writes take, and nothing less", () => {
+    const plain = { ...VALID } as unknown as Exercise;
+    // @ts-expect-error createExercise writes only a checked exercise
+    const created: Parameters<typeof createExercise>[1] = plain;
+    // @ts-expect-error updateExercise writes only a checked exercise
+    const updated: Parameters<typeof updateExercise>[2] = plain;
+    expect([created, updated]).toHaveLength(2);
   });
 });

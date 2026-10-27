@@ -4,6 +4,7 @@
  * password, and how long an unlock lasts.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { characterCount, tidy } from "@/lib/text";

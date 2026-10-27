@@ -34,6 +34,14 @@ export type Exercise = {
   labels: LabelKey[];
 };
 
+declare const checked: unique symbol;
+
+/**
+ * An exercise that has passed every rule here. Only `readExercise` makes one,
+ * and the store writes nothing else, so no write can go around the rules.
+ */
+export type CheckedExercise = Exercise & { readonly [checked]: true };
+
 export type ExerciseField = keyof typeof REFUSAL;
 
 /** The form's values as typed, to show again after a refusal. */
@@ -52,7 +60,7 @@ export type ExerciseValues = {
 };
 
 export type ExerciseReading =
-  | { ok: true; exercise: Exercise }
+  | { ok: true; exercise: CheckedExercise }
   | { ok: false; errors: Partial<Record<ExerciseField, string>> };
 
 const text = (form: FormData, field: string) => {
@@ -180,6 +188,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
   }
   return {
     ok: true,
+    // The one place a CheckedExercise is made.
     exercise: {
       name,
       instructions,
@@ -190,7 +199,7 @@ export function readExercise(values: ExerciseValues): ExerciseReading {
       level: level as Level,
       warmUp: values.warmUp,
       labels: LABEL_KEYS.filter((key) => keys.includes(key)),
-    },
+    } as CheckedExercise,
   };
 }
 

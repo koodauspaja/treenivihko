@@ -13,7 +13,7 @@ import { getDatabase } from "@/lib/db/index";
 import { logged, type Report } from "@/lib/db/logged";
 import { exercise, exerciseLabel } from "@/lib/db/schema";
 import { LABEL_KEYS, type LabelKey } from "./labels";
-import type { AmountKind, Exercise, Level } from "./rules";
+import type { AmountKind, CheckedExercise, Exercise, Level } from "./rules";
 
 export type StoredExercise = Exercise & { id: string };
 
@@ -121,7 +121,7 @@ export function getExercise(userId: string, id: string, report: Report = toStder
 /** Adds an exercise, with its labels, or says its name is already in use. */
 export function createExercise(
   userId: string,
-  values: Exercise,
+  values: CheckedExercise,
   report: Report = toStderr
 ): Promise<SaveResult> {
   return logged("exercise created", `user ${userId}`, report, async () => {
@@ -149,7 +149,7 @@ export function createExercise(
 export function updateExercise(
   userId: string,
   id: string,
-  values: Exercise,
+  values: CheckedExercise,
   report: Report = toStderr
 ): Promise<SaveResult> {
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {

@@ -84,6 +84,8 @@ describe("the schema", () => {
   it("checks every exercise rule in the database too, and the label against the list", () => {
     expect(config(exercise).checks.map((each) => each.name)).toEqual([
       "exercise_name_length",
+      "exercise_name_trimmed",
+      "exercise_instructions_trimmed",
       "exercise_instructions_length",
       "exercise_video_url",
       "exercise_amount",
