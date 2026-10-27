@@ -31,14 +31,15 @@ which this repository has, and they came back in every round
 (`decisions/018-sourcery-repository-context.md`). A risk that needs only the
 one writer is still reported.
 
-Block 4 also says how the app is used: only the app writes the database, and
-one parent uses it. On the first three feature pull requests, #46, #48 and
+Block 4 also says how the app is used: only this repository's code, the app,
+its migrations and its scripts, writes the database, and one parent uses it. On the first three feature pull requests, #46, #48 and
 #49, 33 of 57 findings led to a fix and 24 were answered without a change;
 14 of the 24 were what Blocks 2 and 4 now say, and 8 of those were a write
-from outside the app or two of the parent's own requests at once
-(`decisions/050-sourcery-calibration.md`). A path inside the app that skips
-its checks is still reported: three such findings on #46 were answered at
-first, came back, and were right.
+by hand, outside that code, or two of the parent's own requests at once
+(`decisions/050-sourcery-calibration.md`). A path in that code which skips
+its checks, a migration or a script included, is still reported. Four of the 24 were answered at first and fixed
+when they came back: three on #46 about such a path, which were right, and
+one on #49 about an import's two amounts.
 
 **Block 2's AI rule** is the code-level half of "the AI chooses, it never
 invents" (`CLAUDE.md`). A model's answer that names an exercise outside the
