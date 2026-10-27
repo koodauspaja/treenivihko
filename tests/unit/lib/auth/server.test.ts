@@ -77,15 +77,21 @@ describe("authOptions", () => {
     }
   );
 
-  it("asks the allowlist, as the variable reads at sign-in time", () => {
+  it("asks the allowlist, as the variable reads at sign-in time, with Google's verification", () => {
     const validate = options().user.validateUserInfo;
-    vi.stubEnv("AUTH_ALLOWED_EMAILS", "parent@example.com");
-    expect(validate({ user: { email: "parent@example.com" } })).toBeUndefined();
-    vi.stubEnv("AUTH_ALLOWED_EMAILS", "");
+    const google = { method: "oauth" };
     vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-    expect(validate({ user: { email: "parent@example.com" } })).toEqual({
-      error: "sign_in_not_allowed",
-    });
+    vi.stubEnv("AUTH_ALLOWED_EMAILS", "parent@example.com");
+    expect(
+      validate({ user: { email: "parent@example.com", emailVerified: true }, source: google })
+    ).toBeUndefined();
+    expect(
+      validate({ user: { email: "parent@example.com", emailVerified: false }, source: google })
+    ).toEqual({ error: "sign_in_not_allowed" });
+    vi.stubEnv("AUTH_ALLOWED_EMAILS", "");
+    expect(
+      validate({ user: { email: "parent@example.com", emailVerified: true }, source: google })
+    ).toEqual({ error: "sign_in_not_allowed" });
   });
 });
 

@@ -61,8 +61,17 @@ export function authOptions(env: Environment = process.env) {
     user: {
       // Read at each sign-in rather than at load, so a test can set it. On Railway a
       // changed value reaches the process only through a redeploy.
-      validateUserInfo: ({ user: identity }: { user: { email?: unknown } }) =>
-        signInRefusal(identity.email, process.env.AUTH_ALLOWED_EMAILS),
+      validateUserInfo: ({
+        user: identity,
+        source,
+      }: {
+        user: { email?: unknown; emailVerified?: unknown };
+        source: { method: string };
+      }) =>
+        signInRefusal(
+          { email: identity.email, emailVerified: identity.emailVerified, method: source.method },
+          process.env.AUTH_ALLOWED_EMAILS
+        ),
     },
     // The child's device stays signed in: each use renews the 90 days, at most once a day.
     session: { expiresIn: SESSION_DAYS * DAY_SECONDS, updateAge: DAY_SECONDS },

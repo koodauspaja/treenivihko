@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const requestHeaders = new Headers();
 const getSession = vi.fn();
@@ -16,6 +16,11 @@ beforeEach(() => {
   requestHeaders.delete("cookie");
   getSession.mockReset();
   redirect.mockClear();
+  vi.stubEnv("AUTH_ALLOWED_EMAILS", "parent@example.com");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 const signedIn = () => requestHeaders.set("cookie", "better-auth.session_token=abc.sig");
@@ -36,6 +41,15 @@ describe("currentUser", () => {
     expect(getSession).toHaveBeenCalledWith({ headers: requestHeaders });
   });
 
+  it("answers null for a session whose address has left the allowlist", async () => {
+    signedIn();
+    getSession.mockResolvedValue({
+      user: { id: "u1", name: "Test Parent", email: "parent@example.com" },
+    });
+    vi.stubEnv("AUTH_ALLOWED_EMAILS", "other@example.com");
+    expect(await currentUser()).toBeNull();
+  });
+
   it("answers null for a cookie whose session the server does not know", async () => {
     signedIn();
     getSession.mockResolvedValue(null);
@@ -46,7 +60,9 @@ describe("currentUser", () => {
 describe("requireUser", () => {
   it("hands back the signed-in user", async () => {
     signedIn();
-    getSession.mockResolvedValue({ user: { id: "u1", name: "Test Parent" } });
+    getSession.mockResolvedValue({
+      user: { id: "u1", name: "Test Parent", email: "parent@example.com" },
+    });
     expect(await requireUser()).toEqual({ id: "u1", name: "Test Parent" });
     expect(redirect).not.toHaveBeenCalled();
   });
