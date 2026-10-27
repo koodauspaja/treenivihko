@@ -4,6 +4,7 @@
  *
  * decisions/012-project-init.md
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  */
 
 import { existsSync } from "node:fs";
