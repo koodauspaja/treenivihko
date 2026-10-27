@@ -7,9 +7,9 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, type SQL, sql } from "drizzle-orm";
 import { toStderr } from "@/lib/auth/allowlist";
-import { getDatabase } from "@/lib/db/index";
+import { type Database, getDatabase } from "@/lib/db/index";
 import { logged, type Report } from "@/lib/db/logged";
 import { exercise, exerciseLabel } from "@/lib/db/schema";
 import { LABEL_KEYS, type LabelKey } from "./labels";
@@ -61,64 +61,79 @@ const columnsOf = (values: Exercise) => ({
   warmUp: values.warmUp,
 });
 
-type Reader = Pick<ReturnType<typeof getDatabase>, "select">;
+/**
+ * Whether `id` is one this store could have made. Anything else, such as a
+ * crafted address holding U+0000, which Postgres cannot even compare, is no
+ * exercise of anyone's.
+ */
+const isExerciseId = (id: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id);
 
-/** The rows' labels, read by `reader`, so in the same snapshot as the rows. */
-async function withLabels(reader: Reader, rows: Row[]): Promise<StoredExercise[]> {
-  if (rows.length === 0) {
-    return [];
-  }
-  const labels = await reader
-    .select()
-    .from(exerciseLabel)
-    .where(
-      inArray(
-        exerciseLabel.exerciseId,
-        rows.map((row) => row.id)
-      )
-    );
-  // In the list's order, as readExercise gives them: Postgres promises no order of rows.
-  const order = (key: LabelKey) => LABEL_KEYS.indexOf(key);
-  return rows.map((row) =>
-    toExercise(
-      row,
-      labels
-        .filter((label) => label.exerciseId === row.id)
-        .map((label) => label.label as LabelKey)
-        .sort((a, b) => order(a) - order(b))
-    )
-  );
+/** Labels in the list's order, as readExercise gives them: Postgres promises no order. */
+const inListOrder = (labels: readonly string[]): LabelKey[] =>
+  LABEL_KEYS.filter((key) => labels.includes(key));
+
+/** Exercises with their labels, in one statement, so a save cannot land between them. */
+async function readExercises(where: SQL | undefined): Promise<StoredExercise[]> {
+  const rows = await getDatabase()
+    .select({
+      row: exercise,
+      labels: sql<
+        string[]
+      >`coalesce(array_agg(${exerciseLabel.label}) filter (where ${exerciseLabel.label} is not null), '{}')`,
+    })
+    .from(exercise)
+    .leftJoin(exerciseLabel, eq(exerciseLabel.exerciseId, exercise.id))
+    .where(where)
+    .groupBy(exercise.id);
+  return rows.map(({ row, labels }) => toExercise(row, inListOrder(labels)));
 }
-
-// Rows and labels in one snapshot, so a save between the two reads cannot mix versions.
-const SNAPSHOT = { isolationLevel: "repeatable read", accessMode: "read only" } as const;
 
 /** The parent's whole library, in no particular order. */
 export function listExercises(userId: string, report: Report = toStderr) {
   return logged("exercise list", `user ${userId}`, report, () =>
-    getDatabase().transaction(
-      async (tx) =>
-        withLabels(tx, await tx.select().from(exercise).where(eq(exercise.userId, userId))),
-      SNAPSHOT
-    )
+    readExercises(eq(exercise.userId, userId))
   );
 }
 
 /** One of the parent's exercises, or null when it is not theirs or not there. */
 export function getExercise(userId: string, id: string, report: Report = toStderr) {
-  return logged("exercise read", `user ${userId}, exercise ${id}`, report, () =>
-    getDatabase().transaction(async (tx) => {
-      const rows = await tx
-        .select()
-        .from(exercise)
-        .where(and(eq(exercise.userId, userId), eq(exercise.id, id)));
-      const [found] = await withLabels(tx, rows);
-      return found ?? null;
-    }, SNAPSHOT)
-  );
+  if (!isExerciseId(id)) {
+    return Promise.resolve(null);
+  }
+  return logged("exercise read", `user ${userId}, exercise ${id}`, report, async () => {
+    const [found] = await readExercises(and(eq(exercise.userId, userId), eq(exercise.id, id)));
+    return found ?? null;
+  });
 }
 
-/** Adds an exercise, with its labels, or says its name is already in use. */
+type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+const insertLabels = (tx: Transaction, id: string, labels: readonly LabelKey[]) =>
+  tx.insert(exerciseLabel).values(labels.map((label) => ({ exerciseId: id, label })));
+
+/** Runs a write, turning the name index's refusal into `nameInUse`, logged; any other failure passes on. */
+async function refusingNameInUse<T>(
+  userId: string,
+  report: Report,
+  write: () => Promise<T>
+): Promise<T | { kind: "nameInUse" }> {
+  try {
+    return await write();
+  } catch (error) {
+    if (isNameInUse(error)) {
+      report(`exercise refused, name in use: user ${userId}`);
+      return { kind: "nameInUse" };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Adds an exercise, with its labels, or says its name is already in use. An
+ * add sent again, after its answer was lost, is refused the same way, since
+ * the first is already in the library.
+ */
 export function createExercise(
   userId: string,
   values: CheckedExercise,
@@ -126,22 +141,17 @@ export function createExercise(
 ): Promise<SaveResult> {
   return logged("exercise created", `user ${userId}`, report, async () => {
     const id = randomUUID();
-    try {
-      await getDatabase().transaction(async (tx) => {
+    const result = await refusingNameInUse(userId, report, () =>
+      getDatabase().transaction(async (tx) => {
         await tx.insert(exercise).values({ id, userId, ...columnsOf(values) });
-        await tx
-          .insert(exerciseLabel)
-          .values(values.labels.map((label) => ({ exerciseId: id, label })));
-      });
-    } catch (error) {
-      if (isNameInUse(error)) {
-        report(`exercise refused, name in use: user ${userId}`);
-        return { kind: "nameInUse" };
-      }
-      throw error;
+        await insertLabels(tx, id, values.labels);
+        return { kind: "saved", id } as const;
+      })
+    );
+    if (result.kind === "saved") {
+      report(`exercise created: user ${userId}, exercise ${id}`);
     }
-    report(`exercise created: user ${userId}, exercise ${id}`);
-    return { kind: "saved", id };
+    return result;
   });
 }
 
@@ -152,41 +162,37 @@ export function updateExercise(
   values: CheckedExercise,
   report: Report = toStderr
 ): Promise<SaveResult> {
+  if (!isExerciseId(id)) {
+    return Promise.resolve({ kind: "missing" });
+  }
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {
-    let found = false;
-    try {
-      found = await getDatabase().transaction(async (tx) => {
+    const result = await refusingNameInUse(userId, report, () =>
+      getDatabase().transaction(async (tx) => {
         const [updated] = await tx
           .update(exercise)
           .set({ ...columnsOf(values), updatedAt: new Date() })
           .where(and(eq(exercise.userId, userId), eq(exercise.id, id)))
           .returning({ id: exercise.id });
         if (!updated) {
-          return false;
+          return { kind: "missing" } as const;
         }
         await tx.delete(exerciseLabel).where(eq(exerciseLabel.exerciseId, id));
-        await tx
-          .insert(exerciseLabel)
-          .values(values.labels.map((label) => ({ exerciseId: id, label })));
-        return true;
-      });
-    } catch (error) {
-      if (isNameInUse(error)) {
-        report(`exercise refused, name in use: user ${userId}`);
-        return { kind: "nameInUse" };
-      }
-      throw error;
+        await insertLabels(tx, id, values.labels);
+        return { kind: "saved", id } as const;
+      })
+    );
+    if (result.kind === "saved") {
+      report(`exercise updated: user ${userId}, exercise ${id}`);
     }
-    if (!found) {
-      return { kind: "missing" };
-    }
-    report(`exercise updated: user ${userId}, exercise ${id}`);
-    return { kind: "saved", id };
+    return result;
   });
 }
 
 /** Deletes one of the parent's exercises; false when it was not theirs or not there. */
 export function deleteExercise(userId: string, id: string, report: Report = toStderr) {
+  if (!isExerciseId(id)) {
+    return Promise.resolve(false);
+  }
   return logged("exercise deleted", `user ${userId}, exercise ${id}`, report, async () => {
     const removed = await getDatabase()
       .delete(exercise)

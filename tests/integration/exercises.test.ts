@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
@@ -127,6 +128,27 @@ describe("adding and reading", () => {
   });
 });
 
+describe("an add sent again", () => {
+  it("is refused as a name in use, and the first is in the library, once", async () => {
+    expect((await createExercise("u1", checked(LADDER), report)).kind).toBe("saved");
+    expect(await createExercise("u1", checked(LADDER), report)).toEqual({ kind: "nameInUse" });
+    expect(await listExercises("u1", report)).toHaveLength(1);
+    expect(lines.filter((line) => line.startsWith("exercise created:"))).toHaveLength(1);
+  });
+});
+
+describe("an id the store could not have made", () => {
+  it.each(["\u0000", "not-a-uuid", ""])(
+    "%j is no one's exercise, and asks Postgres nothing",
+    async (id) => {
+      expect(await getExercise("u1", id, report)).toBeNull();
+      expect(await updateExercise("u1", id, checked(LADDER), report)).toEqual({ kind: "missing" });
+      expect(await deleteExercise("u1", id, report)).toBe(false);
+      expect(lines).toEqual([]);
+    }
+  );
+});
+
 describe("the name", () => {
   it("is refused when the library has it in any case, Finnish letters included", async () => {
     await saved("u1", { ...LADDER, name: "Äijä" });
@@ -211,9 +233,9 @@ describe("the database's own checks", () => {
     database()
       .insert(exercise)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         userId: "u1",
-        name: "Raw",
+        name: `Raw ${randomUUID()}`,
         instructions: "Tee näin.",
         amountKind: "count",
         amount: 10,
@@ -222,19 +244,51 @@ describe("the database's own checks", () => {
         ...values,
       });
 
+  // Each check at both sides of its boundary, so a loosened rule under the same name fails.
   it.each([
-    ["a name over 40 characters", { name: "x".repeat(41) }],
-    ["empty instructions", { instructions: "" }],
-    ["a name with a space at its end", { name: "Raw " }],
-    ["instructions with a line break at their start", { instructions: "\nTee näin." }],
-    ["an http video link", { videoUrl: "http://example.com" }],
-    ["a count of 101", { amount: 101 }],
-    ["a time of 7 seconds", { amountKind: "time", amount: 7 }],
-    ["an amount kind not on the list", { amountKind: "laps" }],
-    ["a duration of 31", { durationMinutes: 31 }],
-    ["a level of 4", { level: 4 }],
-  ])("refuse %s", async (_case, values) => {
-    await expect(insert(values)).rejects.toThrow();
+    ["a name of 40 characters", { name: "x".repeat(40) }, true],
+    ["a name of 41 characters", { name: "x".repeat(41) }, false],
+    ["an empty name", { name: "" }, false],
+    ["instructions of 1000 characters", { instructions: "x".repeat(1000) }, true],
+    ["instructions of 1001 characters", { instructions: "x".repeat(1001) }, false],
+    ["empty instructions", { instructions: "" }, false],
+    ["a name with a space at its end", { name: "Raw " }, false],
+    ["a name with a no-break space at its start", { name: "\u00a0Raw" }, false],
+    [
+      "instructions with an ideographic space at their end",
+      { instructions: "Tee näin.\u3000" },
+      false,
+    ],
+    ["instructions with a line break at their start", { instructions: "\nTee näin." }, false],
+    ["instructions with a line break inside", { instructions: "Tee\nnäin." }, true],
+    ["an http video link", { videoUrl: "http://example.com" }, false],
+    ["a video link of 500 characters", { videoUrl: `https://${"x".repeat(492)}` }, true],
+    ["a video link of 501 characters", { videoUrl: `https://${"x".repeat(493)}` }, false],
+    ["a count of 0", { amount: 0 }, false],
+    ["a count of 1", { amount: 1 }, true],
+    ["a count of 100", { amount: 100 }, true],
+    ["a count of 101", { amount: 101 }, false],
+    ["a time of 0 seconds", { amountKind: "time", amount: 0 }, false],
+    ["a time of 5 seconds", { amountKind: "time", amount: 5 }, true],
+    ["a time of 7 seconds", { amountKind: "time", amount: 7 }, false],
+    ["a time of 600 seconds", { amountKind: "time", amount: 600 }, true],
+    ["a time of 605 seconds", { amountKind: "time", amount: 605 }, false],
+    ["an amount kind not on the list", { amountKind: "laps" }, false],
+    ["a duration of 0", { durationMinutes: 0 }, false],
+    ["a duration of 1", { durationMinutes: 1 }, true],
+    ["a duration of 30", { durationMinutes: 30 }, true],
+    ["a duration of 31", { durationMinutes: 31 }, false],
+    ["a level of 0", { level: 0 }, false],
+    ["a level of 1", { level: 1 }, true],
+    ["a level of 3", { level: 3 }, true],
+    ["a level of 4", { level: 4 }, false],
+  ] as const)("take %s: %s", async (_case, values, accepted) => {
+    const write = insert(values);
+    if (accepted) {
+      await expect(write).resolves.toBeDefined();
+    } else {
+      await expect(write).rejects.toThrow();
+    }
   });
 
   it("refuse a label key not on the list", async () => {

@@ -5,7 +5,6 @@ import {
   EMPTY_VALUES,
   type Exercise,
   type ExerciseValues,
-  FILTERED_PARAM,
   filtersFrom,
   formatAmount,
   formatDuration,
@@ -129,6 +128,23 @@ describe("readExercise", () => {
     expect(errorsOf({ videoUrl: "https://example.com/\u0000" })).toEqual({
       videoUrl: "Videolinkin on oltava https-osoite.",
     });
+  });
+
+  it("counts a video link as stored, since it is never normalised", () => {
+    const base = "https://example.com/";
+    const decomposed = `${base}${"a\u0308".repeat(240)}`;
+    expect(decomposed.length).toBe(500);
+    expect(errorsOf({ videoUrl: decomposed })).toBeNull();
+    expect(errorsOf({ videoUrl: `${decomposed}x` })).toEqual({
+      videoUrl: "Videolinkin on oltava https-osoite.",
+    });
+  });
+
+  it("counts a line break in the instructions as one character, however the browser sent it", () => {
+    const lines = Array.from({ length: 10 }, () => "x".repeat(99)).join("\r\n");
+    expect(lines.length).toBe(1008);
+    const reading = readExercise({ ...VALID, instructions: lines });
+    expect(reading.ok && reading.exercise.instructions.length).toBe(999);
   });
 
   it("keeps a video link as typed, only trimmed, never normalised", () => {
@@ -288,13 +304,13 @@ describe("the filters", () => {
         taito: ["dribbling", "field"],
         paikka: "gym",
         valineet: ["goal", "heading"],
-        [FILTERED_PARAM]: "1",
+        rajaus: "1",
       })
     ).toEqual({ skills: ["dribbling"], places: ["gym"], equipment: ["goal"] });
   });
 
   it("read every equipment item unticked as none available", () => {
-    expect(filtersFrom({ [FILTERED_PARAM]: "1" }).equipment).toEqual([]);
+    expect(filtersFrom({ rajaus: "1" }).equipment).toEqual([]);
   });
 
   const none = { skills: [], places: [], equipment: ALL_EQUIPMENT };

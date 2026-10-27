@@ -25,9 +25,14 @@ parent, a file and a model.
   changing it is a pull request and a migration.
 - **Every rule in `rules.ts`**, which gives each field its Finnish refusal,
   and every write goes through it. **Each column's own rule is a check in the
-  database too**: lengths, the amount, the duration, the level, a known label
-  key, and a video link starting `https://`. The rules across rows (a skill
-  and a place) and the link's parse are `rules.ts`'s alone.
+  database too**: lengths, trimmed text, the amount, the duration, the level,
+  a known label key, and a video link starting `https://`. The rules across
+  rows (a skill and a place) and the link's parse are `rules.ts`'s alone. The
+  store writes only a `CheckedExercise`, a type only `readExercise` makes.
+- **One list of whitespace**, `src/lib/text.ts`: what `tidy` trims and what
+  the database's trimmed checks refuse, so the two cannot drift.
+- **An exercise and its labels are read in one statement**, so a save cannot
+  land between them.
 - **A name unique per parent by `lower(name)`**, decided by the unique index
   and read back from its error, so two saves at once cannot both pass.
 - **The library belongs to the parent who made it**, and every read and write
@@ -46,6 +51,12 @@ parent, a file and a model.
 | Decision | Why |
 |---|---|
 | Column checks in the database, the rest in `rules.ts` | A column check costs nothing and holds against a careless write; a skill-and-place check across rows would need a trigger, for writes that all come through `readExercise` |
+| A `CheckedExercise` type, not a second check in the store | The compiler refuses a write that skipped the rules; a second check would be a second copy of them |
+| The whitespace listed, not `\s` in SQL | Postgres's `\s` follows the server's locale; a list is the same on both sides, and a test holds it to JavaScript's `trim` |
+| A line break counted as one | Browsers send a textarea's line breaks as `\r\n`; a person counts one |
+| A video link counted as stored | It is never normalised, which could turn it into another address, so its length is what Postgres counts |
+| An id the store could not have made is no exercise | A crafted address holding U+0000 would otherwise reach Postgres, which cannot compare it |
+| An add sent again, after its answer was lost, refused as a name in use | The first is saved and in the library, and the message says why; no data is lost or overwritten. Keying adds by a form-made id was tried: its upsert brought back deleted exercises and overwrote later edits |
 | Labels in code, not editable in the app | The filters, the import and the AI all depend on the same words, and a renamed label would quietly change what each of them means |
 | English keys, Finnish names | A Finnish name can be corrected without a migration, and keys stay out of the user's sight |
 | Warm-up as a field, not a label | It is a property an exercise has besides its skill, as easy ladder steps can be both; a group with one label in it was the sign. Sessions open with one (Features 004 and 009) |

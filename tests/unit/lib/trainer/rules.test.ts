@@ -56,6 +56,10 @@ describe("nicknameFrom", () => {
     expect(nicknameFrom(`${decomposed}x`)).toBeNull();
   });
 
+  it("refuses U+0000, which Postgres cannot store", () => {
+    expect(nicknameFrom("Ab\u0000")).toBeNull();
+  });
+
   it("refuses what is not text", () => {
     expect(nicknameFrom(null)).toBeNull();
     expect(nicknameFrom(new File([], "x"))).toBeNull();

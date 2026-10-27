@@ -1,14 +1,57 @@
 /**
- * Text as a person counts it, shared by every rule on a typed length: one form
- * of each character (NFC), counted by code point, so "Äijä" is 4 whichever way
- * it was typed and an emoji is 1, as Postgres's `char_length` counts it.
+ * Text as a person counts it, shared by every rule on typed text and by the
+ * database's checks: one form of each character, a line break as one, and the
+ * whitespace trimmed from the ends taken from one list both sides use.
  *
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  */
 
-/** The text trimmed and in one form of each character. */
-export const tidy = (text: string) => text.trim().normalize("NFC");
+/**
+ * Every character `trim` removes from the ends of typed text, listed so the
+ * database's checks refuse the same set; a test holds the two equal.
+ */
+export const WHITESPACE = [
+  "\t",
+  "\n",
+  "\v",
+  "\f",
+  "\r",
+  " ",
+  "\u00a0",
+  "\u1680",
+  "\u2000",
+  "\u2001",
+  "\u2002",
+  "\u2003",
+  "\u2004",
+  "\u2005",
+  "\u2006",
+  "\u2007",
+  "\u2008",
+  "\u2009",
+  "\u200a",
+  "\u2028",
+  "\u2029",
+  "\u202f",
+  "\u205f",
+  "\u3000",
+  "\ufeff",
+] as const;
 
-/** How many characters a person sees in `text`. */
+/** The text with line breaks as `\n`, trimmed, and in one form of each character. */
+export const tidy = (text: string) => text.replace(/\r\n?/g, "\n").trim().normalize("NFC");
+
+/** How many characters a person sees in `text`, as Postgres's `char_length` counts it once tidied. */
 export const characterCount = (text: string) => [...text.normalize("NFC")].length;
+
+/** The characters `text` holds exactly as it is, as Postgres's `char_length` counts what is stored. */
+export const storedLength = (text: string) => [...text].length;
+
+/** Postgres cannot store U+0000 in text. */
+export const hasNul = (text: string) => text.includes("\u0000");
+
+/** `WHITESPACE` as a Postgres escape-string literal, for a check written in SQL. */
+export const WHITESPACE_SQL = `E'${WHITESPACE.map(
+  (character) => String.raw`\u` + (character.codePointAt(0) as number).toString(16).padStart(4, "0")
+).join("")}'`;

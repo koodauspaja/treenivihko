@@ -21,6 +21,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { LABEL_KEYS } from "../exercises/labels";
+import { WHITESPACE_SQL } from "../text";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -152,11 +153,14 @@ export const exercise = pgTable(
   (table) => [
     uniqueIndex("exercise_user_name_idx").on(table.userId, sql`lower(${table.name})`),
     check("exercise_name_length", sql`char_length(${table.name}) between 1 and 40`),
-    // Trimmed at both ends, as readExercise stores them; line breaks inside are kept.
-    check("exercise_name_trimmed", sql`${table.name} = btrim(${table.name}, E' \\t\\n\\r')`),
+    // Trimmed of the same whitespace readExercise trims; line breaks inside are kept.
+    check(
+      "exercise_name_trimmed",
+      sql`${table.name} = btrim(${table.name}, ${sql.raw(WHITESPACE_SQL)})`
+    ),
     check(
       "exercise_instructions_trimmed",
-      sql`${table.instructions} = btrim(${table.instructions}, E' \\t\\n\\r')`
+      sql`${table.instructions} = btrim(${table.instructions}, ${sql.raw(WHITESPACE_SQL)})`
     ),
     check(
       "exercise_instructions_length",

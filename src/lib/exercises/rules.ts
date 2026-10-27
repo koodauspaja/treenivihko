@@ -3,10 +3,11 @@
  * filters it. Every write goes through it; the database checks each column's
  * rule again, not the rules across rows.
  *
+ * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  */
 
-import { characterCount, tidy } from "@/lib/text";
+import { characterCount, hasNul, storedLength, tidy } from "@/lib/text";
 import { LABEL_KEYS, type LabelGroup, type LabelKey, labelOf, labelsIn } from "./labels";
 import { REFUSAL } from "./messages";
 
@@ -123,9 +124,6 @@ export function valuesOf(form: FormData): ExerciseValues {
   };
 }
 
-/** Postgres cannot store U+0000 in text, so a field holding it is refused rather than failing the write. */
-const hasNul = (text: string) => text.includes("\u0000");
-
 /**
  * The video link as stored: null for none, or an address that starts with
  * `https://` exactly, as the database's check reads it, and parses.
@@ -138,7 +136,8 @@ function videoUrlFrom(input: string): string | null | undefined {
   }
   if (
     !trimmed.startsWith("https://") ||
-    characterCount(trimmed) > VIDEO_URL_MAX_LENGTH ||
+    // Counted as stored, since it is never normalised: the database counts the same.
+    storedLength(trimmed) > VIDEO_URL_MAX_LENGTH ||
     hasNul(trimmed)
   ) {
     return undefined;
@@ -150,7 +149,8 @@ function videoUrlFrom(input: string): string | null | undefined {
 export function readExercise(values: ExerciseValues): ExerciseReading {
   const errors: Partial<Record<ExerciseField, string>> = {};
   const name = tidy(values.name);
-  if (characterCount(name) < 1 || characterCount(name) > NAME_MAX_LENGTH || hasNul(name)) {
+  const nameLength = characterCount(name);
+  if (nameLength < 1 || nameLength > NAME_MAX_LENGTH || hasNul(name)) {
     errors.name = REFUSAL.name;
   }
   const instructions = tidy(values.instructions);
@@ -244,8 +244,17 @@ const all = (query: Query, name: string): string[] => {
   return value === undefined ? [] : [value].flat();
 };
 
-/** Marks a filter that was sent, so every equipment item unticked reads as none, not as all. */
-export const FILTERED_PARAM = "rajaus";
+/**
+ * The library's filters in its address: one name per label group, and one
+ * that marks a filter as sent, so every equipment item unticked reads as none
+ * available rather than as no filter.
+ */
+export const EXERCISE_FILTER = {
+  skill: "taito",
+  place: "paikka",
+  equipment: "valineet",
+  sent: "rajaus",
+} as const;
 
 /**
  * The filters from the address. Nothing sent means nothing filtered, with
@@ -257,12 +266,12 @@ export function filtersFrom(query: Query): Filters {
     return all(query, name).filter((key) => offered.has(key));
   };
   return {
-    skills: keysIn("taito", "skill"),
-    places: keysIn("paikka", "place"),
+    skills: keysIn(EXERCISE_FILTER.skill, "skill"),
+    places: keysIn(EXERCISE_FILTER.place, "place"),
     equipment:
-      query[FILTERED_PARAM] === undefined
+      query[EXERCISE_FILTER.sent] === undefined
         ? labelsIn("equipment").map((label) => label.key)
-        : keysIn("valineet", "equipment"),
+        : keysIn(EXERCISE_FILTER.equipment, "equipment"),
   };
 }
 

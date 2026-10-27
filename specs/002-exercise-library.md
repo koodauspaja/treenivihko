@@ -39,7 +39,7 @@ The parent, at home on wifi, on the trainer side, behind its password
 | Field | Finnish label | Rule |
 |---|---|---|
 | Name | `Nimi` | Trimmed, 1–40 characters (counted as Feature 001 counts a nickname); unique within the library whatever its case |
-| Instructions | `Ohje` | Trimmed, 1–1000 characters; line breaks kept |
+| Instructions | `Ohje` | Trimmed, 1–1000 characters; line breaks kept, each counted as one |
 | Video link | `Videolinkki` | Optional; an `https://` address of at most 500 characters |
 | Amount | `Määrä` | Either a count, 1–100 times, or a time, 5 seconds to 10 minutes in steps of 5 seconds |
 | Duration | `Kesto` | Whole minutes, 1–30 |
@@ -184,6 +184,7 @@ Not used.
 | Renaming to the name another exercise has | `Samanniminen harjoite on jo kirjastossa.`; renaming to the same name in another case is allowed |
 | Saving an exercise that was deleted meanwhile | `Sivua ei löytynyt.` |
 | Two saves of the same exercise at once | The later one wins |
+| The same add sent again, as after an answer lost on the way | One exercise, the first; the second gets `Samanniminen harjoite on jo kirjastossa.` |
 | A time chosen, then the amount kind changed to count | Only the shown field is sent and checked |
 | A label key the server does not know, in a crafted request | Refused with `Valitse vähintään yksi taito.`, as a key on no list belongs to no group; nothing saved |
 | An exercise address with an id of another parent's exercise | `Sivua ei löytynyt.`; it is never shown or changed |
