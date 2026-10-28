@@ -506,7 +506,9 @@ describe("the log", () => {
     await moveBlock("u1", second, "up", report);
     await added("u1", first, ladder);
     await added("u1", first, ladder);
-    const [one, two] = (await getSession("u1", sessionId, report))?.blocks[1]?.exercises ?? [];
+    const [one, two] =
+      (await getSession("u1", sessionId, report))?.blocks.find((each) => each.id === first)
+        ?.exercises ?? [];
     await updateBlockExerciseAmount("u1", one?.id ?? "", 12, report);
     await moveBlockExercise("u1", two?.id ?? "", "up", report);
     await deleteBlockExercise("u1", one?.id ?? "", report);

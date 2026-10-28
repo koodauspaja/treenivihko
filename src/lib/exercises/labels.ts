@@ -5,6 +5,7 @@
  *
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
+ * decisions/f004-periods-and-sessions.md
  */
 
 export type LabelGroup = "skill" | "place" | "equipment";
