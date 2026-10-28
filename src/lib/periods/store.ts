@@ -990,6 +990,15 @@ export type NotebookSession = {
 };
 export type Notebook = { period: PeriodRow; sessions: NotebookSession[] };
 
+/** One block's exercises among the period's, in the order they were read. */
+const notebookExercisesIn = (
+  rows: readonly (Omit<NotebookExercise, "amountKind"> & { blockId: string; amountKind: string })[],
+  blockId: string
+): NotebookExercise[] =>
+  rows
+    .filter((row) => row.blockId === blockId)
+    .map(({ blockId: _, ...row }) => ({ ...row, amountKind: row.amountKind as AmountKind }));
+
 /**
  * The period the child's side shows on `day`, the current or else the next,
  * with its sessions, blocks and exercises in order; null when there is none.
@@ -1054,12 +1063,7 @@ export function getNotebook(userId: string, day: string, report: Report = toStde
             .map((each) => ({
               id: each.id,
               theme: each.theme,
-              exercises: exercises
-                .filter((row) => row.blockId === each.id)
-                .map(({ blockId: _, ...row }) => ({
-                  ...row,
-                  amountKind: row.amountKind as AmountKind,
-                })),
+              exercises: notebookExercisesIn(exercises, each.id),
             })),
         })),
       };

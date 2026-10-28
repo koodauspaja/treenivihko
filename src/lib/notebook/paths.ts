@@ -2,6 +2,7 @@
  * The child's side's addresses, Finnish; their English folders are rows in
  * `src/lib/routes.ts`.
  *
+ * decisions/029-sign-in.md
  * decisions/f005-notebook-view.md
  */
 
