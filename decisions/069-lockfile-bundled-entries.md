@@ -26,7 +26,8 @@ no entries, which is most likely how the lockfile was first written.
 ## Decision
 
 - **The lockfile was regenerated once with `--allow-remote=all`** on that one
-  command, which added the six entries and changed nothing else.
+  command, which added the six entries and changed nothing else. It resolved
+  no new package, and every `resolved` URL in it is on the registry.
 - **`allow-remote` stays at npm's default** everywhere else: `.npmrc`, CI,
   Railway's build and Renovate.
 - **Renovate's npm stays at 12**, as `engines` requires.
@@ -43,16 +44,21 @@ no entries, which is most likely how the lockfile was first written.
 
 - **A Tailwind update fails the same way** until npm releases the fix: a new
   `oxide-wasm32-wasi` version comes without its bundled entries, as does any
-  new package that bundles its dependencies. Its pull request is fixed by
-  running, on its branch,
-  `npm install --package-lock-only --ignore-scripts --allow-remote=all` and
-  pushing the lockfile, which Renovate then leaves to the human.
-- **That command lets npm fetch any URL while it runs**, so it is run only
-  when every tarball comes from the registry: before it and after it,
-  `grep '"resolved"' package-lock.json | grep -v '"https://registry.npmjs.org/'`
-  prints nothing, and no dependency in `package.json` is a URL.
+  new package that bundles its dependencies. Its pull request is fixed on its
+  branch, and the lockfile pushed, which Renovate then leaves to the human:
+  1. `npm install --package-lock-only --ignore-scripts` fails with
+     `EALLOWREMOTE`, naming the tarball it refused. Go on only if that is a
+     `https://registry.npmjs.org/` URL.
+  2. `npm cache add <package>@<version>`, for the package that URL names, puts
+     the tarball in npm's cache through the registry.
+  3. `npm install --package-lock-only --ignore-scripts --allow-remote=all --offline`
+     writes the lockfile from the cache alone. A URL that is not there fails
+     with `ENOTCACHED` instead of being fetched, so `--allow-remote=all`
+     reaches no host. A failure on another `https://registry.npmjs.org/` URL
+     is one step 1 had not reached: step 2 for its package, then step 3
+     again. A failure on any other URL stops the repair.
 - **Deleting the lockfile and installing again, on macOS, drops the entries**,
   and the next Renovate pull request is red with `EALLOWREMOTE`. The same
-  command puts them back, and fixes lockfile maintenance if it fails this way.
+  steps put them back, and fix lockfile maintenance if it fails this way.
 - **Once npm ships the fix**, Renovate's npm, which follows `engines`, picks it
   up, and none of this needs doing.
