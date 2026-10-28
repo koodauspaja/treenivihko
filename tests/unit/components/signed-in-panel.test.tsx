@@ -40,6 +40,16 @@ describe("SignedInPanel", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Hei, Testi!" })).toBeDefined();
   });
 
+  it("links to the child's progress after the period, before the trainer side", async () => {
+    render(await SignedInPanel());
+    const progress = screen.getByRole("link", { name: "Omat treenit" });
+    expect(progress.getAttribute("href")).toBe("/omat-treenit");
+    expect(screen.getAllByRole("link").map((each) => each.textContent)).toEqual([
+      "Omat treenit",
+      "Valmentaja",
+    ]);
+  });
+
   it("links to the trainer side's address", async () => {
     render(await SignedInPanel());
     expect(screen.getByRole("link", { name: "Valmentaja" }).getAttribute("href")).toBe(

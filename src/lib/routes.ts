@@ -11,6 +11,7 @@
  * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
  * decisions/f006-session-marks.md
+ * decisions/f007-progress.md
  */
 
 export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> = [
@@ -35,6 +36,8 @@ export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> =
   ["/harjoite/:id", "/exercise/:id"],
   // The child's side: marking a session.
   ["/treeni/:id", "/session/:id"],
+  // The child's side: their progress.
+  ["/omat-treenit", "/progress"],
 ];
 
 /** Next's rewrites: each address served from its folder. */

@@ -29,6 +29,8 @@ export const coverageExclusions: Readonly<Record<string, string>> = {
     "Every statement is a query whose point is what Postgres does with it, such as the exclusion deciding an overlap and the locks keeping positions and limits; tests/integration/periods.test.ts runs each against Postgres.",
   "src/lib/marks/store.ts":
     "Every statement is a query whose point is what Postgres does with it, such as the unique key deciding two first saves and the locks holding a session and its picks; tests/integration/marks.test.ts runs each against Postgres.",
+  "src/lib/progress/store.ts":
+    "Every statement is a query whose point is what Postgres does with it, such as reading a period's sessions and their marks in one snapshot; tests/integration/progress.test.ts runs each against Postgres.",
   "src/lib/trainer/store.ts":
     "Every statement is a query whose point is what Postgres does with it, such as the lockout's single statement and the races around it; tests/integration/trainer.test.ts runs each against Postgres, which a mock could not stand in for.",
   "scripts/set-trainer-password.ts":

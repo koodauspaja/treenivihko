@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SIGN_IN_PATH } from "@/lib/auth/paths";
+import { PROGRESS_PATH } from "@/lib/notebook/paths";
 import { ROUTES, routeRedirects, routeRewrites } from "@/lib/routes";
 import {
   EXERCISES_PATH,
@@ -72,6 +73,11 @@ describe("the route table", () => {
 
   it("serves a session's marking page from an English folder", () => {
     expect(ROUTES).toContainEqual(["/treeni/:id", "/session/:id"]);
+  });
+
+  it("serves the child's progress from an English folder", () => {
+    expect(ROUTES).toContainEqual([PROGRESS_PATH, "/progress"]);
+    expect(PROGRESS_PATH).toBe("/omat-treenit");
   });
 
   it("rewrites each Finnish address to its folder", () => {

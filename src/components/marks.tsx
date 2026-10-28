@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { removeMark } from "@/app/session/actions";
 import { ConfirmAction } from "@/components/confirm-action";
 import { MarkForm } from "@/components/mark-form";
+import { MarkLine } from "@/components/mark-line";
 import { SIGNED_IN_PATH } from "@/lib/auth/paths";
 import { requireUser } from "@/lib/auth/session";
 import {
@@ -10,14 +11,12 @@ import {
   CONFIRM_DELETE_MARK,
   DELETE_MARK,
   MARK,
-  markLine,
   previousHeading,
 } from "@/lib/marks/messages";
-import { emojiOf } from "@/lib/marks/rules";
 import { type ChildMarks, getMarkPage, type MarkSummary } from "@/lib/marks/store";
 import { BACK } from "@/lib/messages";
 import { markPath } from "@/lib/notebook/paths";
-import { formatDay, spanOf, today } from "@/lib/periods/dates";
+import { spanOf, today } from "@/lib/periods/dates";
 import { NO_SESSIONS, periodHeading, sessionHeading } from "@/lib/periods/messages";
 
 /**
@@ -36,15 +35,7 @@ export function MarkStatus({
 }: Readonly<{ sessionId: string; mark: MarkSummary | undefined }>) {
   return (
     <>
-      {mark === undefined ? null : (
-        <p>
-          {markLine(
-            mark.status,
-            mark.trainedOn === null ? "" : formatDay(mark.trainedOn),
-            emojiOf(mark.feeling)
-          )}
-        </p>
-      )}
+      {mark === undefined ? null : <MarkLine mark={mark} />}
       <Link href={markPath(sessionId)} className="underline">
         {mark === undefined ? MARK : CHANGE}
       </Link>
