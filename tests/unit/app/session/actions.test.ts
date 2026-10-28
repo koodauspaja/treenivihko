@@ -1,3 +1,10 @@
+/**
+ * A session's mark saved and removed on the child's side, for today in Finland.
+ *
+ * decisions/f004-periods-and-sessions.md
+ * decisions/f006-session-marks.md
+ */
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const USER = { id: "u1", name: "Test Parent", sessionId: "s1" };

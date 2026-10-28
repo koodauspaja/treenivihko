@@ -1,5 +1,5 @@
 {
-  "id": "545c9a5b-f28c-47f9-94ca-03646f061745",
+  "id": "a95a048e-ec18-4fcc-9680-4ccd0ba12507",
   "prevId": "a1f072c0-5449-4b7a-936f-a85ef073a784",
   "version": "7",
   "dialect": "postgresql",
@@ -959,7 +959,7 @@
         },
         "session_mark_not_done_empty": {
           "name": "session_mark_not_done_empty",
-          "value": "\"session_mark\".\"status\" <> 'not_done' or (\"session_mark\".\"feeling\" is null and \"session_mark\".\"liked_best_exercise_id\" is null and \"session_mark\".\"liked_least_exercise_id\" is null and \"session_mark\".\"easiest_exercise_id\" is null and \"session_mark\".\"hardest_exercise_id\" is null)"
+          "value": "\"session_mark\".\"trained_on\" is not null or (\"session_mark\".\"feeling\" is null and \"session_mark\".\"liked_best_exercise_id\" is null and \"session_mark\".\"liked_least_exercise_id\" is null and \"session_mark\".\"easiest_exercise_id\" is null and \"session_mark\".\"hardest_exercise_id\" is null)"
         },
         "session_mark_trained_on": {
           "name": "session_mark_trained_on",

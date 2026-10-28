@@ -1,3 +1,10 @@
+/**
+ * What a mark may be, and which periods the child may mark on a day in Finland.
+ *
+ * decisions/f004-periods-and-sessions.md
+ * decisions/f006-session-marks.md
+ */
+
 import { describe, expect, it } from "vitest";
 import {
   emojiOf,

@@ -312,6 +312,24 @@ describe("a mark", () => {
     expect(await marks()).toEqual([]);
   });
 
+  it("is refused a pick whose exercise leaves the session while it is being saved", async () => {
+    const periodId = await periodOf("u1", CURRENT);
+    const { sprint, sessionId } = await builtSession("u1", periodId);
+    const result = await whileHeld(
+      (tx) => tx.delete(blockExercise).where(eq(blockExercise.exerciseId, sprint)),
+      () =>
+        saveMark(
+          "u1",
+          sessionId,
+          { ...DONE, picks: { ...NO_PICKS, likedBest: sprint } },
+          DAY,
+          report
+        )
+    );
+    expect(result).toEqual({ kind: "stale" });
+    expect(await marks()).toEqual([]);
+  });
+
   it("keeps its pick when the parent removes the exercise from the session", async () => {
     const periodId = await periodOf("u1", CURRENT);
     const { ladder, sprint, sessionId } = await builtSession("u1", periodId);

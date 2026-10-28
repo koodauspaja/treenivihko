@@ -64,6 +64,15 @@ const periodWithSessions = async (userId: string, startsOn: string) => {
   return periodId;
 };
 
+/** A period's first session's id; a period with none fails the test, rather than visiting a made-up address. */
+const firstSessionOf = async (userId: string, periodId: string) => {
+  const [first] = (await getPeriod(userId, periodId, quiet))?.sessions ?? [];
+  if (first === undefined) {
+    throw new Error("the fixture period has no session");
+  }
+  return first.id;
+};
+
 const main = (page: Page) => page.getByRole("main");
 const group = (page: Page, name: string) => main(page).getByRole("group", { name });
 const save = (page: Page) => main(page).getByRole("button", { name: "Tallenna" }).click();
@@ -177,8 +186,7 @@ test("the child marks a session of the previous period after the next has starte
   await expect(previous.getByRole("link", { name: "Muuta" })).toHaveCount(1);
   await expect(main(page).getByRole("link", { name: "Merkitse" })).toHaveCount(3);
 
-  const [older] = (await getPeriod(userId, olderId, quiet))?.sessions ?? [];
-  await page.goto(`/treeni/${older?.id}`);
+  await page.goto(`/treeni/${await firstSessionOf(userId, olderId)}`);
   await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();
 });
 
@@ -188,8 +196,7 @@ test("the next period, before it starts, has nothing to mark", async ({ page }, 
   await page.goto("/");
   await expect(main(page).getByText(/^Alkaa /)).toBeVisible();
   await expect(main(page).getByRole("link", { name: "Merkitse" })).toHaveCount(0);
-  const [first] = (await getPeriod(userId, periodId, quiet))?.sessions ?? [];
-  await page.goto(`/treeni/${first?.id}`);
+  await page.goto(`/treeni/${await firstSessionOf(userId, periodId)}`);
   await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();
 });
 
