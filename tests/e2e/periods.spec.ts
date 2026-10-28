@@ -121,12 +121,14 @@ test("a period is built by hand, copied into the next, and keeps what it uses", 
   await seed(userId, { name: "Sali", labels: ["strength", "gym"] });
   await unlockTrainer(page);
 
-  // A first period: empty, from today for 2 weeks.
-  const startsOn = today();
-  const firstSpan = formatSpan(startsOn, lastDayOf(startsOn, 2));
+  // A first period: empty, from today for 2 weeks. Today is read on both sides
+  // of the page's own reading, so a run across Finnish midnight still passes.
+  const before = today();
   await page.goto("/valmentaja/jaksot/uusi");
   await expect(main(page).getByText("Uusi jakso alkaa tyhjänä.")).toBeVisible();
-  await expect(page.getByLabel("Alkaa")).toHaveValue(startsOn);
+  const startsOn = await page.getByLabel("Alkaa").inputValue();
+  expect([before, today()]).toContain(startsOn);
+  const firstSpan = formatSpan(startsOn, lastDayOf(startsOn, 2));
   await expect(page.getByLabel("Kesto")).toHaveValue("2");
   await page.getByRole("button", { name: "Luo jakso" }).click();
   await expect(main(page).getByRole("heading", { name: `Jakso ${firstSpan}` })).toBeVisible();

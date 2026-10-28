@@ -16,15 +16,16 @@ const answer = (version: number, message: string | null, errors = {}) => ({
 describe("FieldForm", () => {
   it("starts from its value, and sends it with its fields", async () => {
     const action = vi.fn().mockResolvedValue(answer(1, "Tallennettu."));
-    render(
+    const form = (initial: string) => (
       <FieldForm
         action={action}
         fields={{ id: "b1" }}
         name="theme"
         label="Osio"
-        initial="Kuljetus"
+        initial={initial}
       />
     );
+    const { rerender } = render(form("Kuljetus"));
     expect(field().value).toBe("Kuljetus");
     expect(field().id).toBe("theme-b1");
     fireEvent.change(field(), { target: { value: "Laukaus" } });
@@ -34,7 +35,12 @@ describe("FieldForm", () => {
     });
     const sent = (action.mock.calls[0] as [unknown, FormData])[1];
     expect([sent.get("id"), sent.get("theme")]).toEqual(["b1", "Laukaus"]);
+    // After a save the field shows the page's value, not what was typed: the
+    // saved value once the refreshed page passes it.
+    // decisions/f004-periods-and-sessions.md
     expect(field().value).toBe("Kuljetus");
+    rerender(form("Laukaus"));
+    expect(field().value).toBe("Laukaus");
   });
 
   it("shows a refusal beside the field, keeping what was typed", async () => {
