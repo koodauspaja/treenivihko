@@ -115,11 +115,20 @@ const marked = async (sessionId: string, mark: Partial<Mark>, day = DAY) =>
     )
   );
 
-/** Takes an exercise out of the session's only block, as the parent does. */
+/** The library exercises in a session's blocks, by id. */
+const exercisesIn = async (sessionId: string) =>
+  ((await getSession("u1", sessionId, report))?.blocks ?? []).flatMap((block) =>
+    block.exercises.map((each) => ({ id: each.id, exerciseId: each.exerciseId }))
+  );
+
+/** Takes an exercise out of the session, as the parent does; one that stays fails the test. */
 const removeFromSession = async (sessionId: string, exerciseId: string) => {
-  const blocks = (await getSession("u1", sessionId, report))?.blocks ?? [];
-  const inBlock = blocks[0]?.exercises.find((each) => each.exerciseId === exerciseId);
-  await deleteBlockExercise("u1", inBlock?.id ?? "", report);
+  const inBlock = (await exercisesIn(sessionId)).find((each) => each.exerciseId === exerciseId);
+  if (inBlock === undefined) {
+    throw new Error("the fixture's exercise is not in the session");
+  }
+  expect(await deleteBlockExercise("u1", inBlock.id, report)).toBe(sessionId);
+  expect((await exercisesIn(sessionId)).map((each) => each.exerciseId)).not.toContain(exerciseId);
 };
 
 beforeAll(async () => {

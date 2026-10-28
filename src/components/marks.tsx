@@ -26,6 +26,7 @@ import { NO_SESSIONS, periodHeading, sessionHeading } from "@/lib/periods/messag
  * decisions/029-sign-in.md
  * decisions/f005-notebook-view.md
  * decisions/f006-session-marks.md
+ * decisions/f007-progress.md
  */
 
 /** A session's mark, when it has one, and the link to its marking page. */
