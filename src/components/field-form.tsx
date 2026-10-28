@@ -10,8 +10,8 @@ const START: FieldState = { version: 0, message: null, errors: {} };
 /**
  * One field and its button, such as a block's theme or an exercise's amount:
  * its refusal beside it with what was typed kept, and its message after
- * saving; then the field shows `initial` again, as the page now has it.
- * decisions/f004-periods-and-sessions.md
+ * saving; then the field shows `initial` again, as the page now has it, and
+ * again whenever the page brings a newer one. decisions/f004-periods-and-sessions.md
  */
 export function FieldForm({
   action,
@@ -48,7 +48,7 @@ export function FieldForm({
       <div className="flex flex-col gap-1">
         <label htmlFor={id}>{label}</label>
         <input
-          key={state.version}
+          key={`${state.version}|${initial}`}
           id={id}
           name={name}
           defaultValue={shown}

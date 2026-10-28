@@ -295,10 +295,10 @@ export function updatePeriodDates(
   return logged("period updated", `user ${userId}, period ${id}`, report, async () => {
     try {
       const result = await getDatabase().transaction(async (tx) => {
-        const periods = await periodsOf(tx, userId);
-        if (!periods.some((each) => each.id === id)) {
+        if ((await lockPeriod(tx, userId, id)) === null) {
           return { kind: "missing" } as const;
         }
+        const periods = await periodsOf(tx, userId);
         const other = overlapping(periods, dates, id);
         if (other !== undefined) {
           return { kind: "overlap", with: other } as const;
@@ -785,10 +785,12 @@ export function addBlockExercise(
   return logged("block exercise created", `user ${userId}, block ${blockId}`, report, async () => {
     const result = await getDatabase().transaction(async (tx) => {
       const found = await lockBlock(tx, userId, blockId);
+      // Held until the insert commits, so a deletion of the exercise waits and then finds it in use.
       const [library] = await tx
         .select({ amountKind: exercise.amountKind, amount: exercise.amount })
         .from(exercise)
-        .where(and(eq(exercise.userId, userId), eq(exercise.id, exerciseId)));
+        .where(and(eq(exercise.userId, userId), eq(exercise.id, exerciseId)))
+        .for("key share");
       if (found === null || library === undefined) {
         return { kind: "missing" } as const;
       }

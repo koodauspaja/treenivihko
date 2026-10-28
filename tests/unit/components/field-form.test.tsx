@@ -43,6 +43,21 @@ describe("FieldForm", () => {
     expect(field().value).toBe("Laukaus");
   });
 
+  it("follows a newer saved value the page passes, such as after a save in another tab", () => {
+    const form = (initial: string) => (
+      <FieldForm
+        action={vi.fn()}
+        fields={{ id: "b1" }}
+        name="theme"
+        label="Osio"
+        initial={initial}
+      />
+    );
+    const { rerender } = render(form("Kuljetus"));
+    rerender(form("Laukaus"));
+    expect(field().value).toBe("Laukaus");
+  });
+
   it("shows a refusal beside the field, keeping what was typed", async () => {
     const action = vi
       .fn()
