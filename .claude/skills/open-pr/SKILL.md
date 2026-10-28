@@ -17,8 +17,7 @@ description: Review your own diff, then open the pull request and hand it to a h
 
    A later push repeats these checks on what it changed.
 2. **Commit** with a conventional message: `feat: …`, `fix: …`, `chore: …` or
-   `docs: …`. The subject says what changed, never which review round it
-   answers; that goes in a pull request comment.
+   `docs: …`, and a subject that meets `CLAUDE.md`'s rule on commit subjects.
 3. **Tick the issue's boxes** (Acceptance criteria always, and Scope where the
    template has it) before the pull request opens. A box is ticked when its
    outcome is verified. One that cannot be ticked honestly says so on the box:

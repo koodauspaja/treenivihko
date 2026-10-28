@@ -82,3 +82,4 @@ findings across two rounds, so the rule says that text is the parent's input.
 | The spec and decision record named in the PR description | The PR template; a rule cannot see the description |
 | No secrets or personal data in a commit message, PR title or description | The author, per `/open-pr` |
 | English commit messages | Convention only: a rule reads files, never the commit log |
+| A commit's subject says what the commit changes | `CLAUDE.md`, read against each commit by `/self-review` before a push; a rule never sees the commit log |
