@@ -46,8 +46,8 @@ in round 3.
 - **Block 4 says a request the parent sends again, by a second click or after
   a lost answer, is theirs too**: nothing resends a server action on its own.
   That such a request, an add or a move, applies a second time is not
-  reported when its result shows on the page, one action undoes it and no
-  data is lost.
+  reported when its result shows on the page, one action undoes the second
+  time and no data is lost.
 - **One that loses data, leaves it half saved, or whose result cannot be seen
   is still reported**, as a race between two requests at once is.
 - **The text is in `docs/setup/004-sourcery-setup.md`**, the one copy pasted
@@ -63,7 +63,8 @@ in round 3.
 |---|---|
 | Say it in Block 4, not guard the writes | Keying requests by an id the form makes brought back deleted rows and overwrote later edits in Feature 002 (`decisions/f002-exercise-library.md`). Guarding by the position or count a form saw would change what a second tab shows, which is a product decision, for a repeat whose result is already in plain sight |
 | The same test as a race: lost, half saved or unseen | A repeat that loses data is worth a finding whoever sends it; one the parent sees and undoes with one click is not |
-| Name the server action, not the buttons | Neither the browser nor Next.js sends an action again, so a repeat is always the parent's click. The add buttons are disabled while their request runs, but the move and remove buttons are not, so a double-click can repeat a move; it shows at once and one click undoes it. The rule rests on what holds for every button |
+| Say what one action undoes: the second time | A move swaps a row with its neighbour from where it is now, so a move made twice shifts it two places, and one move back leaves it one place from where it started, where the parent meant it. Sourcery's first review of this rule read "one action undoes it" as undoing both moves and asked for the one-click reason to go; the text names the second time and gives both examples |
+| Name the server action, not the buttons | Neither the browser nor Next.js sends an action again, so a repeat is always the parent's click. The add buttons are disabled while their request runs, but the move and remove buttons are not, so a double-click can repeat a move; it shows at once and one click undoes the second time. The rule rests on what holds for every button |
 
 ## Consequences
 
