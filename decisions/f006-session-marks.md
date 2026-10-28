@@ -41,9 +41,9 @@ marks a day late, sometimes after the next period has started.
   crafted. The page then shows the session's exercises as they are.
 - **A pick no longer in the session shows `Ohita`** on the marking page, which
   lists only the session's exercises now; the next save drops it.
-- **A save holds its session and its picked exercises with `KEY SHARE`**, so a
-  deletion of either meanwhile waits for it, or commits first and leaves the
-  save `missing` or `stale`.
+- **A save holds its session, its picked exercises and their places in the
+  session with `KEY SHARE`**, so a deletion of any of them meanwhile waits for
+  it, or commits first and leaves the save `missing` or `stale`.
 - **`not_done` keeps nothing but the status**: no day, no face, no picks. The
   database checks it again, as it checks each column's rule.
 - **The session's key is `DEFERRABLE INITIALLY IMMEDIATE`** (migration 0007),
@@ -68,7 +68,7 @@ marks a day late, sometimes after the next period has started.
 | The library exercise in a pick | Features 007 and 009 ask which exercise was liked, not which place in a block; the same exercise twice in a session is one choice, and a pick survives the parent tidying the session |
 | `set null`, not a refusal, on deleting an exercise | A library exercise can be deleted only once no block uses it; refusing it for a mark too would leave the parent no way to delete it but to remove the child's marks |
 | A stale pick refused | A mark naming an exercise the session no longer has would tell Feature 009 something that did not happen |
-| `KEY SHARE` on the session and the exercises | It conflicts with a deletion, not with an update, so the parent's edits to a session go on while a mark is saved; without it, a deletion between the check and the insert ended on the error page |
+| `KEY SHARE` on the session, the exercises and their places | It conflicts with a deletion, not with an update, so the parent's edits to a session go on while a mark is saved; without it, deleting the session or a picked exercise between the check and the insert ended on the error page, and removing a picked exercise from the session saved a pick the session no longer had |
 | The session's key deferred for an account's deletion | Deleting a user cascades to its exercises and to its periods, in trigger order; when the periods go first, clearing a pick updates a mark whose session is gone, and an immediate key refuses it. The integration tests hit it on their first run |
 | The faces 5 down to 1 | Sorting and averaging read the right way round with no lookup |
 | A snapshot of its own | The period's read is Feature 005's and serves the exercise pages too; the marks join to it by session id, and a write between the two reads shows on the next load |

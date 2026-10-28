@@ -1,9 +1,9 @@
 /**
  * The marks' reads and writes, always within one parent's own sessions, and
  * only in a period the child may mark on the day. A read of several
- * statements runs in one read-only snapshot. A write holds its session and
- * its picked exercises against deletion until it commits. Each write logs
- * ids only.
+ * statements runs in one read-only snapshot. A write holds its session, its
+ * picked exercises and their places in the session against deletion until it
+ * commits. Each write logs ids only.
  *
  * decisions/f004-periods-and-sessions.md
  * decisions/f006-session-marks.md
@@ -201,8 +201,8 @@ export function getMarkPage(userId: string, id: string, day: string, report: Rep
 }
 
 /**
- * Whether every picked exercise is in the session now, holding each against
- * deletion until the write commits.
+ * Whether every picked exercise is in the session now, holding each, and its
+ * places in the session, against deletion until the write commits.
  */
 const picksInSession = async (tx: Transaction, sessionId: string, mark: Mark) => {
   const picked = [...new Set(PICKS.map((pick) => mark.picks[pick]).filter((id) => id !== null))];
@@ -217,12 +217,15 @@ const picksInSession = async (tx: Transaction, sessionId: string, mark: Mark) =>
     .from(exercise)
     .where(inArray(exercise.id, picked))
     .for("key share");
-  const inSession = await tx
-    .selectDistinct({ id: blockExercise.exerciseId })
+  // Postgres refuses a lock on a distinct select, so an exercise in two places is counted once here.
+  const places = await tx
+    .select({ id: blockExercise.exerciseId })
     .from(blockExercise)
     .innerJoin(block, eq(block.id, blockExercise.blockId))
-    .where(and(eq(block.sessionId, sessionId), inArray(blockExercise.exerciseId, picked)));
-  return found.length === picked.length && inSession.length === picked.length;
+    .where(and(eq(block.sessionId, sessionId), inArray(blockExercise.exerciseId, picked)))
+    .for("key share", { of: blockExercise });
+  const inSession = new Set(places.map((each) => each.id));
+  return found.length === picked.length && inSession.size === picked.length;
 };
 
 /** Saves a session's mark on `day`, replacing any it had. */

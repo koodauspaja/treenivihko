@@ -23,7 +23,8 @@ exercise shows its instructions and video at home.
 
 - Printing or a PDF.
 - Marking a session: Feature 006.
-- Any editing: the child's side only reads.
+- Any editing: the child's side only reads. Feature 006 later adds marking a
+  session, and nothing else.
 - Earlier periods.
 
 ## Who and where
@@ -103,14 +104,15 @@ Not used.
 ## Logging
 
 None: the pages only read, and a failure is logged by the store it reads
-from, as Feature 001 logs it.
+from, as Feature 001 logs it. Feature 006's marking logs its own writes.
 
 ## Security and secrets
 
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   child's side, as now; it reads only the parent's own periods and the
-  exercises in them, and never writes.
+  exercises in them, and never writes. Feature 006 adds the one write, a
+  session's mark.
 
 ## Acceptance criteria
 
@@ -119,7 +121,7 @@ from, as Feature 001 logs it.
 - [ ] An empty session shows `Treeni on vielä tyhjä.`, and an empty period `Jaksossa ei ole vielä treenejä.`
 - [ ] An exercise's name leads to its page: its amount in the session, duration, instructions and `Katso video` when it has one
 - [ ] An exercise of an earlier period, and another parent's, show `Sivua ei löytynyt.`
-- [ ] The child's side never shows a way to change anything but the link to the trainer side
+- [ ] The child's side never shows a way to change anything but the link to the trainer side (Feature 006 adds the links to mark a session)
 - [ ] It fits a phone's width without sideways scrolling
 
 ## Tests

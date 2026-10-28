@@ -371,9 +371,10 @@ export const sessionMark = pgTable(
       "session_mark_not_done",
       sql`(${table.status} = 'not_done') = (${table.trainedOn} is null)`
     ),
+    // A mark has a day exactly when it was done, so one with no day has nothing else either.
     check(
       "session_mark_not_done_empty",
-      sql`${table.status} <> 'not_done' or (${table.feeling} is null and ${table.likedBestExerciseId} is null and ${table.likedLeastExerciseId} is null and ${table.easiestExerciseId} is null and ${table.hardestExerciseId} is null)`
+      sql`${table.trainedOn} is not null or (${table.feeling} is null and ${table.likedBestExerciseId} is null and ${table.likedLeastExerciseId} is null and ${table.easiestExerciseId} is null and ${table.hardestExerciseId} is null)`
     ),
     check(
       "session_mark_trained_on",
