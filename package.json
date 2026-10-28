@@ -28,7 +28,7 @@
     "trainer:set-password": "tsx scripts/set-trainer-password.ts"
   },
   "dependencies": {
-    "better-auth": "1.7.7",
+    "better-auth": "1.7.8",
     "drizzle-orm": "0.45.4",
     "next": "16.4.3",
     "postgres": "3.4.9",
