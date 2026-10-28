@@ -47,6 +47,10 @@ no entries, which is most likely how the lockfile was first written.
   running, on its branch,
   `npm install --package-lock-only --ignore-scripts --allow-remote=all` and
   pushing the lockfile, which Renovate then leaves to the human.
+- **That command lets npm fetch any URL while it runs**, so it is run only
+  when every tarball comes from the registry: before it and after it,
+  `grep '"resolved"' package-lock.json | grep -v '"https://registry.npmjs.org/'`
+  prints nothing, and no dependency in `package.json` is a URL.
 - **Deleting the lockfile and installing again, on macOS, drops the entries**,
   and the next Renovate pull request is red with `EALLOWREMOTE`. The same
   command puts them back, and fixes lockfile maintenance if it fails this way.
