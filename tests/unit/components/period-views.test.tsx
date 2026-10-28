@@ -5,6 +5,7 @@ const requireTrainer = vi.fn();
 const listPeriods = vi.fn();
 const listPeriodDates = vi.fn();
 const getPeriod = vi.fn();
+const getPeriodMarks = vi.fn();
 const notFound = vi.fn(() => {
   throw new Error("not found");
 });
@@ -14,6 +15,9 @@ vi.mock("@/lib/periods/store", () => ({
   listPeriods: (...args: unknown[]) => listPeriods(...args),
   listPeriodDates: (...args: unknown[]) => listPeriodDates(...args),
   getPeriod: (...args: unknown[]) => getPeriod(...args),
+}));
+vi.mock("@/lib/progress/store", () => ({
+  getPeriodMarks: (...args: unknown[]) => getPeriodMarks(...args),
 }));
 vi.mock("@/app/trainer/periods/actions", () => ({
   addSessionFromForm: vi.fn(),
@@ -79,6 +83,7 @@ beforeEach(() => {
   for (const mock of [listPeriods, listPeriodDates, getPeriod]) {
     mock.mockReset();
   }
+  getPeriodMarks.mockReset().mockResolvedValue({});
   notFound.mockClear();
 });
 
@@ -181,6 +186,43 @@ describe("PeriodView", () => {
     expect(screen.getByText(`timeout ${END.toISOString()}`)).toBeDefined();
   });
 
+  it("shows a marked session's line and its set picks by name, and nothing more for one not marked", async () => {
+    getPeriod.mockResolvedValue({
+      ...PERIOD,
+      sessions: [
+        { id: "t1", position: 1, place: "field", targetMinutes: 45, totalMinutes: 40 },
+        { id: "t2", position: 2, place: "gym", targetMinutes: 30, totalMinutes: 35 },
+      ],
+    });
+    getPeriodMarks.mockResolvedValue({
+      t1: {
+        status: "done",
+        trainedOn: "2026-11-04",
+        feeling: 5,
+        picks: { likedBest: "Lähdöt", likedLeast: null, easiest: "Kikat", hardest: "Lähdöt" },
+      },
+    });
+    render(await PeriodView({ id: Promise.resolve("p1") }));
+    expect(getPeriodMarks).toHaveBeenCalledWith("u1", "p1");
+    const [first, second] = screen.getAllByRole("listitem");
+    expect(
+      within(first as HTMLElement)
+        .getAllByText(/./, { selector: "p" })
+        .map((each) => each.textContent)
+    ).toEqual([
+      "Kenttä, 40 / 45 min",
+      "Tehty 4.11.2026 😄",
+      "Kivoin: Lähdöt",
+      "Helpoin: Kikat",
+      "Vaikein: Lähdöt",
+    ]);
+    expect(
+      within(second as HTMLElement)
+        .getAllByText(/./, { selector: "p" })
+        .map((each) => each.textContent)
+    ).toEqual(["Kuntosali, 35 / 30 min"]);
+  });
+
   it("says a period has no sessions, and marks no other period current", async () => {
     getPeriod.mockResolvedValue({ ...PERIOD, startsOn: "2026-11-17", sessions: [] });
     render(await PeriodView({ id: Promise.resolve("p1") }));
@@ -198,5 +240,6 @@ describe("PeriodView", () => {
     requireTrainer.mockRejectedValue(new Error("redirect /valmentaja/avaa"));
     await expect(PeriodView({ id: Promise.resolve("p1") })).rejects.toThrow("redirect");
     expect(getPeriod).not.toHaveBeenCalled();
+    expect(getPeriodMarks).not.toHaveBeenCalled();
   });
 });

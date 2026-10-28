@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { addSessionFromForm, removePeriod } from "@/app/trainer/periods/actions";
 import { ActionButton } from "@/components/action-button";
 import { ConfirmAction } from "@/components/confirm-action";
+import { MarkLine } from "@/components/mark-line";
 import { PeriodForm } from "@/components/period-form";
 import { TrainerTimeout } from "@/components/trainer-timeout";
 import { nameOf } from "@/lib/exercises/labels";
+import { PICKS } from "@/lib/marks/rules";
 import { spanOf, today } from "@/lib/periods/dates";
 import {
   ADD_SESSION,
@@ -23,6 +25,8 @@ import {
 } from "@/lib/periods/messages";
 import { currentOf, latestOf, newPeriodDates } from "@/lib/periods/rules";
 import { getPeriod, listPeriodDates, listPeriods } from "@/lib/periods/store";
+import { pickLine } from "@/lib/progress/messages";
+import { getPeriodMarks, type MarkDetail } from "@/lib/progress/store";
 import { requireTrainer } from "@/lib/trainer/access";
 import { periodPath, sessionPath } from "@/lib/trainer/paths";
 
@@ -32,7 +36,29 @@ import { periodPath, sessionPath } from "@/lib/trainer/paths";
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f006-session-marks.md
+ * decisions/f007-progress.md
  */
+
+/** A session's mark as the parent sees it, when it has one: its line, then each pick that is set, by name. */
+function SessionMark({ mark }: Readonly<{ mark: MarkDetail | undefined }>) {
+  if (mark === undefined) {
+    return null;
+  }
+  return (
+    <>
+      <MarkLine mark={mark} className="text-sm" />
+      {PICKS.map((pick) => {
+        const name = mark.picks[pick];
+        return name === null ? null : (
+          <p key={pick} className="text-sm break-words">
+            {pickLine(pick, name)}
+          </p>
+        );
+      })}
+    </>
+  );
+}
 
 /** The parent's periods, newest first, the current one marked. */
 export async function PeriodList() {
@@ -75,10 +101,17 @@ export async function NewPeriod() {
   );
 }
 
-/** One of the parent's periods: its dates, its sessions, and its deletion; another's is not found. */
+/**
+ * One of the parent's periods: its dates, its sessions with their marks, and
+ * its deletion; another's is not found.
+ */
 export async function PeriodView({ id }: Readonly<{ id: Promise<string> }>) {
   const { user, expiresAt } = await requireTrainer();
-  const found = await getPeriod(user.id, await id);
+  const periodId = await id;
+  const [found, marks] = await Promise.all([
+    getPeriod(user.id, periodId),
+    getPeriodMarks(user.id, periodId),
+  ]);
   if (found === null) {
     notFound();
   }
@@ -105,6 +138,7 @@ export async function PeriodView({ id }: Readonly<{ id: Promise<string> }>) {
               <p className="text-sm">
                 {sessionLine(nameOf(each.place), each.totalMinutes, each.targetMinutes)}
               </p>
+              <SessionMark mark={marks[each.id]} />
             </li>
           ))}
         </ul>

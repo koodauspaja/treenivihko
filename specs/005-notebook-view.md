@@ -57,11 +57,13 @@ and spans are shown as in Feature 004.
 
 Feature 006 adds each session's mark and the way to mark it, and the previous
 period's sessions to mark, so the child's side writes marks and nothing else
-(`specs/006-session-marks.md`).
+(`specs/006-session-marks.md`). Feature 007 adds `Omat treenit`, before
+`Valmentaja`: a page of every period that has started, with its sessions'
+marks and none of their blocks or exercises (`specs/007-progress.md`).
 
 The period shown is the current one, whose days include today in Finnish
 time (`Europe/Helsinki`); when there is none, the one that starts next; when
-there is neither, the message. An earlier period is never shown.
+there is neither, the message. An earlier period is never shown here.
 
 **An exercise**, at `/harjoite/‹block exercise id›`:
 
