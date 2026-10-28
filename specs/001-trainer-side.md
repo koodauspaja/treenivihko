@@ -51,6 +51,9 @@ Addresses are Finnish rows in `src/lib/routes.ts`; folders are English.
 | Body | `Treenit tulevat tänne pian.` (as today) |
 | Link to the trainer side, small, at the bottom | `Valmentaja` |
 
+Feature 005 replaces the body with the period to copy into the notebook
+(`specs/005-notebook-view.md`).
+
 **The lock page**, at `/valmentaja/avaa`:
 
 | Where | Text |
