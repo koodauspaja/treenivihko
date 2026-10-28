@@ -53,6 +53,14 @@ Two things hold for every feature:
   never a bare `#N`. Renovate's pull requests have no issue to link. GitHub also reads the keyword in a squash commit body,
   backticks and all, so a merge that must not close the issue does not
   contain the phrase in any form.
+- **A commit's subject says what the commit changes**, in words a reader of
+  `main`'s log or Railway's deploy list understands without opening the pull
+  request. A rebase merge lands every commit on `main` as written, and Railway
+  names each deploy by the commit at `main`'s head. Never which review round,
+  finding or reviewer it answers; that goes in a pull request comment
+  (`decisions/060-commit-subjects.md`). Good: `feat: build periods and
+  sessions by hand on the trainer side`. Bad: `fix: answer the fifth Sourcery
+  round on periods and sessions`.
 - **The repository is public, and the user is a child.** No name, age, photo,
   school, team or location of a real person goes into code, fixtures, specs,
   issues, pull requests or logs. Test data uses invented names. Logs carry ids,

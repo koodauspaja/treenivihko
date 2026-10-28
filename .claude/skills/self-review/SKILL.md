@@ -21,9 +21,12 @@ what each later push changes. It takes minutes; a review round takes longer.
    counter. Not every class applies to every diff, but say to yourself which
    do not, rather than skipping the list.
 3. For every test added, run its mutation (class 4).
-4. Run `npm run verify`: lint, the type check, the unit tests at 100% coverage
+4. Read the subject of every commit about to be pushed against `CLAUDE.md`'s
+   rule on commit subjects, a review round's fix included, and reword one that
+   fails before it is pushed.
+5. Run `npm run verify`: lint, the type check, the unit tests at 100% coverage
    with `coverage-gaps`, the build and the end-to-end tests.
-5. Write in the pull request what the pass changed, or that it found nothing.
+6. Write in the pull request what the pass changed, or that it found nothing.
 
 ## The classes
 
