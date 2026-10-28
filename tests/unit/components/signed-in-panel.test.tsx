@@ -7,6 +7,9 @@ vi.mock("@/lib/auth/session", () => ({ requireUser: () => requireUser() }));
 vi.mock("@/components/notebook", () => ({
   Notebook: ({ userId }: { userId: string }) => <p>notebook {userId}</p>,
 }));
+vi.mock("@/components/streak", () => ({
+  StreakLines: ({ userId }: { userId: string }) => <p>streak {userId}</p>,
+}));
 vi.mock("@/lib/trainer/store", () => ({
   ensureChild: (...args: unknown[]) => ensureChild(...args),
 }));
@@ -29,6 +32,13 @@ describe("SignedInPanel", () => {
     expect(ensureChild).toHaveBeenCalledWith("u1");
     expect(screen.getByRole("heading", { level: 2, name: "Hei!" })).toBeDefined();
     expect(screen.getByText("notebook u1")).toBeDefined();
+    // The streak comes under the greeting, before the period.
+    expect(container.textContent?.indexOf("streak u1")).toBeLessThan(
+      container.textContent?.indexOf("notebook u1") ?? -1
+    );
+    expect(container.textContent?.indexOf("Hei!")).toBeLessThan(
+      container.textContent?.indexOf("streak u1") ?? -1
+    );
     expect(container.textContent).not.toContain("Treenit tulevat tänne pian.");
     expect(container.textContent).not.toContain("Test Parent");
     expect(screen.queryByRole("button")).toBeNull();

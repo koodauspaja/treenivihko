@@ -1,12 +1,14 @@
 import { getTableConfig, PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import {
+  accomplishment,
   account,
   block,
   blockExercise,
   child,
   exercise,
   exerciseLabel,
+  pause,
   period,
   session,
   sessionMark,
@@ -170,5 +172,36 @@ describe("the schema", () => {
       "session_mark_not_done_empty",
       "session_mark_trained_on",
     ]);
+  });
+
+  it("keeps a parent's pauses of 1 to 182 days, deleted with the parent", () => {
+    expect(config(pause).name).toBe("pause");
+    expect(deletes(pause)).toEqual([["id", "user", "cascade"]]);
+    expect(config(pause).indexes.map((index) => index.config.name)).toEqual(["pause_user_id_idx"]);
+    expect(config(pause).checks.map((each) => each.name)).toEqual([
+      "pause_days",
+      "pause_day_bounds",
+    ]);
+  });
+
+  it("keeps each accomplishment once per parent, kind and key, with each kind's parts checked", () => {
+    expect(config(accomplishment).name).toBe("accomplishment");
+    expect(deletes(accomplishment)).toEqual([["id", "user", "cascade"]]);
+    expect(
+      config(accomplishment).uniqueConstraints.map((each) => [
+        each.name,
+        each.columns.map((column) => column.name),
+      ])
+    ).toEqual([["accomplishment_user_kind_key", ["user_id", "kind", "key"]]]);
+    expect(config(accomplishment).checks.map((each) => each.name)).toEqual([
+      "accomplishment_kind",
+      "accomplishment_key",
+      "accomplishment_period",
+      "accomplishment_exercise",
+      "accomplishment_earned_on",
+    ]);
+    expect(checkSql(accomplishment, "accomplishment_key")).toBe(
+      "(kind in ('full_period', 'hard_to_easy')) = (key <> '')"
+    );
   });
 });

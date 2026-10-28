@@ -8,6 +8,7 @@
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  * decisions/f006-session-marks.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 import { sql } from "drizzle-orm";
@@ -21,9 +22,11 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { LABEL_KEYS, labelsIn } from "../exercises/labels";
+import { KEYED_KINDS, KINDS } from "../streaks/kinds";
 import { WHITESPACE_SQL } from "../text";
 
 const timestamps = {
@@ -379,6 +382,76 @@ export const sessionMark = pgTable(
     check(
       "session_mark_trained_on",
       sql`${table.trainedOn} between date '0001-01-01' and date '9999-12-31'`
+    ),
+  ]
+);
+
+const quoted = (keys: readonly string[]) => keys.map((key) => `'${key}'`).join(", ");
+
+// No two of one parent's pauses share a day: an exclusion in the custom
+// migration 0009, which drizzle's schema cannot express.
+
+/** Days the parent set aside, when a week touched by one does not break the streak: 1 to 182 days. */
+export const pause = pgTable(
+  "pause",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    startsOn: date("starts_on", { mode: "string" }).notNull(),
+    endsOn: date("ends_on", { mode: "string" }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("pause_user_id_idx").on(table.userId),
+    check(
+      "pause_days",
+      sql`${table.endsOn} >= ${table.startsOn} and ${table.endsOn} - ${table.startsOn} <= 181`
+    ),
+    check(
+      "pause_day_bounds",
+      sql`${table.startsOn} >= date '0001-01-01' and ${table.endsOn} <= date '9999-12-31'`
+    ),
+  ]
+);
+
+/**
+ * What the child has earned, kept for good. `key` names the period or the
+ * exercise for the kinds earned once each, as a plain value, so it stays
+ * when they are deleted; their name's parts are kept as they were.
+ */
+export const accomplishment = pgTable(
+  "accomplishment",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    key: text("key").notNull(),
+    earnedOn: date("earned_on", { mode: "string" }).notNull(),
+    periodStartsOn: date("period_starts_on", { mode: "string" }),
+    periodWeeks: integer("period_weeks"),
+    exerciseName: text("exercise_name"),
+    createdAt: timestamps.createdAt,
+  },
+  (table) => [
+    unique("accomplishment_user_kind_key").on(table.userId, table.kind, table.key),
+    check("accomplishment_kind", sql.raw(`kind in (${quoted(KINDS)})`)),
+    check("accomplishment_key", sql.raw(`(kind in (${quoted(KEYED_KINDS)})) = (key <> '')`)),
+    check(
+      "accomplishment_period",
+      // Each branch is true or false, never null, which a check would let through.
+      sql`case when ${table.kind} = 'full_period' then ${table.periodStartsOn} is not null and ${table.periodWeeks} is not null and ${table.periodWeeks} between 1 and 4 else ${table.periodStartsOn} is null and ${table.periodWeeks} is null end`
+    ),
+    check(
+      "accomplishment_exercise",
+      sql`(${table.kind} = 'hard_to_easy') = (${table.exerciseName} is not null)`
+    ),
+    check(
+      "accomplishment_earned_on",
+      sql`${table.earnedOn} between date '0001-01-01' and date '9999-12-31'`
     ),
   ]
 );

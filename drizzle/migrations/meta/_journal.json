@@ -57,6 +57,20 @@
       "when": 1793211515287,
       "tag": "0007_alter_session_mark_session_key",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793220771842,
+      "tag": "0008_create_pause_and_accomplishment_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793220776901,
+      "tag": "0009_add_pause_overlap",
+      "breakpoints": true
     }
   ]
 }

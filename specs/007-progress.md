@@ -67,7 +67,9 @@ next period, before it starts, is not one.
 | No exercise picked | `Harjoitteita ei ole vielä valittu.` |
 | Link back | `Takaisin`, to the child's side |
 
-The page only reads: it has no `Merkitse` or `Muuta`. An exercise's name is
+The page has no `Merkitse` or `Muuta`. Feature 008 adds the streak, the
+accomplishments and the next goals after its heading, and its load records
+what the child has earned (`specs/008-streaks-and-accomplishments.md`). An exercise's name is
 its current name in the library. The exercise lines name no link: an
 exercise's page belongs to a block of the period shown (Feature 005).
 
@@ -121,14 +123,16 @@ Not used.
 ## Logging
 
 None: the pages only read, and a failure is logged by the store it reads
-from, as Feature 001 logs it.
+from, as Feature 001 logs it. Feature 008's accomplishments log their own
+writes.
 
 ## Security and secrets
 
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   progress page, with no unlock, as it sees the child's side. It reads only
-  the parent's own periods, marks and exercises, and never writes. The marks
+  the parent's own periods, marks and exercises, and writes nothing but what
+  Feature 008 records as earned. The marks
   on the trainer side are behind its unlock, as the rest of it.
 
 ## Acceptance criteria

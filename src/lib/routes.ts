@@ -12,6 +12,7 @@
  * decisions/f005-notebook-view.md
  * decisions/f006-session-marks.md
  * decisions/f007-progress.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> = [
@@ -32,6 +33,8 @@ export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> =
   ["/valmentaja/jaksot/:id", "/trainer/periods/:id"],
   ["/valmentaja/treenit/:id", "/trainer/sessions/:id"],
   ["/valmentaja/treenit/:id/lisaa/:blockId", "/trainer/sessions/:id/add/:blockId"],
+  // The pauses.
+  ["/valmentaja/tauot", "/trainer/pauses"],
   // The child's side: one exercise of the period shown.
   ["/harjoite/:id", "/exercise/:id"],
   // The child's side: marking a session.

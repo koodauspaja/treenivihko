@@ -6,6 +6,7 @@
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 export const TRAINER_PATH = "/valmentaja";
@@ -20,6 +21,8 @@ export const exercisePath = (id: string) => `${EXERCISES_PATH}/${encodeURICompon
 
 export const PERIODS_PATH = "/valmentaja/jaksot";
 export const NEW_PERIOD_PATH = "/valmentaja/jaksot/uusi";
+
+export const PAUSES_PATH = "/valmentaja/tauot";
 
 /** One period's page. */
 export const periodPath = (id: string) => `${PERIODS_PATH}/${encodeURIComponent(id)}`;

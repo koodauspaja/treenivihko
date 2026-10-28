@@ -24,7 +24,8 @@ exercise shows its instructions and video at home.
 - Printing or a PDF.
 - Marking a session: Feature 006.
 - Any editing: the child's side only reads. Feature 006 later adds marking a
-  session, and nothing else.
+  session, and Feature 008 recording what the child has earned
+  (`specs/008-streaks-and-accomplishments.md`).
 - Earlier periods.
 
 ## Who and where
@@ -56,10 +57,12 @@ and spans are shown as in Feature 004.
 | The way to the trainer side | `Valmentaja`, as now, last |
 
 Feature 006 adds each session's mark and the way to mark it, and the previous
-period's sessions to mark, so the child's side writes marks and nothing else
+period's sessions to mark, so the child's side writes marks
 (`specs/006-session-marks.md`). Feature 007 adds `Omat treenit`, before
 `Valmentaja`: a page of every period that has started, with its sessions'
 marks and none of their blocks or exercises (`specs/007-progress.md`).
+Feature 008 adds the streak's lines under the greeting, and its load records
+what the child has earned (`specs/008-streaks-and-accomplishments.md`).
 
 The period shown is the current one, whose days include today in Finnish
 time (`Europe/Helsinki`); when there is none, the one that starts next; when
@@ -106,15 +109,16 @@ Not used.
 ## Logging
 
 None: the pages only read, and a failure is logged by the store it reads
-from, as Feature 001 logs it. Feature 006's marking logs its own writes.
+from, as Feature 001 logs it. Feature 006's marking logs its own writes, and
+Feature 008's accomplishments theirs.
 
 ## Security and secrets
 
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   child's side, as now; it reads only the parent's own periods and the
-  exercises in them, and never writes. Feature 006 adds the one write, a
-  session's mark.
+  exercises in them, and never writes. Feature 006 adds a write, a session's
+  mark, and Feature 008 another, an accomplishment earned.
 
 ## Acceptance criteria
 
