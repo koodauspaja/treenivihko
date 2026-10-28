@@ -9,6 +9,7 @@
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f005-notebook-view.md
  */
 
 export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> = [
@@ -29,6 +30,8 @@ export const ROUTES: ReadonlyArray<readonly [address: string, folder: string]> =
   ["/valmentaja/jaksot/:id", "/trainer/periods/:id"],
   ["/valmentaja/treenit/:id", "/trainer/sessions/:id"],
   ["/valmentaja/treenit/:id/lisaa/:blockId", "/trainer/sessions/:id/add/:blockId"],
+  // The child's side: one exercise of the period shown.
+  ["/harjoite/:id", "/exercise/:id"],
 ];
 
 /** Next's rewrites: each address served from its folder. */

@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const requireUser = vi.fn();
 const ensureChild = vi.fn();
 vi.mock("@/lib/auth/session", () => ({ requireUser: () => requireUser() }));
+vi.mock("@/components/notebook", () => ({
+  Notebook: ({ userId }: { userId: string }) => <p>notebook {userId}</p>,
+}));
 vi.mock("@/lib/trainer/store", () => ({
   ensureChild: (...args: unknown[]) => ensureChild(...args),
 }));
@@ -20,12 +23,13 @@ afterEach(() => {
 });
 
 describe("SignedInPanel", () => {
-  it("requires a signed-in browser, then greets the child, and shows nothing of the parent's", async () => {
+  it("requires a signed-in browser, then greets the child and shows the period, and nothing else of the parent's", async () => {
     const { container } = render(await SignedInPanel());
     expect(requireUser).toHaveBeenCalledOnce();
     expect(ensureChild).toHaveBeenCalledWith("u1");
     expect(screen.getByRole("heading", { level: 2, name: "Hei!" })).toBeDefined();
-    expect(screen.getByText("Treenit tulevat tänne pian.")).toBeDefined();
+    expect(screen.getByText("notebook u1")).toBeDefined();
+    expect(container.textContent).not.toContain("Treenit tulevat tänne pian.");
     expect(container.textContent).not.toContain("Test Parent");
     expect(screen.queryByRole("button")).toBeNull();
   });

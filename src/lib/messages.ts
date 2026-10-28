@@ -8,3 +8,4 @@
 export const NOT_FOUND = "Sivua ei löytynyt.";
 export const DELETE = "Poista";
 export const CANCEL = "Peruuta";
+export const BACK = "Takaisin";

@@ -14,9 +14,10 @@ and adapts the next period: longer or shorter, easier or harder.
 
 Every user-facing string is Finnish; code, comments and documents are English.
 
-**Status:** being set up. The parent signs in with Google and lands on a
-placeholder for the child's side; `docs/setup/` is written step by step as the
-infrastructure is stood up, and features follow as specs.
+**Status:** being built. The parent signs in with Google and lands on the
+child's side, which shows the period to copy into the notebook; `docs/setup/`
+is written step by step as the infrastructure is stood up, and features follow
+as specs.
 
 ```bash
 nvm use                # Node 24, from .nvmrc

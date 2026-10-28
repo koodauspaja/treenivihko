@@ -7,6 +7,7 @@
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f005-notebook-view.md
  */
 
 import { LABEL_KEYS, type LabelKey, labelOf, labelsIn } from "@/lib/exercises/labels";
@@ -83,6 +84,16 @@ export const currentOf = <T extends PeriodDates>(
   periods.find(
     (period) => period.startsOn <= day && day <= lastDayOf(period.startsOn, period.weeks)
   );
+
+/** The period the child's side shows: the current one, or else the one that starts next. */
+export const shownOf = <T extends PeriodDates>(periods: readonly T[], day: string): T | undefined =>
+  currentOf(periods, day) ??
+  periods
+    .filter((period) => period.startsOn > day)
+    .reduce<T | undefined>(
+      (first, period) => (first === undefined || period.startsOn < first.startsOn ? period : first),
+      undefined
+    );
 
 /** The period that ends last, which a new one copies and follows. */
 export const latestOf = <T extends PeriodDates>(periods: readonly T[]): T | undefined =>

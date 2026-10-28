@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { DeleteExercise } from "@/components/delete-exercise";
 import { ExerciseForm } from "@/components/exercise-form";
 import { TrainerTimeout } from "@/components/trainer-timeout";
-import { WATCH_VIDEO } from "@/lib/exercises/messages";
+import { VideoLink } from "@/components/video-link";
 import { EMPTY_VALUES, valuesFrom } from "@/lib/exercises/rules";
 import { getExercise } from "@/lib/exercises/store";
 import { requireTrainer } from "@/lib/trainer/access";
@@ -33,16 +33,7 @@ export async function ExistingExercise({ id }: Readonly<{ id: Promise<string> }>
     <>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <h1 className="text-3xl font-bold">{exercise.name}</h1>
-      {exercise.videoUrl === null ? null : (
-        <a
-          href={exercise.videoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-block underline"
-        >
-          {WATCH_VIDEO}
-        </a>
-      )}
+      <VideoLink url={exercise.videoUrl} />
       <ExerciseForm exerciseId={exercise.id} initialValues={valuesFrom(exercise)} />
       <div className="mt-8">
         <DeleteExercise id={exercise.id} name={exercise.name} />

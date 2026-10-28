@@ -66,6 +66,10 @@ describe("the route table", () => {
     expect(pickerPath("s/1", "b 2")).toBe("/valmentaja/treenit/s%2F1/lisaa/b%202");
   });
 
+  it("serves an exercise of the child's side from an English folder", () => {
+    expect(ROUTES).toContainEqual(["/harjoite/:id", "/exercise/:id"]);
+  });
+
   it("rewrites each Finnish address to its folder", () => {
     expect(routeRewrites()).toContainEqual({ source: "/kirjaudu", destination: "/sign-in" });
     expect(routeRewrites()).toHaveLength(ROUTES.length);
