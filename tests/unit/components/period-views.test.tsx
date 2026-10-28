@@ -63,7 +63,7 @@ const { NewPeriod, PeriodList, PeriodView } = await import("@/components/period-
 const END = new Date("2026-11-05T12:15:00.000Z");
 
 beforeAll(() => {
-  // 5 November 2026 in Finland.
+  // 5 November 2026 in Finland, whose day the pages use. decisions/f004-periods-and-sessions.md
   vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-05T10:00:00Z") });
 });
 

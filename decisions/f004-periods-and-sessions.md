@@ -50,7 +50,8 @@ once. Most periods look like the one before, so a new one starts as a copy.
   (`YYYY-MM-DD`, Postgres `date`), moved in UTC so a change to summer time
   never skips one.
 - **A start date is a real day in the years 1 to 9999, and so is the
-  period's last day**; anything else is `Anna alkamispäivä.`
+  period's last day**; anything else is `Anna alkamispäivä.` The database
+  checks it again (`period_days`, migration 0005), as it checks the weeks.
 - **An id that is not a UUID is no row of anyone's**, refused before any
   query (`src/lib/db/ids.ts`), as Feature 002 did for exercises.
 - **A refused field keeps what was typed.** React empties a form after its
@@ -110,8 +111,9 @@ once. Most periods look like the one before, so a new one starts as a copy.
 - An add sent twice, as when its answer is lost, adds two rows. The second is
   in plain sight and one `Poista` removes it; keying adds by an id the form
   makes brought back deleted rows in Feature 002.
-- A rollback past this feature once block exercises exist: the older
-  version's exercise deletion meets the new foreign key and shows the error
-  page rather than the refusal. Nothing is deleted.
+- The older version, still serving during the rollout or back after a
+  rollback, once block exercises exist: its exercise deletion meets the new
+  foreign key and shows the error page rather than the refusal. Nothing is
+  deleted.
 - The picker reads the whole library and filters it in the app, as the
   library page does: it is one parent's curated list.

@@ -1,0 +1,1 @@
+ALTER TABLE "period" ADD CONSTRAINT "period_days" CHECK ("period"."starts_on" >= date '0001-01-01' and "period"."starts_on" + (7 * "period"."weeks" - 1) <= date '9999-12-31');

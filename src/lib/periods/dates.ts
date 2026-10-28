@@ -43,10 +43,10 @@ export const lastDayOf = (startsOn: string, weeks: number): string =>
 
 const parts = (day: string) => day.split("-").map(Number) as [number, number, number];
 
-/** A day as the app shows it: `3.11.2026`. */
+/** A day as the app shows it: `3.11.2026`, the year always in four digits, so 26 is not read as 2026. */
 export const formatDay = (day: string) => {
   const [year, month, date] = parts(day);
-  return `${date}.${month}.${year}`;
+  return `${date}.${month}.${String(year).padStart(4, "0")}`;
 };
 
 /** A span of days, the year once when both share it: `3.11.–16.11.2026`, `29.12.2026–11.1.2027`. */

@@ -88,6 +88,8 @@ describe("lastDayOf", () => {
 describe("formatting", () => {
   it("shows a day without leading zeros", () => {
     expect(formatDay("2026-11-03")).toBe("3.11.2026");
+    expect(formatDay("0026-11-03")).toBe("3.11.0026");
+    expect(formatDay("0001-01-01")).toBe("1.1.0001");
   });
 
   it("shows a span's year once, or both across a year", () => {

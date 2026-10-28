@@ -36,6 +36,13 @@
       "when": 1793141855379,
       "tag": "0004_add_period_overlap_and_order",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793192457555,
+      "tag": "0005_add_period_day_bounds",
+      "breakpoints": true
     }
   ]
 }
