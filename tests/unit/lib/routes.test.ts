@@ -70,6 +70,10 @@ describe("the route table", () => {
     expect(ROUTES).toContainEqual(["/harjoite/:id", "/exercise/:id"]);
   });
 
+  it("serves a session's marking page from an English folder", () => {
+    expect(ROUTES).toContainEqual(["/treeni/:id", "/session/:id"]);
+  });
+
   it("rewrites each Finnish address to its folder", () => {
     expect(routeRewrites()).toContainEqual({ source: "/kirjaudu", destination: "/sign-in" });
     expect(routeRewrites()).toHaveLength(ROUTES.length);

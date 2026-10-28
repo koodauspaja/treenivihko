@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MarkStatus, PreviousPeriod } from "@/components/marks";
 import { VideoLink } from "@/components/video-link";
 import { SIGNED_IN_PATH } from "@/lib/auth/paths";
 import { requireUser } from "@/lib/auth/session";
 import { nameOf } from "@/lib/exercises/labels";
 import { formatAmount, formatDuration } from "@/lib/exercises/rules";
+import { getChildMarks, type MarkSummary } from "@/lib/marks/store";
 import { BACK } from "@/lib/messages";
 import { EMPTY_SESSION, NO_PERIOD, sessionLine, startsOn } from "@/lib/notebook/messages";
 import { notebookExercisePath } from "@/lib/notebook/paths";
@@ -13,19 +15,26 @@ import { NO_SESSIONS, periodHeading, sessionHeading } from "@/lib/periods/messag
 import { getNotebook, getNotebookExercise, type NotebookSession } from "@/lib/periods/store";
 
 /**
- * The child's notebook view: the period to copy, and one exercise's page.
- * Both only read, for a signed-in browser, and show nothing to change.
+ * The child's notebook view: the period to copy, each session's mark and the
+ * way to mark it while its period may be marked, and one exercise's page. For
+ * a signed-in browser; nothing here changes anything but a mark.
  *
  * decisions/029-sign-in.md
  * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
+ * decisions/f006-session-marks.md
  */
 
-function Session({ session }: Readonly<{ session: NotebookSession }>) {
+function Session({
+  session,
+  markable,
+  mark,
+}: Readonly<{ session: NotebookSession; markable: boolean; mark: MarkSummary | undefined }>) {
   return (
     <section className="mt-6">
       <h3 className="text-lg font-semibold">{sessionHeading(session.position)}</h3>
       <p>{sessionLine(nameOf(session.place), session.targetMinutes)}</p>
+      {markable ? <MarkStatus sessionId={session.id} mark={mark} /> : null}
       {session.blocks.length === 0 ? (
         <p className="mt-2">{EMPTY_SESSION}</p>
       ) : (
@@ -51,25 +60,39 @@ function Session({ session }: Readonly<{ session: NotebookSession }>) {
   );
 }
 
-/** The period the child copies: the current one, or the next, or the message that there is none. */
+/**
+ * The period the child copies: the current one, or the next, or the message
+ * that there is none; then the latest period that ended, to mark.
+ */
 export async function Notebook({ userId }: Readonly<{ userId: string }>) {
   const day = today();
-  const notebook = await getNotebook(userId, day);
+  const [notebook, marks] = await Promise.all([
+    getNotebook(userId, day),
+    getChildMarks(userId, day),
+  ]);
   if (notebook === null) {
-    return <p className="mt-4">{NO_PERIOD}</p>;
+    return (
+      <>
+        <p className="mt-4">{NO_PERIOD}</p>
+        <PreviousPeriod marks={marks} />
+      </>
+    );
   }
   const { period, sessions } = notebook;
+  // The next period, before it starts, is copied but not marked.
+  const markable = period.startsOn <= day;
   return (
     <>
       <h2 className="mt-6 text-xl font-semibold break-words">{periodHeading(spanOf(period))}</h2>
-      {period.startsOn > day ? (
-        <p className="mt-1">{startsOn(formatDay(period.startsOn))}</p>
-      ) : null}
+      {markable ? null : <p className="mt-1">{startsOn(formatDay(period.startsOn))}</p>}
       {sessions.length === 0 ? (
         <p className="mt-4">{NO_SESSIONS}</p>
       ) : (
-        sessions.map((each) => <Session key={each.id} session={each} />)
+        sessions.map((each) => (
+          <Session key={each.id} session={each} markable={markable} mark={marks.marks[each.id]} />
+        ))
       )}
+      <PreviousPeriod marks={marks} />
     </>
   );
 }
