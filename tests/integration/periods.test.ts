@@ -156,9 +156,15 @@ const whileHeld = async <T>(
     written();
     await released;
   });
-  await done;
+  // A write that fails, or an act that never waits, ends the test rather than hanging it.
+  await Promise.race([done, held]);
+  let settled = false;
   const acting = act();
-  while (!(await waitingOnLock())) {
+  const settle = () => {
+    settled = true;
+  };
+  acting.then(settle, settle);
+  while (!settled && !(await waitingOnLock())) {
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   release();
