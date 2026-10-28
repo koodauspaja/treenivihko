@@ -38,6 +38,13 @@ describe("PeriodForm", () => {
     expect(document.querySelector('input[name="id"]')).toBeNull();
   });
 
+  it("follows newer saved dates the page passes, such as after a save in another tab", () => {
+    const { rerender } = render(<PeriodForm periodId="p1" initial={INITIAL} />);
+    rerender(<PeriodForm periodId="p1" initial={{ startsOn: "2026-11-10", weeks: "3" }} />);
+    expect(start().value).toBe("2026-11-10");
+    expect(weeks().value).toBe("3");
+  });
+
   it("creates a new period with Luo jakso", async () => {
     createPeriodFromForm.mockResolvedValue({
       version: 1,
@@ -63,12 +70,15 @@ describe("PeriodForm", () => {
       errors: {},
       values: { startsOn: "2026-11-10", weeks: "1" },
     });
-    render(<PeriodForm periodId="p1" initial={INITIAL} />);
+    const { rerender } = render(<PeriodForm periodId="p1" initial={INITIAL} />);
     fireEvent.click(screen.getByRole("button", { name: "Tallenna" }));
     await waitFor(() => {
       expect(screen.getByRole("status").textContent).toBe("Tallennettu.");
     });
     expect((savePeriodDates.mock.calls[0] as [unknown, FormData])[1].get("id")).toBe("p1");
+    // The refreshed page passes the saved dates, which the form then shows.
+    // decisions/f004-periods-and-sessions.md
+    rerender(<PeriodForm periodId="p1" initial={{ startsOn: "2026-11-10", weeks: "1" }} />);
     expect(start().value).toBe("2026-11-10");
     expect(weeks().value).toBe("1");
   });

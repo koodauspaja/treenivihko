@@ -26,7 +26,8 @@ import { requireTrainer } from "@/lib/trainer/access";
 import { PERIODS_PATH, periodPath, sessionPath } from "@/lib/trainer/paths";
 
 export type PeriodFormState = {
-  // Changes on every answer, so the form starts again from `values`.
+  // Changes on every answer, so the form starts again: from `values` when
+  // refused, otherwise from the page's dates.
   version: number;
   message: string | null;
   errors: Partial<Record<"startsOn" | "weeks", string>>;

@@ -6,6 +6,7 @@
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
+ * decisions/f004-periods-and-sessions.md
  */
 
 import { formText as text } from "@/lib/forms";

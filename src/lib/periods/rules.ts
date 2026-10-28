@@ -95,11 +95,17 @@ export const latestOf = <T extends PeriodDates>(periods: readonly T[]): T | unde
     undefined
   );
 
-/** A new period's form as it starts: the day after the latest ends and its length, or today for 2 weeks. */
+/**
+ * A new period's form as it starts: the day after the latest ends and its
+ * length, or today for 2 weeks. No day follows 31.12.9999, so after a period
+ * ending then the start is left empty.
+ */
 export function newPeriodDates(latest: PeriodDates | undefined, day: string): PeriodDates {
-  return latest === undefined
-    ? { startsOn: day, weeks: DEFAULT_WEEKS }
-    : { startsOn: addDays(lastDayOf(latest.startsOn, latest.weeks), 1), weeks: latest.weeks };
+  if (latest === undefined) {
+    return { startsOn: day, weeks: DEFAULT_WEEKS };
+  }
+  const next = addDays(lastDayOf(latest.startsOn, latest.weeks), 1);
+  return { startsOn: isDay(next) ? next : "", weeks: latest.weeks };
 }
 
 /** A block's theme, trimmed as a nickname is, or null when it breaks the rule. */

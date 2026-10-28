@@ -108,6 +108,17 @@ describe("a period's neighbours", () => {
       weeks: 3,
     });
   });
+
+  it("leaves the start empty after a period ending on the last day there is", () => {
+    expect(newPeriodDates(period("p", "9999-12-11", 3), "2026-11-03")).toEqual({
+      startsOn: "",
+      weeks: 3,
+    });
+    expect(newPeriodDates(period("p", "9999-12-10", 3), "2026-11-03")).toEqual({
+      startsOn: "9999-12-31",
+      weeks: 3,
+    });
+  });
 });
 
 describe("readTheme", () => {

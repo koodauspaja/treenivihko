@@ -55,6 +55,16 @@ once. Most periods look like the one before, so a new one starts as a copy.
   query (`src/lib/db/ids.ts`), as Feature 002 did for exercises.
 - **A refused field keeps what was typed.** React empties a form after its
   action, so the forms keep the sent values and show them again on a refusal.
+- **Otherwise a form shows the page's saved values, newer ones included**: its
+  fields are keyed on them as well as on its answer, so a page refreshed after
+  a save in another tab shows that save.
+- **Saving a period's dates locks the period first**, as every other save
+  locks its row, so a deletion meanwhile is not found rather than saved.
+- **Adding a block exercise reads its library exercise with a `KEY SHARE`
+  lock**, so a deletion of it meanwhile either waits and is refused as in
+  use, or commits first and leaves the add not found.
+- **No day follows 31.12.9999**, so after a period ending then, a new
+  period's form leaves its start empty.
 
 ## Why
 
@@ -75,6 +85,8 @@ once. Most periods look like the one before, so a new one starts as a copy.
 | Years 1 to 9999 | Postgres has no year 0, and a last day past 9999 cannot be shown as `D.M.YYYY` |
 | A non-UUID id refused before a query | A crafted address can carry U+0000, which Postgres cannot even compare, and would end on the error page rather than as not found |
 | Refused values kept in the form | Retyping a 30-character theme to fix one letter is the kind of friction that makes the parent stop planning |
+| Forms keyed on the saved values | React leaves a mounted field's value alone when only its default changes, so without the key the older value stayed on screen and the next save sent it back |
+| The period and the library exercise locked when read | A read that decides a write has to see the row the write meets: unlocked, a deletion between them made a save of a deleted period say `Tallennettu.`, and an add end on the error page |
 
 ## Not done
 
@@ -90,3 +102,16 @@ once. Most periods look like the one before, so a new one starts as a copy.
   out of the spec's scope.
 - A version check on concurrent edits of the same field: the later save wins,
   as in Feature 002 (Feature 010 is filed for the library).
+- Two periods created at the same moment from two tabs, with days apart, can
+  both copy the same latest period, so the later one misses the other's
+  sessions. Nothing is lost, and the copy can be edited; a lock would have to
+  be taken before the copy's `repeatable read` snapshot, which a lock inside
+  its transaction is not.
+- An add sent twice, as when its answer is lost, adds two rows. The second is
+  in plain sight and one `Poista` removes it; keying adds by an id the form
+  makes brought back deleted rows in Feature 002.
+- A rollback past this feature once block exercises exist: the older
+  version's exercise deletion meets the new foreign key and shows the error
+  page rather than the refusal. Nothing is deleted.
+- The picker reads the whole library and filters it in the app, as the
+  library page does: it is one parent's curated list.

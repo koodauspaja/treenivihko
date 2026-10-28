@@ -126,6 +126,46 @@ const added = async (userId: string, blockId: string, exerciseId: string) => {
   }
 };
 
+type Transaction = Parameters<Parameters<ReturnType<typeof database>["transaction"]>[0]>[0];
+
+const waitingOnLock = async () => {
+  const [row] = await database().execute<{ waiting: number }>(
+    sql`select count(*)::int as waiting from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`
+  );
+  return (row?.waiting ?? 0) > 0;
+};
+
+/**
+ * What `act` comes to when `write` is in a transaction left open until `act`
+ * waits on its locks, and committed then: two writes at once, in that order.
+ */
+const whileHeld = async <T>(
+  write: (tx: Transaction) => Promise<unknown>,
+  act: () => Promise<T>
+) => {
+  let written = () => {};
+  let release = () => {};
+  const done = new Promise<void>((resolve) => {
+    written = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const held = database().transaction(async (tx) => {
+    await write(tx);
+    written();
+    await released;
+  });
+  await done;
+  const acting = act();
+  while (!(await waitingOnLock())) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  release();
+  await held;
+  return acting;
+};
+
 /** A period with one session of two blocks, the first with both exercises. */
 const builtPeriod = async (userId: string, startsOn: string) => {
   const ladder = await exerciseOf(userId, LADDER);
@@ -267,6 +307,15 @@ describe("a period", () => {
     ).toEqual({
       kind: "missing",
     });
+  });
+
+  it("is not saved when it is deleted while its dates are being saved", async () => {
+    const periodId = await periodOf("u1", "2026-11-02");
+    const result = await whileHeld(
+      (tx) => tx.delete(period).where(eq(period.id, periodId)),
+      () => updatePeriodDates("u1", periodId, { startsOn: "2026-11-09", weeks: 2 }, report)
+    );
+    expect(result).toEqual({ kind: "missing" });
   });
 
   it("lists the parent's periods newest first, each with its count of sessions", async () => {
@@ -545,16 +594,15 @@ describe("writes to neighbours at once", () => {
       const sessionId = await sessionOf("u1", periodId);
       const first = await blockOf("u1", sessionId, "Yksi");
       const second = await blockOf("u1", sessionId, "Kaksi");
-      await blockOf("u1", sessionId, "Kolme");
+      const third = await blockOf("u1", sessionId, "Kolme");
       await Promise.all([
         moveBlock("u1", first, "down", report),
         deleteBlock("u1", second, report),
         moveBlock("u1", second, "up", report),
       ]);
-      const positions = (await getSession("u1", sessionId, report))?.blocks.map(
-        (each) => each.position
-      );
-      expect(positions).toEqual([1, 2]);
+      const blocks = (await getSession("u1", sessionId, report))?.blocks ?? [];
+      expect(blocks.map((each) => each.position)).toEqual([1, 2]);
+      expect(new Set(blocks.map((each) => each.id))).toEqual(new Set([first, third]));
       await deleteSession("u1", sessionId, report);
     }
   });
@@ -563,17 +611,18 @@ describe("writes to neighbours at once", () => {
     const built = await builtPeriod("u1", "2026-11-02");
     for (let round = 0; round < ROUNDS; round++) {
       await added("u1", built.warmUp, built.ladder);
-      const [first, second] =
-        (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+      const before = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+      const [first, second] = before;
       await Promise.all([
         moveBlockExercise("u1", first?.id ?? "", "down", report),
         deleteBlockExercise("u1", second?.id ?? "", report),
         moveBlockExercise("u1", second?.id ?? "", "up", report),
       ]);
-      const positions = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises.map(
-        (each) => each.position
+      const after = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+      expect(after.map((each) => each.position)).toEqual([1, 2]);
+      expect(new Set(after.map((each) => each.id))).toEqual(
+        new Set(before.filter((each) => each !== second).map((each) => each.id))
       );
-      expect(positions).toEqual([1, 2]);
     }
   });
 
@@ -582,10 +631,10 @@ describe("writes to neighbours at once", () => {
     for (let round = 0; round < ROUNDS; round++) {
       const first = await sessionOf("u1", periodId);
       const second = await sessionOf("u1", periodId);
-      await sessionOf("u1", periodId);
+      const third = await sessionOf("u1", periodId);
       await Promise.all([deleteSession("u1", first, report), deleteSession("u1", second, report)]);
       const sessions = (await getPeriod("u1", periodId, report))?.sessions ?? [];
-      expect(sessions.map((each) => each.position)).toEqual([1]);
+      expect(sessions.map((each) => [each.id, each.position])).toEqual([[third, 1]]);
       await deleteSession("u1", sessions[0]?.id ?? "", report);
     }
   });
@@ -614,45 +663,35 @@ describe("a library exercise in use", () => {
     const periodId = await periodOf("u1", "2026-11-02");
     const sessionId = await sessionOf("u1", periodId);
     const blockId = await blockOf("u1", sessionId, "Lämmittely");
-    let inserted = () => {};
-    let release = () => {};
-    const insertDone = new Promise<void>((resolve) => {
-      inserted = resolve;
-    });
-    const released = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    // Holds a new block exercise uncommitted until the delete waits on it, then commits it.
-    const other = database().transaction(async (tx) => {
-      await tx.insert(blockExercise).values({
-        id: randomUUID(),
-        blockId,
-        exerciseId: ladder,
-        position: 1,
-        amountKind: "count",
-        amount: 10,
-      });
-      inserted();
-      await released;
-    });
-    await insertDone;
-    const deleting = deleteExercise("u1", ladder, report);
-    const waitingOnLock = async () => {
-      const [row] = await database().execute<{ waiting: number }>(
-        sql`select count(*)::int as waiting from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`
-      );
-      return (row?.waiting ?? 0) > 0;
-    };
-    while (!(await waitingOnLock())) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    release();
-    await other;
-    const result = await deleting;
+    const result = await whileHeld(
+      (tx) =>
+        tx.insert(blockExercise).values({
+          id: randomUUID(),
+          blockId,
+          exerciseId: ladder,
+          position: 1,
+          amountKind: "count",
+          amount: 10,
+        }),
+      () => deleteExercise("u1", ladder, report)
+    );
     expect(result).toEqual({
       kind: "inUse",
       periods: [{ id: periodId, startsOn: "2026-11-02", weeks: 2 }],
     });
+  });
+
+  it("is not found by a block taking it while it is being deleted", async () => {
+    const ladder = await exerciseOf("u1", LADDER);
+    const periodId = await periodOf("u1", "2026-11-02");
+    const sessionId = await sessionOf("u1", periodId);
+    const blockId = await blockOf("u1", sessionId, "Lämmittely");
+    const result = await whileHeld(
+      (tx) => tx.delete(exercise).where(eq(exercise.id, ladder)),
+      () => addBlockExercise("u1", blockId, ladder, report)
+    );
+    expect(result).toEqual({ kind: "missing" });
+    expect(await database().select().from(blockExercise)).toEqual([]);
   });
 
   it("is deleted once no period uses it", async () => {

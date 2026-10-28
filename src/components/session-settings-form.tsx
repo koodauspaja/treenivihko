@@ -11,7 +11,8 @@ const START: FieldState = { version: 0, message: null, errors: {} };
 
 /**
  * A session's place, equipment at hand and target length, with what was
- * chosen kept when refused. decisions/f004-periods-and-sessions.md
+ * chosen kept when refused, and the saved ones shown again whenever the page
+ * brings newer ones. decisions/f004-periods-and-sessions.md
  */
 export function SessionSettingsForm({
   sessionId,
@@ -42,7 +43,11 @@ export function SessionSettingsForm({
     act(form);
   };
   return (
-    <form key={state.version} action={submit} className="mt-6 flex flex-col gap-3">
+    <form
+      key={`${state.version}|${saved.place}|${saved.equipment.join(",")}|${saved.target}`}
+      action={submit}
+      className="mt-6 flex flex-col gap-3"
+    >
       <input type="hidden" name="id" value={sessionId} />
       <fieldset className="flex flex-col gap-1">
         <legend className="font-semibold">{FIELD.place}</legend>

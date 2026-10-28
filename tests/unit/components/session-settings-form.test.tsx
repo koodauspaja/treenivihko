@@ -44,6 +44,18 @@ describe("SessionSettingsForm", () => {
     expect(target().value).toBe("45");
   });
 
+  it("follows newer saved choices the page passes, such as after a save in another tab", () => {
+    const { rerender } = show();
+    rerender(
+      <SessionSettingsForm sessionId="t1" place="gym" equipment={["ladder"]} targetMinutes={60} />
+    );
+    expect(box("Kuntosali").checked).toBe(true);
+    expect(box("Kenttä").checked).toBe(false);
+    expect(box("Tikkaat").checked).toBe(true);
+    expect(box("Pallo").checked).toBe(false);
+    expect(target().value).toBe("60");
+  });
+
   it("sends the choices, and says they were saved", async () => {
     saveSessionSettings.mockResolvedValue({ version: 1, message: "Tallennettu.", errors: {} });
     show();
