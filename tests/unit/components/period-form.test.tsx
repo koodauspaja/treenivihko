@@ -83,6 +83,26 @@ describe("PeriodForm", () => {
     expect(weeks().value).toBe("1");
   });
 
+  it("drops a refusal and what was sent once the page brings newer saved dates", async () => {
+    savePeriodDates.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: { startsOn: "Anna alkamispäivä." },
+      values: { startsOn: "", weeks: "4" },
+    });
+    const { rerender } = render(<PeriodForm periodId="p1" initial={INITIAL} />);
+    fireEvent.click(screen.getByRole("button", { name: "Tallenna" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined();
+    });
+    rerender(<PeriodForm periodId="p1" initial={INITIAL} />);
+    expect(weeks().value).toBe("4");
+    rerender(<PeriodForm periodId="p1" initial={{ startsOn: "2026-11-10", weeks: "3" }} />);
+    expect(start().value).toBe("2026-11-10");
+    expect(weeks().value).toBe("3");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("shows each refusal beside its field, with what was sent", async () => {
     savePeriodDates.mockResolvedValue({
       version: 1,

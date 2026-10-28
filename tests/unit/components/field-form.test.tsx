@@ -74,6 +74,32 @@ describe("FieldForm", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it("drops a refusal and what was typed once the page brings a newer saved value", async () => {
+    const action = vi
+      .fn()
+      .mockResolvedValue(answer(1, null, { theme: "Osion nimessä on oltava 1–30 merkkiä." }));
+    const form = (initial: string) => (
+      <FieldForm
+        action={action}
+        fields={{ id: "b1" }}
+        name="theme"
+        label="Osio"
+        initial={initial}
+      />
+    );
+    const { rerender } = render(form("A"));
+    fireEvent.change(field(), { target: { value: "x".repeat(31) } });
+    fireEvent.click(screen.getByRole("button", { name: "Tallenna" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined();
+    });
+    rerender(form("A"));
+    expect(field().value).toBe("x".repeat(31));
+    rerender(form("Laukaus"));
+    expect(field().value).toBe("Laukaus");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("shows the page's value again after adding, with its own button", async () => {
     const action = vi.fn().mockResolvedValue(answer(1, null));
     render(

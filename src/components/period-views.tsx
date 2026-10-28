@@ -30,6 +30,7 @@ import { periodPath, sessionPath } from "@/lib/trainer/paths";
  * The periods' pages' content, each behind the unlock.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  */
 

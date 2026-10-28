@@ -601,7 +601,7 @@ export function deleteSession(userId: string, id: string, report: Report = toStd
         .returning({ position: trainingSession.position });
       await tx
         .update(trainingSession)
-        .set({ position: sql`${trainingSession.position} - 1` })
+        .set({ position: sql`${trainingSession.position} - 1`, updatedAt: new Date() })
         .where(
           and(
             eq(trainingSession.periodId, found.periodId),
@@ -695,8 +695,9 @@ async function swap(
   if (other === undefined) {
     return false;
   }
-  await tx.update(table).set({ position: other.position }).where(eq(table.id, self.id));
-  await tx.update(table).set({ position: self.position }).where(eq(table.id, other.id));
+  const updatedAt = new Date();
+  await tx.update(table).set({ position: other.position, updatedAt }).where(eq(table.id, self.id));
+  await tx.update(table).set({ position: self.position, updatedAt }).where(eq(table.id, other.id));
   return true;
 }
 
@@ -751,7 +752,7 @@ export function deleteBlock(userId: string, id: string, report: Report = toStder
         .returning({ position: block.position });
       await tx
         .update(block)
-        .set({ position: sql`${block.position} - 1` })
+        .set({ position: sql`${block.position} - 1`, updatedAt: new Date() })
         .where(
           and(
             eq(block.sessionId, found.sessionId),
@@ -945,7 +946,7 @@ export function deleteBlockExercise(userId: string, id: string, report: Report =
           .returning({ position: blockExercise.position });
         await tx
           .update(blockExercise)
-          .set({ position: sql`${blockExercise.position} - 1` })
+          .set({ position: sql`${blockExercise.position} - 1`, updatedAt: new Date() })
           .where(
             and(
               eq(blockExercise.blockId, found.blockId),

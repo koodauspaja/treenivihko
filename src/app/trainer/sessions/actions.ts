@@ -6,6 +6,7 @@
  * keeps every write to the parent's own.
  *
  * decisions/f001-trainer-side.md
+ * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  */
 
