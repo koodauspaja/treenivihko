@@ -3,6 +3,7 @@
  *
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f005-notebook-view.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -41,6 +42,8 @@ import {
   deleteBlockExercise,
   deletePeriod,
   deleteSession,
+  getNotebook,
+  getNotebookExercise,
   getPeriod,
   getSession,
   listPeriodDates,
@@ -550,6 +553,89 @@ describe("an exercise in a block", () => {
     expect(await ids()).toEqual([[built.ladder, 1]]);
     expect(await moveBlockExercise("u2", first?.id ?? "", "up", report)).toBeNull();
     expect(await deleteBlockExercise("u2", first?.id ?? "", report)).toBeNull();
+  });
+});
+
+describe("the child's notebook", () => {
+  it("reads the current period's sessions, blocks and exercises in order, with each block's amount", async () => {
+    const built = await builtPeriod("u1", "2026-11-02");
+    const second = await sessionOf("u1", built.periodId);
+    // Updated rows move to the end of the table, so only the reads' order keeps the positions'.
+    await updateSessionSettings("u1", built.sessionId, NEW_SESSION, report);
+    await updateBlockTheme("u1", built.warmUp, "Alku", report);
+    const [, kuljetus] = (await getSession("u1", built.sessionId, report))?.blocks ?? [];
+    const [first] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+    await updateBlockExerciseAmount("u1", first?.id ?? "", 12, report);
+    lines = [];
+    const notebook = await getNotebook("u1", "2026-11-15", report);
+    expect(notebook).toEqual({
+      period: { id: built.periodId, startsOn: "2026-11-02", weeks: 2 },
+      sessions: [
+        {
+          id: built.sessionId,
+          position: 1,
+          place: "field",
+          targetMinutes: 45,
+          blocks: [
+            {
+              id: built.warmUp,
+              theme: "Alku",
+              exercises: [
+                { id: first?.id, name: LADDER.name, amountKind: "count", amount: 12 },
+                { id: expect.any(String), name: SPRINT.name, amountKind: "time", amount: 30 },
+              ],
+            },
+            { id: kuljetus?.id, theme: "Kuljetus", exercises: [] },
+          ],
+        },
+        { id: second, position: 2, place: "field", targetMinutes: 45, blocks: [] },
+      ],
+    });
+    expect(lines).toEqual([]);
+  });
+
+  it("reads the next period before it starts, and none after the last ends", async () => {
+    const first = await periodOf("u1", "2026-11-02");
+    const later = await periodOf("u1", "2026-12-07", 1);
+    const next = await periodOf("u1", "2026-11-16");
+    expect((await getNotebook("u1", "2026-10-30", report))?.period.id).toBe(first);
+    expect((await getNotebook("u1", "2026-11-15", report))?.period.id).toBe(first);
+    expect((await getNotebook("u1", "2026-11-16", report))?.period.id).toBe(next);
+    expect((await getNotebook("u1", "2026-12-01", report))?.period.id).toBe(later);
+    expect(await getNotebook("u1", "2026-12-14", report)).toBeNull();
+    expect((await getNotebook("u1", "2026-11-03", report))?.sessions).toEqual([]);
+  });
+
+  it("is never another parent's", async () => {
+    await builtPeriod("u1", "2026-11-02");
+    expect(await getNotebook("u2", "2026-11-03", report)).toBeNull();
+  });
+
+  it("reads an exercise of the period shown, with its block's amount and the library's text", async () => {
+    const built = await builtPeriod("u1", "2026-11-02");
+    const [first] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+    const id = first?.id ?? "";
+    await updateBlockExerciseAmount("u1", id, 12, report);
+    expect(await getNotebookExercise("u1", id, "2026-11-03", report)).toEqual({
+      name: LADDER.name,
+      amountKind: "count",
+      amount: 12,
+      durationMinutes: LADDER.durationMinutes,
+      instructions: LADDER.instructions,
+      videoUrl: null,
+    });
+    expect(await getNotebookExercise("u2", id, "2026-11-03", report)).toBeNull();
+    expect(await getNotebookExercise("u1", "not-an-id", "2026-11-03", report)).toBeNull();
+    expect(await getNotebookExercise("u1", randomUUID(), "2026-11-03", report)).toBeNull();
+  });
+
+  it("finds no exercise of a period the child's side does not show", async () => {
+    const built = await builtPeriod("u1", "2026-11-02");
+    const [first] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
+    await periodOf("u1", "2026-11-16");
+    expect(await getNotebookExercise("u1", first?.id ?? "", "2026-11-16", report)).toBeNull();
+    expect(await getNotebookExercise("u1", first?.id ?? "", "2026-12-31", report)).toBeNull();
+    expect(await getNotebookExercise("u1", first?.id ?? "", "2026-11-15", report)).not.toBeNull();
   });
 });
 

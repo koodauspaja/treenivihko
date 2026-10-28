@@ -8,6 +8,7 @@
  *
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f005-notebook-view.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -36,6 +37,7 @@ import {
   type PeriodDates,
   SESSIONS_MAX,
   type SessionSettings,
+  shownOf,
 } from "./rules";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -977,3 +979,137 @@ export const periodsUsing = (
     .innerJoin(period, eq(period.id, trainingSession.periodId))
     .where(and(owned(userId), eq(blockExercise.exerciseId, exerciseId)))
     .orderBy(asc(period.startsOn));
+
+export type NotebookExercise = { id: string; name: string; amountKind: AmountKind; amount: number };
+export type NotebookSession = {
+  id: string;
+  position: number;
+  place: LabelKey;
+  targetMinutes: number;
+  blocks: { id: string; theme: string; exercises: NotebookExercise[] }[];
+};
+export type Notebook = { period: PeriodRow; sessions: NotebookSession[] };
+
+/**
+ * The period the child's side shows on `day`, the current or else the next,
+ * with its sessions, blocks and exercises in order; null when there is none.
+ */
+export function getNotebook(userId: string, day: string, report: Report = toStderr) {
+  return logged("notebook read", `user ${userId}`, report, () =>
+    snapshot(async (tx): Promise<Notebook | null> => {
+      const shown = shownOf(await periodsOf(tx, userId), day);
+      if (shown === undefined) {
+        return null;
+      }
+      const sessions = await tx
+        .select({
+          id: trainingSession.id,
+          position: trainingSession.position,
+          place: trainingSession.place,
+          targetMinutes: trainingSession.targetMinutes,
+        })
+        .from(trainingSession)
+        .where(eq(trainingSession.periodId, shown.id))
+        .orderBy(asc(trainingSession.position));
+      const blocks =
+        sessions.length === 0
+          ? []
+          : await tx
+              .select({ id: block.id, sessionId: block.sessionId, theme: block.theme })
+              .from(block)
+              .where(
+                inArray(
+                  block.sessionId,
+                  sessions.map((each) => each.id)
+                )
+              )
+              .orderBy(asc(block.position));
+      const exercises =
+        blocks.length === 0
+          ? []
+          : await tx
+              .select({
+                id: blockExercise.id,
+                blockId: blockExercise.blockId,
+                name: exercise.name,
+                amountKind: blockExercise.amountKind,
+                amount: blockExercise.amount,
+              })
+              .from(blockExercise)
+              .innerJoin(exercise, eq(exercise.id, blockExercise.exerciseId))
+              .where(
+                inArray(
+                  blockExercise.blockId,
+                  blocks.map((each) => each.id)
+                )
+              )
+              .orderBy(asc(blockExercise.position));
+      return {
+        period: shown,
+        sessions: sessions.map((session) => ({
+          ...session,
+          place: session.place as LabelKey,
+          blocks: blocks
+            .filter((each) => each.sessionId === session.id)
+            .map((each) => ({
+              id: each.id,
+              theme: each.theme,
+              exercises: exercises
+                .filter((row) => row.blockId === each.id)
+                .map(({ blockId: _, ...row }) => ({
+                  ...row,
+                  amountKind: row.amountKind as AmountKind,
+                })),
+            })),
+        })),
+      };
+    })
+  );
+}
+
+export type NotebookExercisePage = {
+  name: string;
+  amountKind: AmountKind;
+  amount: number;
+  durationMinutes: number;
+  instructions: string;
+  videoUrl: string | null;
+};
+
+/**
+ * An exercise as it is in a block of the period the child's side shows on
+ * `day`, with the library's instructions; null for any other block exercise.
+ */
+export function getNotebookExercise(
+  userId: string,
+  id: string,
+  day: string,
+  report: Report = toStderr
+) {
+  if (!isRowId(id)) {
+    return Promise.resolve(null);
+  }
+  return logged("notebook exercise read", `user ${userId}, block exercise ${id}`, report, () =>
+    snapshot(async (tx): Promise<NotebookExercisePage | null> => {
+      const shown = shownOf(await periodsOf(tx, userId), day);
+      if (shown === undefined) {
+        return null;
+      }
+      const [found] = await tx
+        .select({
+          name: exercise.name,
+          amountKind: blockExercise.amountKind,
+          amount: blockExercise.amount,
+          durationMinutes: exercise.durationMinutes,
+          instructions: exercise.instructions,
+          videoUrl: exercise.videoUrl,
+        })
+        .from(blockExercise)
+        .innerJoin(exercise, eq(exercise.id, blockExercise.exerciseId))
+        .innerJoin(block, eq(block.id, blockExercise.blockId))
+        .innerJoin(trainingSession, eq(trainingSession.id, block.sessionId))
+        .where(and(eq(blockExercise.id, id), eq(trainingSession.periodId, shown.id)));
+      return found === undefined ? null : { ...found, amountKind: found.amountKind as AmountKind };
+    })
+  );
+}

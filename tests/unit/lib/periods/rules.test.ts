@@ -18,6 +18,7 @@ import {
   readPeriodDates,
   readSessionSettings,
   readTheme,
+  shownOf,
   totalMinutes,
 } from "@/lib/periods/rules";
 
@@ -87,6 +88,21 @@ describe("a period's neighbours", () => {
     expect(currentOf([first, second], "2026-11-17")).toBe(second);
     expect(currentOf([first, second], "2026-11-24")).toBeUndefined();
     expect(currentOf([first], "2026-11-02")).toBeUndefined();
+  });
+
+  it("shows the current period on the child's side, from its first day to its last", () => {
+    expect(shownOf([second, first], "2026-11-03")).toBe(first);
+    expect(shownOf([second, first], "2026-11-16")).toBe(first);
+    expect(shownOf([second, first], "2026-11-17")).toBe(second);
+  });
+
+  it("shows the one that starts first when none is current, and never an earlier one", () => {
+    const later = period("p4", "2026-12-01", 1);
+    expect(shownOf([later, second, first], "2026-11-01")).toBe(first);
+    expect(shownOf([first, later, second], "2026-11-01")).toBe(first);
+    expect(shownOf([first, later], "2026-11-20")).toBe(later);
+    expect(shownOf([first, second], "2026-11-24")).toBeUndefined();
+    expect(shownOf([], "2026-11-24")).toBeUndefined();
   });
 
   it("takes as latest the period that ends last, whatever their order", () => {

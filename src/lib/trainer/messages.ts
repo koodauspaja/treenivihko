@@ -6,6 +6,7 @@
  * decisions/f004-periods-and-sessions.md
  */
 
+import { BACK } from "@/lib/messages";
 import { minutesLeft } from "./rules";
 
 export const TRAINER_HEADING = "Valmentaja";
@@ -13,7 +14,7 @@ export const TRAINER_LINK = "Valmentaja";
 
 export const PASSWORD_LABEL = "Salasana";
 export const UNLOCK_BUTTON = "Avaa";
-export const BACK_LINK = "Takaisin";
+export const BACK_LINK = BACK;
 export const WRONG_PASSWORD = "Väärä salasana.";
 export const NO_PASSWORD_SET = "Valmentajan salasanaa ei ole vielä asetettu.";
 
