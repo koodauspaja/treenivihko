@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { type FieldState, saveSessionSettings } from "@/app/trainer/sessions/actions";
 import { Refusal } from "@/components/refusal";
 import { type LabelKey, labelsIn } from "@/lib/exercises/labels";
+import { formText } from "@/lib/forms";
 import { FIELD, SAVE } from "@/lib/periods/messages";
 
 const START: FieldState = { version: 0, message: null, errors: {} };
@@ -33,11 +34,10 @@ export function SessionSettingsForm({
   const [typed, setTyped] = useState(saved);
   const shown = Object.keys(state.errors).length === 0 ? saved : typed;
   const submit = (form: FormData) => {
-    // Every field here is text; only the place can be missing, when none is chosen.
     setTyped({
-      place: String(form.get("place") ?? ""),
-      equipment: form.getAll("equipment").map(String),
-      target: String(form.get("targetMinutes")),
+      place: formText(form, "place"),
+      equipment: form.getAll("equipment").filter((value) => typeof value === "string"),
+      target: formText(form, "targetMinutes"),
     });
     act(form);
   };

@@ -1,3 +1,10 @@
+/**
+ * A period's days at the Finnish clock's turns: midnight, a year's end and
+ * the start of summer time.
+ *
+ * decisions/f004-periods-and-sessions.md
+ */
+
 import { describe, expect, it, vi } from "vitest";
 import {
   addDays,

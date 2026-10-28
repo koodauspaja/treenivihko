@@ -1,6 +1,13 @@
+/**
+ * The periods' store against Postgres: its checks, its locks and its races.
+ *
+ * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
+ */
+
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
@@ -605,8 +612,15 @@ describe("a library exercise in use", () => {
     const periodId = await periodOf("u1", "2026-11-02");
     const sessionId = await sessionOf("u1", periodId);
     const blockId = await blockOf("u1", sessionId, "Lämmittely");
-    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    // Holds a new block exercise uncommitted while the delete runs, then commits it.
+    let inserted = () => {};
+    let release = () => {};
+    const insertDone = new Promise<void>((resolve) => {
+      inserted = resolve;
+    });
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // Holds a new block exercise uncommitted until the delete waits on it, then commits it.
     const other = database().transaction(async (tx) => {
       await tx.insert(blockExercise).values({
         id: randomUUID(),
@@ -616,11 +630,23 @@ describe("a library exercise in use", () => {
         amountKind: "count",
         amount: 10,
       });
-      await pause(300);
+      inserted();
+      await released;
     });
-    await pause(50);
-    const result = await deleteExercise("u1", ladder, report);
+    await insertDone;
+    const deleting = deleteExercise("u1", ladder, report);
+    const waitingOnLock = async () => {
+      const [row] = await database().execute<{ waiting: number }>(
+        sql`select count(*)::int as waiting from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`
+      );
+      return (row?.waiting ?? 0) > 0;
+    };
+    while (!(await waitingOnLock())) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    release();
     await other;
+    const result = await deleting;
     expect(result).toEqual({
       kind: "inUse",
       periods: [{ id: periodId, startsOn: "2026-11-02", weeks: 2 }],

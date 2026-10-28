@@ -1,12 +1,10 @@
 /**
- * Days as a period counts them: a calendar date with no time, as Postgres's
- * `date` holds it, and today as it is in Finland, wherever the server runs.
+ * Days as a period counts them: a calendar date with no time, written
+ * `YYYY-MM-DD` as Postgres's `date` holds it, and today as it is in Finland,
+ * wherever the server runs.
  *
  * decisions/f004-periods-and-sessions.md
  */
-
-/** A calendar date, `YYYY-MM-DD`. */
-export type Day = string;
 
 const FINNISH_TIME = "Europe/Helsinki";
 
@@ -18,12 +16,12 @@ const inFinland = new Intl.DateTimeFormat("en-CA", {
 });
 
 /** Today in Finland, which is what the parent and the child call today. */
-export const today = (now: Date = new Date()): Day => inFinland.format(now);
+export const today = (now: Date = new Date()): string => inFinland.format(now);
 
-const asUtc = (day: Day) => new Date(`${day}T00:00:00Z`);
+const asUtc = (day: string) => new Date(`${day}T00:00:00Z`);
 
 /** `day` moved by `days`, counted on the calendar, so a change to summer time never skips one. */
-export const addDays = (day: Day, days: number): Day => {
+export const addDays = (day: string, days: number): string => {
   const moved = asUtc(day);
   moved.setUTCDate(moved.getUTCDate() + days);
   return moved.toISOString().slice(0, 10);
@@ -40,18 +38,19 @@ export const isDay = (input: string): boolean =>
   addDays(input, 0) === input;
 
 /** A period's last day: its start plus its weeks, less a day. */
-export const lastDayOf = (startsOn: Day, weeks: number): Day => addDays(startsOn, 7 * weeks - 1);
+export const lastDayOf = (startsOn: string, weeks: number): string =>
+  addDays(startsOn, 7 * weeks - 1);
 
-const parts = (day: Day) => day.split("-").map(Number) as [number, number, number];
+const parts = (day: string) => day.split("-").map(Number) as [number, number, number];
 
 /** A day as the app shows it: `3.11.2026`. */
-export const formatDay = (day: Day) => {
+export const formatDay = (day: string) => {
   const [year, month, date] = parts(day);
   return `${date}.${month}.${year}`;
 };
 
 /** A span of days, the year once when both share it: `3.11.–16.11.2026`, `29.12.2026–11.1.2027`. */
-export const formatSpan = (first: Day, last: Day) => {
+export const formatSpan = (first: string, last: string) => {
   const [firstYear, firstMonth, firstDate] = parts(first);
   const [lastYear] = parts(last);
   return firstYear === lastYear
@@ -60,5 +59,5 @@ export const formatSpan = (first: Day, last: Day) => {
 };
 
 /** A period's days as the app shows them, from its start and its weeks. */
-export const spanOf = ({ startsOn, weeks }: Readonly<{ startsOn: Day; weeks: number }>) =>
+export const spanOf = ({ startsOn, weeks }: Readonly<{ startsOn: string; weeks: number }>) =>
   formatSpan(startsOn, lastDayOf(startsOn, weeks));
