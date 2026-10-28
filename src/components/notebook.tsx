@@ -16,6 +16,8 @@ import { getNotebook, getNotebookExercise, type NotebookSession } from "@/lib/pe
  * The child's notebook view: the period to copy, and one exercise's page.
  * Both only read, for a signed-in browser, and show nothing to change.
  *
+ * decisions/029-sign-in.md
+ * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
  */
 
