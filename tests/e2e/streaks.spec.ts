@@ -38,8 +38,10 @@ test("sessions done in two weeks make a streak, on the child's side and Omat tre
   page,
 }, info) => {
   const { userId } = await signInParent(page, info);
+  // One day for the whole test, so its fixture and expectations agree.
+  const day = today();
   // A period from last week's Monday, of two sessions: one done last week, one today.
-  const startsOn = addDays(mondayOf(today()), -7);
+  const startsOn = addDays(mondayOf(day), -7);
   const periodId = saved(await createPeriod(userId, { startsOn, weeks: 2 }, quiet)).id;
   saved(await addSession(userId, periodId, quiet));
   saved(await addSession(userId, periodId, quiet));
@@ -47,14 +49,14 @@ test("sessions done in two weeks make a streak, on the child's side and Omat tre
   const lastWeek = addDays(startsOn, 4);
   for (const [each, trainedOn] of [
     [sessions[0], lastWeek],
-    [sessions[1], today()],
+    [sessions[1], day],
   ] as const) {
     saved(
       await saveMark(
         userId,
         each?.id ?? "",
         { status: "done", trainedOn, feeling: null, picks: NO_PICKS },
-        today(),
+        day,
         quiet
       )
     );
@@ -71,8 +73,8 @@ test("sessions done in two weeks make a streak, on the child's side and Omat tre
     has: page.getByRole("heading", { level: 2, name: "Saavutukset" }),
   });
   await expect(earned.getByRole("listitem")).toHaveText([
-    `Ensimmäinen treeni${formatDay(today())}`,
-    `Koko jakso tehty ${spanOf({ startsOn, weeks: 2 })}${formatDay(today())}`,
+    `Ensimmäinen treeni${formatDay(day)}`,
+    `Koko jakso tehty ${spanOf({ startsOn, weeks: 2 })}${formatDay(day)}`,
   ]);
   await expect(main(page).getByText("10 treeniä (2/10)")).toBeVisible();
   await expect(main(page).getByText("4 viikon putki (2/4)")).toBeVisible();
@@ -83,6 +85,7 @@ test("the parent adds a pause, the child's side shows it, and the parent deletes
   page,
 }, info) => {
   await signInParent(page, info);
+  const day = today();
   await page.goto("/");
   await expect(main(page).getByText("Tee treeni tällä viikolla, niin putki alkaa.")).toBeVisible();
 
@@ -91,10 +94,10 @@ test("the parent adds a pause, the child's side shows it, and the parent deletes
   await expect(page).toHaveURL(/\/valmentaja\/tauot$/);
   await expect(main(page).getByText("Tauon aikana putki ei katkea.")).toBeVisible();
   await expect(main(page).getByText("Taukoja ei ole.")).toBeVisible();
-  await expect(main(page).getByLabel("Alkaa")).toHaveValue(today());
-  await expect(main(page).getByLabel("Päättyy")).toHaveValue(addDays(today(), 6));
+  await expect(main(page).getByLabel("Alkaa")).toHaveValue(day);
+  await expect(main(page).getByLabel("Päättyy")).toHaveValue(addDays(day, 6));
   await main(page).getByRole("button", { name: "Lisää tauko" }).click();
-  const span = pauseSpan({ startsOn: today(), endsOn: addDays(today(), 6) });
+  const span = pauseSpan({ startsOn: day, endsOn: addDays(day, 6) });
   await expect(main(page).getByRole("listitem")).toHaveCount(1);
   await expect(main(page).getByRole("listitem").first()).toContainText(span);
   await fitsWidth(page);
@@ -114,20 +117,21 @@ test("a pause is refused an end before its start, and a day another pause has", 
   page,
 }, info) => {
   await signInParent(page, info);
+  const day = today();
   await unlockTrainer(page);
   await page.goto("/valmentaja/tauot");
-  await main(page).getByLabel("Päättyy").fill(addDays(today(), -1));
+  await main(page).getByLabel("Päättyy").fill(addDays(day, -1));
   await main(page).getByRole("button", { name: "Lisää tauko" }).click();
   await expect(main(page).getByText("Tauko ei voi päättyä ennen alkuaan.")).toBeVisible();
-  await expect(main(page).getByLabel("Päättyy")).toHaveValue(addDays(today(), -1));
+  await expect(main(page).getByLabel("Päättyy")).toHaveValue(addDays(day, -1));
   await expect(main(page).getByText("Taukoja ei ole.")).toBeVisible();
 
-  await main(page).getByLabel("Päättyy").fill(today());
+  await main(page).getByLabel("Päättyy").fill(day);
   await main(page).getByRole("button", { name: "Lisää tauko" }).click();
   await expect(main(page).getByRole("listitem")).toHaveCount(1);
   await main(page).getByRole("button", { name: "Lisää tauko" }).click();
   await expect(
-    main(page).getByText(`Tauko menee päällekkäin tauon ${formatDay(today())} kanssa.`)
+    main(page).getByText(`Tauko menee päällekkäin tauon ${formatDay(day)} kanssa.`)
   ).toBeVisible();
   await expect(main(page).getByRole("listitem")).toHaveCount(1);
 });

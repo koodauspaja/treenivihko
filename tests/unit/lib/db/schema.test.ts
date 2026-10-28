@@ -195,13 +195,11 @@ describe("the schema", () => {
     ).toEqual([["accomplishment_user_kind_key", ["user_id", "kind", "key"]]]);
     expect(config(accomplishment).checks.map((each) => each.name)).toEqual([
       "accomplishment_kind",
-      "accomplishment_key",
-      "accomplishment_period",
-      "accomplishment_exercise",
+      "accomplishment_parts",
       "accomplishment_earned_on",
     ]);
-    expect(checkSql(accomplishment, "accomplishment_key")).toBe(
-      "(kind in ('full_period', 'hard_to_easy')) = (key <> '')"
+    expect(checkSql(accomplishment, "accomplishment_kind")).toBe(
+      "kind in ('sessions_1', 'sessions_10', 'sessions_25', 'sessions_50', 'sessions_100', 'streak_4', 'streak_8', 'streak_12', 'streak_26', 'full_period', 'hard_to_easy')"
     );
   });
 });

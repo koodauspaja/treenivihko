@@ -28,8 +28,5 @@ export const KINDS = [
 
 export type Kind = (typeof KINDS)[number];
 
-/** The kinds earned once per period or once per exercise, whose key names which. */
-export const KEYED_KINDS = ["full_period", "hard_to_easy"] as const;
-
 export const sessionKind = (goal: (typeof SESSION_GOALS)[number]) => `sessions_${goal}` as Kind;
 export const streakKind = (goal: (typeof STREAK_GOALS)[number]) => `streak_${goal}` as Kind;

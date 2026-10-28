@@ -38,7 +38,8 @@ export function readPause(startsOn: string, endsOn: string): PauseReading {
     errors.endsOn = REFUSAL.endsOn;
   } else if (errors.startsOn === undefined && end < start) {
     errors.endsOn = REFUSAL.endsBeforeStart;
-  } else if (errors.startsOn === undefined && end > addDays(start, PAUSE_DAYS_MAX - 1)) {
+  } else if (errors.startsOn === undefined && addDays(end, 1 - PAUSE_DAYS_MAX) > start) {
+    // Counted back from the end, which stays in the years `isDay` takes; forward could pass 9999.
     errors.endsOn = REFUSAL.tooLong;
   }
   return Object.keys(errors).length > 0
@@ -88,8 +89,11 @@ export function streakOf({
     startsOn: each.startsOn,
     endsOn: lastDayOf(each.startsOn, each.weeks),
   }));
-  // Every week before the first period or the first session done is covered by no period and neutral.
-  const first = [...spans.map((each) => each.startsOn), ...doneDays].sort()[0];
+  // Before the first session done, every run is 0 whatever the weeks are, so the count starts there.
+  const first = doneDays.reduce<string | undefined>(
+    (earliest, each) => (earliest === undefined || each < earliest ? each : earliest),
+    undefined
+  );
   let current = 0;
   let best = 0;
   if (first === undefined) {

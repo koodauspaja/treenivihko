@@ -313,6 +313,13 @@ describe("readPause", () => {
     });
   });
 
+  it("takes a pause at the end of the year 9999, whose 182nd day would be past it", () => {
+    expect(readPause("9999-12-01", "9999-12-31")).toEqual({
+      ok: true,
+      pause: { startsOn: "9999-12-01", endsOn: "9999-12-31" },
+    });
+  });
+
   it("refuses 183 days, and an end before the start", () => {
     expect(readPause("2026-01-01", "2026-07-02")).toEqual({
       ok: false,

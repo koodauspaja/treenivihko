@@ -122,17 +122,17 @@ Not used.
 
 ## Logging
 
-None: the pages only read, and a failure is logged by the store it reads
-from, as Feature 001 logs it. Feature 008's accomplishments log their own
-writes.
+None for this feature's reads: a failure is logged by the store it reads
+from, as Feature 001 logs it. Feature 008's accomplishments, recorded on the
+page's load, log their own.
 
 ## Security and secrets
 
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   progress page, with no unlock, as it sees the child's side. It reads only
-  the parent's own periods, marks and exercises, and writes nothing but what
-  Feature 008 records as earned. The marks
+  the parent's own periods, marks and exercises; its one write is the
+  accomplishments Feature 008 records as earned, to the parent's own. The marks
   on the trainer side are behind its unlock, as the rest of it.
 
 ## Acceptance criteria
