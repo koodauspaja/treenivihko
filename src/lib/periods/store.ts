@@ -88,7 +88,7 @@ const snapshot = <T>(read: (tx: Transaction) => Promise<T>) =>
 
 const owned = (userId: string) => eq(period.userId, userId);
 
-const periodsOf = (db: Database | Transaction, userId: string): Promise<PeriodRow[]> =>
+const periodsOf = (db: Pick<Database, "select">, userId: string): Promise<PeriodRow[]> =>
   db
     .select({ id: period.id, startsOn: period.startsOn, weeks: period.weeks })
     .from(period)
@@ -273,9 +273,8 @@ export function createPeriod(
         report(`period refused, overlap: user ${userId}`);
         return result;
       }
-      report(
-        `period created: user ${userId}, period ${id}, from ${result.from === undefined ? "none" : `period ${result.from}`}`
-      );
+      const from = result.from === undefined ? "none" : `period ${result.from}`;
+      report(`period created: user ${userId}, period ${id}, from ${from}`);
       return { kind: "saved", id };
     } catch (error) {
       return overlapOrThrow(error, userId, dates, undefined, report);
@@ -962,7 +961,11 @@ export function deleteBlockExercise(userId: string, id: string, report: Report =
 }
 
 /** The parent's periods that use a library exercise, earliest first. */
-export const periodsUsing = (db: Database | Transaction, userId: string, exerciseId: string) =>
+export const periodsUsing = (
+  db: Pick<Database, "selectDistinct">,
+  userId: string,
+  exerciseId: string
+) =>
   db
     .selectDistinct({ id: period.id, startsOn: period.startsOn, weeks: period.weeks })
     .from(blockExercise)

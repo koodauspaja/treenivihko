@@ -272,7 +272,7 @@ export function deleteExercise(
     return Promise.resolve({ kind: "missing" });
   }
   return logged("exercise deleted", `user ${userId}, exercise ${id}`, report, async () => {
-    const inUse = async (periods: PeriodRow[]) => {
+    const inUse = (periods: PeriodRow[]) => {
       report(`exercise refused, in use: user ${userId}, exercise ${id}`);
       return { kind: "inUse", periods } as const;
     };

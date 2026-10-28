@@ -1,3 +1,10 @@
+/**
+ * The parent building periods by hand, through the pages.
+ *
+ * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
+ */
+
 import { expect, type Page, test } from "@playwright/test";
 import { type Exercise, readExercise, valuesFrom } from "../../src/lib/exercises/rules.ts";
 import { createExercise } from "../../src/lib/exercises/store.ts";
@@ -6,11 +13,7 @@ import { signInParent, unlockTrainer } from "./support/parent.ts";
 
 const quiet = () => {};
 
-/**
- * An exercise saved through readExercise, as every write is; a fixture that fails it fails the test.
- * decisions/f002-exercise-library.md
- * decisions/f004-periods-and-sessions.md
- */
+/** An exercise saved through readExercise, as every write is; a fixture that fails it fails the test. */
 const seed = async (userId: string, overrides: Partial<Exercise>) => {
   const reading = readExercise(
     valuesFrom({

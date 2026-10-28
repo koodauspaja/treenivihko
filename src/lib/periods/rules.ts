@@ -21,7 +21,7 @@ import {
   wholeNumber,
 } from "@/lib/exercises/rules";
 import { characterCount, tidy, unstorable } from "@/lib/text";
-import { addDays, type Day, isDay, lastDayOf } from "./dates";
+import { addDays, isDay, lastDayOf } from "./dates";
 import { REFUSAL } from "./messages";
 
 export const WEEKS_MAX = 4;
@@ -37,7 +37,7 @@ export const DEFAULT_TARGET = 45;
 export const DEFAULT_PLACE: LabelKey = "field";
 
 /** A period's days, as the database holds them. */
-export type PeriodDates = { startsOn: Day; weeks: number };
+export type PeriodDates = { startsOn: string; weeks: number };
 
 export type PeriodDatesReading =
   | { ok: true; dates: PeriodDates }
@@ -76,7 +76,10 @@ export function overlapping<T extends PeriodDates & { id: string }>(
 }
 
 /** The period whose days include `day`, which no two share. */
-export const currentOf = <T extends PeriodDates>(periods: readonly T[], day: Day): T | undefined =>
+export const currentOf = <T extends PeriodDates>(
+  periods: readonly T[],
+  day: string
+): T | undefined =>
   periods.find(
     (period) => period.startsOn <= day && day <= lastDayOf(period.startsOn, period.weeks)
   );
@@ -93,7 +96,7 @@ export const latestOf = <T extends PeriodDates>(periods: readonly T[]): T | unde
   );
 
 /** A new period's form as it starts: the day after the latest ends and its length, or today for 2 weeks. */
-export function newPeriodDates(latest: PeriodDates | undefined, day: Day): PeriodDates {
+export function newPeriodDates(latest: PeriodDates | undefined, day: string): PeriodDates {
   return latest === undefined
     ? { startsOn: day, weeks: DEFAULT_WEEKS }
     : { startsOn: addDays(lastDayOf(latest.startsOn, latest.weeks), 1), weeks: latest.weeks };

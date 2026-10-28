@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { FieldState } from "@/app/trainer/sessions/actions";
+import { formText } from "@/lib/forms";
 import { SAVE } from "@/lib/periods/messages";
 
 const START: FieldState = { version: 0, message: null, errors: {} };
@@ -36,8 +37,7 @@ export function FieldForm({
   const shown = error === undefined ? initial : typed;
   const id = `${name}-${Object.values(fields).join("-")}`;
   const submit = (form: FormData) => {
-    // The field is a text input of this form, so it is always there, as text.
-    setTyped(String(form.get(name)));
+    setTyped(formText(form, name));
     act(form);
   };
   return (

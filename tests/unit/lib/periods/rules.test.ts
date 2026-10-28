@@ -1,3 +1,10 @@
+/**
+ * Each field of a period, a session and a block at its boundaries, and the
+ * arithmetic the pages show.
+ *
+ * decisions/f004-periods-and-sessions.md
+ */
+
 import { describe, expect, it } from "vitest";
 import {
   currentOf,
