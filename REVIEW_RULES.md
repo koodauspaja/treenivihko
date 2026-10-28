@@ -46,7 +46,7 @@ Block 4 also covers a request the parent sends again, by a second click or
 after a lost answer. On #55, Feature 004's pull request, 6 of the 33 findings,
 in five of its six full reviews, said a repeated add or move applies twice.
 Nothing resends a server action on its own, so the repeat is the parent's own
-click, in plain sight and one click from undone. 050 counted such a retry among the noise it removed, but
+click, in plain sight, and one click undoes the second time. 050 counted such a retry among the noise it removed, but
 the rule's words covered only two requests at the same instant
 (`decisions/056-sourcery-repeated-requests.md`). A repeat that loses data,
 half saves it, or whose result cannot be seen is still reported.
