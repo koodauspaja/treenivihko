@@ -42,6 +42,15 @@ its checks, a migration or a script included, is still reported. Four of the 24 
 when they came back: three on #46 about such a path, which were right, and
 one on #49 about an import's two amounts.
 
+Block 4 also covers a request the parent sends again, by a second click or
+after a lost answer. On #55, Feature 004's pull request, 6 of the 33 findings,
+in five of its six full reviews, said a repeated add or move applies twice.
+Nothing resends a server action on its own, so the repeat is the parent's own
+click, in plain sight and one click from undone. 050 counted such a retry among the noise it removed, but
+the rule's words covered only two requests at the same instant
+(`decisions/056-sourcery-repeated-requests.md`). A repeat that loses data,
+half saves it, or whose result cannot be seen is still reported.
+
 **Block 2's AI rule** is the code-level half of "the AI chooses, it never
 invents" (`CLAUDE.md`). A model's answer that names an exercise outside the
 library, or a value outside its limits, is rejected before anyone sees it. It
