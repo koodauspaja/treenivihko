@@ -82,7 +82,7 @@ test("the child's side shows the current period to copy, and an exercise's page"
 }, info) => {
   const { userId } = await signInParent(page, info);
   const startsOn = addDays(today(), -3);
-  await periodWithSessions(userId, startsOn);
+  const { ladderInBlock } = await periodWithSessions(userId, startsOn);
   await page.goto("/");
 
   await expect(
@@ -127,6 +127,13 @@ test("the child's side shows the current period to copy, and an exercise's page"
   await main(page).getByRole("link", { name: "Lähdöt" }).click();
   await expect(main(page).getByText("1 min 30 s")).toBeVisible();
   await expect(main(page).getByRole("link", { name: "Katso video" })).toHaveCount(0);
+
+  // The parent's edit shows on the next load: nothing is cached between loads.
+  await updateBlockExerciseAmount(userId, ladderInBlock, 15, quiet);
+  await page.goto("/");
+  await expect(main(page).getByRole("listitem").first()).toHaveText(
+    "Tikkaat: perusaskel – 15 kertaa"
+  );
 
   await page.goto("/harjoite/00000000-0000-4000-8000-000000000000");
   await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();

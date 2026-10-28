@@ -629,6 +629,24 @@ describe("the child's notebook", () => {
     expect(await getNotebookExercise("u1", randomUUID(), "2026-11-03", report)).toBeNull();
   });
 
+  it("shows the library's name and text as they are now, after the library changes them", async () => {
+    const built = await builtPeriod("u1", "2026-11-02");
+    const reading = readExercise(
+      valuesFrom({ ...LADDER, name: "Tikkaat: sivuaskel", instructions: "Sivuttain." })
+    );
+    if (!reading.ok) {
+      throw new Error("the fixture is valid");
+    }
+    await updateExercise("u1", built.ladder, reading.exercise, report);
+    const notebook = await getNotebook("u1", "2026-11-03", report);
+    const [ladder] = notebook?.sessions[0]?.blocks[0]?.exercises ?? [];
+    expect(ladder?.name).toBe("Tikkaat: sivuaskel");
+    expect(await getNotebookExercise("u1", ladder?.id ?? "", "2026-11-03", report)).toMatchObject({
+      name: "Tikkaat: sivuaskel",
+      instructions: "Sivuttain.",
+    });
+  });
+
   it("finds no exercise of a period the child's side does not show", async () => {
     const built = await builtPeriod("u1", "2026-11-02");
     const [first] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
