@@ -31,13 +31,14 @@ export function FieldForm({
   inputMode?: "numeric";
 }>) {
   const [state, act, pending] = useActionState(action, START);
-  // React empties a form after its action, so a refused value is put back from here.
-  const [typed, setTyped] = useState(initial);
-  const error = state.errors[name];
-  const shown = error === undefined ? initial : typed;
+  // React empties a form after its action, so a refused value is put back from
+  // here, while the page still has the value it was refused against.
+  const [typed, setTyped] = useState({ value: initial, against: initial });
+  const error = typed.against === initial ? state.errors[name] : undefined;
+  const shown = error === undefined ? initial : typed.value;
   const id = `${name}-${Object.values(fields).join("-")}`;
   const submit = (form: FormData) => {
-    setTyped(formText(form, name));
+    setTyped({ value: formText(form, name), against: initial });
     act(form);
   };
   return (

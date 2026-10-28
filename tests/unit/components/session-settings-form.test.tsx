@@ -73,6 +73,31 @@ describe("SessionSettingsForm", () => {
     expect(sent.get("targetMinutes")).toBe("30");
   });
 
+  it("drops a refusal and what was chosen once the page brings newer saved choices", async () => {
+    saveSessionSettings.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: { target: "Tavoitekeston on oltava 5–120 minuuttia, 5 minuutin välein." },
+    });
+    const { rerender } = show();
+    fireEvent.change(target(), { target: { value: "7" } });
+    save();
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined();
+    });
+    expect(target().value).toBe("7");
+    rerender(
+      <SessionSettingsForm
+        sessionId="t1"
+        place="field"
+        equipment={["ball", "cones"]}
+        targetMinutes={60}
+      />
+    );
+    expect(target().value).toBe("60");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("shows each refusal beside its field, keeping what was chosen", async () => {
     saveSessionSettings.mockResolvedValue({
       version: 1,

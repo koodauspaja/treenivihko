@@ -12,7 +12,9 @@ const START: FieldState = { version: 0, message: null, errors: {} };
 /**
  * A session's place, equipment at hand and target length, with what was
  * chosen kept when refused, and the saved ones shown again whenever the page
- * brings newer ones. decisions/f004-periods-and-sessions.md
+ * brings newer ones.
+ * decisions/f002-exercise-library.md
+ * decisions/f004-periods-and-sessions.md
  */
 export function SessionSettingsForm({
   sessionId,
@@ -31,23 +33,23 @@ export function SessionSettingsForm({
     equipment: equipment as readonly string[],
     target: String(targetMinutes),
   };
-  // React empties a form after its action, so refused choices are put back from here.
-  const [typed, setTyped] = useState(saved);
-  const shown = Object.keys(state.errors).length === 0 ? saved : typed;
+  const savedKey = `${saved.place}|${saved.equipment.join(",")}|${saved.target}`;
+  // React empties a form after its action, so refused choices are put back from
+  // here, while the page still has the choices they were refused against.
+  const [typed, setTyped] = useState({ ...saved, against: savedKey });
+  const errors = typed.against === savedKey ? state.errors : {};
+  const shown = Object.keys(errors).length === 0 ? saved : typed;
   const submit = (form: FormData) => {
     setTyped({
       place: formText(form, "place"),
       equipment: form.getAll("equipment").filter((value) => typeof value === "string"),
       target: formText(form, "targetMinutes"),
+      against: savedKey,
     });
     act(form);
   };
   return (
-    <form
-      key={`${state.version}|${saved.place}|${saved.equipment.join(",")}|${saved.target}`}
-      action={submit}
-      className="mt-6 flex flex-col gap-3"
-    >
+    <form key={`${state.version}|${savedKey}`} action={submit} className="mt-6 flex flex-col gap-3">
       <input type="hidden" name="id" value={sessionId} />
       <fieldset className="flex flex-col gap-1">
         <legend className="font-semibold">{FIELD.place}</legend>
@@ -62,7 +64,7 @@ export function SessionSettingsForm({
             {label.name}
           </label>
         ))}
-        <Refusal message={state.errors.place} />
+        <Refusal message={errors.place} />
       </fieldset>
       <fieldset className="flex flex-col gap-1">
         <legend className="font-semibold">{FIELD.equipment}</legend>
@@ -86,7 +88,7 @@ export function SessionSettingsForm({
         defaultValue={shown.target}
         className="self-start rounded border px-3 py-2"
       />
-      <Refusal message={state.errors.target} />
+      <Refusal message={errors.target} />
       {state.message === null ? null : <output>{state.message}</output>}
       <button
         type="submit"

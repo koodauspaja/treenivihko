@@ -58,7 +58,8 @@ once. Most periods look like the one before, so a new one starts as a copy.
   action, so the forms keep the sent values and show them again on a refusal.
 - **Otherwise a form shows the page's saved values, newer ones included**: its
   fields are keyed on them as well as on its answer, so a page refreshed after
-  a save in another tab shows that save.
+  a save in another tab shows that save. A refusal, and what was typed with
+  it, stands only while the page has the values it was refused against.
 - **Saving a period's dates locks the period first**, as every other save
   locks its row, so a deletion meanwhile is not found rather than saved.
 - **Adding a block exercise reads its library exercise with a `KEY SHARE`
@@ -86,7 +87,7 @@ once. Most periods look like the one before, so a new one starts as a copy.
 | Years 1 to 9999 | Postgres has no year 0, and a last day past 9999 cannot be shown as `D.M.YYYY` |
 | A non-UUID id refused before a query | A crafted address can carry U+0000, which Postgres cannot even compare, and would end on the error page rather than as not found |
 | Refused values kept in the form | Retyping a 30-character theme to fix one letter is the kind of friction that makes the parent stop planning |
-| Forms keyed on the saved values | React leaves a mounted field's value alone when only its default changes, so without the key the older value stayed on screen and the next save sent it back |
+| Forms keyed on the saved values | React leaves a mounted field's value alone when only its default changes, so without the key the older value stayed on screen and the next save sent it back. A refusal kept past a newer save would do the same with what was typed |
 | The period and the library exercise locked when read | A read that decides a write has to see the row the write meets: unlocked, a deletion between them made a save of a deleted period say `Tallennettu.`, and an add end on the error page |
 
 ## Not done
@@ -108,9 +109,12 @@ once. Most periods look like the one before, so a new one starts as a copy.
   sessions. Nothing is lost, and the copy can be edited; a lock would have to
   be taken before the copy's `repeatable read` snapshot, which a lock inside
   its transaction is not.
-- An add sent twice, as when its answer is lost, adds two rows. The second is
-  in plain sight and one `Poista` removes it; keying adds by an id the form
-  makes brought back deleted rows in Feature 002.
+- An add sent twice, as when its answer is lost, adds two rows, and a move
+  sent twice moves two places. A button is disabled while its request runs,
+  and neither the browser nor Next.js sends an action again, so the second is
+  the parent's own click. Its result is in plain sight and one click undoes
+  it; keying requests by an id the form makes brought back deleted rows in
+  Feature 002.
 - The older version, still serving during the rollout or back after a
   rollback, once block exercises exist: its exercise deletion meets the new
   foreign key and shows the error page rather than the refusal. Nothing is

@@ -597,6 +597,45 @@ describe("the log", () => {
   });
 });
 
+describe("a position change", () => {
+  const LONG_AGO = new Date("2020-01-01T00:00:00Z");
+  const age = async () => {
+    await database().update(trainingSession).set({ updatedAt: LONG_AGO });
+    await database().update(block).set({ updatedAt: LONG_AGO });
+    await database().update(blockExercise).set({ updatedAt: LONG_AGO });
+  };
+  const touched = async (table: typeof trainingSession | typeof block | typeof blockExercise) =>
+    new Set(
+      (await database().select({ id: table.id, updatedAt: table.updatedAt }).from(table))
+        .filter((row) => row.updatedAt > LONG_AGO)
+        .map((row) => row.id)
+    );
+
+  it("marks every row whose position it changes as updated, and only them", async () => {
+    const built = await builtPeriod("u1", "2026-11-02");
+    const before = await getSession("u1", built.sessionId, report);
+    const [ladderRow, sprintRow] = before?.blocks[0]?.exercises ?? [];
+    const second = before?.blocks[1]?.id;
+    const later = await sessionOf("u1", built.periodId);
+
+    await age();
+    await moveBlockExercise("u1", sprintRow?.id ?? "", "up", report);
+    expect(await touched(blockExercise)).toEqual(new Set([ladderRow?.id, sprintRow?.id]));
+
+    await age();
+    await deleteBlockExercise("u1", sprintRow?.id ?? "", report);
+    expect(await touched(blockExercise)).toEqual(new Set([ladderRow?.id]));
+
+    await age();
+    await deleteBlock("u1", built.warmUp, report);
+    expect(await touched(block)).toEqual(new Set([second]));
+
+    await age();
+    await deleteSession("u1", built.sessionId, report);
+    expect(await touched(trainingSession)).toEqual(new Set([later]));
+  });
+});
+
 describe("writes to neighbours at once", () => {
   const ROUNDS = 10;
 
