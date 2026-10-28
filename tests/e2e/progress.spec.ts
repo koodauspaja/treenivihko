@@ -146,5 +146,5 @@ test("the progress says nothing has started, and leaves out the next period", as
   await page.goto("/omat-treenit");
   await expect(main(page).getByText("Jaksoa ei ole vielä aloitettu.")).toBeVisible();
   await expect(main(page).getByText("Harjoitteita ei ole vielä valittu.")).toBeVisible();
-  await expect(main(page).getByRole("heading", { level: 2 })).toHaveText(["Harjoitteet"]);
+  await expect(main(page).getByRole("heading", { level: 2, name: /^Jakso / })).toHaveCount(0);
 });

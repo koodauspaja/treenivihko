@@ -14,6 +14,15 @@ vi.mock("@/lib/auth/session", () => ({ requireUser: () => requireUser() }));
 vi.mock("@/lib/progress/store", () => ({
   getProgress: (...args: unknown[]) => getProgress(...args),
 }));
+const getAchievements = vi.fn();
+vi.mock("@/lib/streaks/store", () => ({
+  getAchievements: (...args: unknown[]) => getAchievements(...args),
+}));
+vi.mock("@/components/streak", () => ({
+  AchievementSections: ({ achievements }: { achievements: unknown }) => (
+    <p>achievements {JSON.stringify(achievements)}</p>
+  ),
+}));
 
 const { ProgressView } = await import("@/components/progress");
 
@@ -29,6 +38,7 @@ afterAll(() => {
 beforeEach(() => {
   requireUser.mockReset().mockResolvedValue({ id: "u1", name: "Test Parent", sessionId: "s1" });
   getProgress.mockReset();
+  getAchievements.mockReset().mockResolvedValue({ the: "achievements" });
 });
 
 afterEach(() => {
@@ -63,7 +73,16 @@ describe("ProgressView", () => {
     getProgress.mockResolvedValue({ periods: [], exercises: [] });
     render(await ProgressView());
     expect(getProgress).toHaveBeenCalledWith("u1", "2026-11-05");
+    expect(getAchievements).toHaveBeenCalledWith("u1", "2026-11-05");
     expect(screen.getByRole("heading", { level: 1, name: "Omat treenit" })).toBeDefined();
+    // The streak and the accomplishments come first, before the periods.
+    const text = document.body.textContent ?? "";
+    expect(text.indexOf('achievements {"the":"achievements"}')).toBeGreaterThan(
+      text.indexOf("Omat treenit")
+    );
+    expect(text.indexOf("achievements")).toBeLessThan(
+      text.indexOf("Jaksoa ei ole vielä aloitettu.")
+    );
     expect(screen.getByRole("link", { name: "Takaisin" }).getAttribute("href")).toBe("/");
   });
 
@@ -120,5 +139,6 @@ describe("ProgressView", () => {
     requireUser.mockRejectedValue(new Error("redirect /kirjaudu"));
     await expect(ProgressView()).rejects.toThrow("redirect /kirjaudu");
     expect(getProgress).not.toHaveBeenCalled();
+    expect(getAchievements).not.toHaveBeenCalled();
   });
 });

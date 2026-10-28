@@ -9,6 +9,7 @@ import {
   NEW_EXERCISE_PATH,
   NEW_PERIOD_PATH,
   NICKNAME_PATH,
+  PAUSES_PATH,
   PERIODS_PATH,
   periodPath,
   pickerPath,
@@ -65,6 +66,11 @@ describe("the route table", () => {
     expect(periodPath("a b/c")).toBe("/valmentaja/jaksot/a%20b%2Fc");
     expect(sessionPath("a b/c")).toBe("/valmentaja/treenit/a%20b%2Fc");
     expect(pickerPath("s/1", "b 2")).toBe("/valmentaja/treenit/s%2F1/lisaa/b%202");
+  });
+
+  it("serves the pauses from an English folder", () => {
+    expect(ROUTES).toContainEqual([PAUSES_PATH, "/trainer/pauses"]);
+    expect(PAUSES_PATH).toBe("/valmentaja/tauot");
   });
 
   it("serves an exercise of the child's side from an English folder", () => {

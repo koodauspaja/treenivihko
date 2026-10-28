@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MarkLine } from "@/components/mark-line";
+import { AchievementSections } from "@/components/streak";
 import { SIGNED_IN_PATH } from "@/lib/auth/paths";
 import { requireUser } from "@/lib/auth/session";
 import { BACK } from "@/lib/messages";
@@ -16,15 +17,18 @@ import {
 } from "@/lib/progress/messages";
 import { doneCount } from "@/lib/progress/rules";
 import { getProgress, type PeriodProgress } from "@/lib/progress/store";
+import { getAchievements } from "@/lib/streaks/store";
 
 /**
- * The child's progress: every period that has started, with its sessions'
- * marks, and every exercise the marks pick, with its counts. For a signed-in
- * browser; it only reads, so it has no way to mark.
+ * The child's progress: the streak, the accomplishments and the next goals;
+ * every period that has started, with its sessions' marks; and every
+ * exercise the marks pick, with its counts. For a signed-in browser; it has
+ * no way to mark, and its one write is recording what has been earned.
  *
  * decisions/029-sign-in.md
  * decisions/f006-session-marks.md
  * decisions/f007-progress.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 function Period({ period }: Readonly<{ period: PeriodProgress }>) {
@@ -51,10 +55,15 @@ function Period({ period }: Readonly<{ period: PeriodProgress }>) {
 /** The progress page's content, for today in Finland. */
 export async function ProgressView() {
   const user = await requireUser();
-  const { periods, exercises } = await getProgress(user.id, today());
+  const day = today();
+  const [{ periods, exercises }, achievements] = await Promise.all([
+    getProgress(user.id, day),
+    getAchievements(user.id, day),
+  ]);
   return (
     <>
       <h1 className="text-3xl font-bold">{PROGRESS}</h1>
+      <AchievementSections achievements={achievements} />
       {periods.length === 0 ? (
         <p className="mt-4">{NO_STARTED_PERIOD}</p>
       ) : (

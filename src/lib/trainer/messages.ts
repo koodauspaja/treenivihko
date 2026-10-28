@@ -4,6 +4,7 @@
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 import { minutesLeft } from "./rules";
@@ -28,6 +29,7 @@ export const SAVED = "Tallennettu.";
 export const NICKNAME_REFUSED = "Nimessä on oltava 1–20 merkkiä.";
 export const LOCK_BUTTON = "Lukitse ja palaa";
 export const PERIODS_LINK = "Jaksot";
+export const PAUSES_LINK = "Tauot";
 export const EXERCISES_LINK = "Harjoitteet";
 export const NICKNAME_LINK = "Lapsen nimi";
 export const SIGN_OUT_BUTTON = "Kirjaudu ulos";
