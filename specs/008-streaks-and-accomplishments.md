@@ -236,7 +236,7 @@ days, an accomplishment's kind or key, or an exercise's name.
 ## Acceptance criteria
 
 - [ ] The child's side shows the streak's line, and the pause's or the week's line under it, as *The child's side* gives them
-- [ ] A week with a session done counts; a paused week, a week no period covers and the current week neither break nor count; any other week breaks the streak
+- [ ] A week with a session done counts, the current week included; a paused week, a week no period covers, and the current week until a session is done in it neither break nor count; any other week breaks the streak
 - [ ] `Omat treenit` shows `Putki nyt` and `Paras putki`, the accomplishments earned with their days, newest first, and the next goals with their progress
 - [ ] Each accomplishment in the table is earned on the first load after its condition holds, once, and stays when the marks, pauses or periods change
 - [ ] `Koko jakso tehty` is earned once per period, and `Vaikeasta helpoksi` once per exercise, each with the span or name it had when earned
