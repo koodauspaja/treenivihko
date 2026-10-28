@@ -54,6 +54,10 @@ and spans are shown as in Feature 004.
 | No current or next period | `Jaksoa ei ole vielä tehty.` |
 | The way to the trainer side | `Valmentaja`, as now, last |
 
+Feature 006 adds each session's mark and the way to mark it, and the previous
+period's sessions to mark, so the child's side writes marks and nothing else
+(`specs/006-session-marks.md`).
+
 The period shown is the current one, whose days include today in Finnish
 time (`Europe/Helsinki`); when there is none, the one that starts next; when
 there is neither, the message. An earlier period is never shown.

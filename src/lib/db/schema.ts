@@ -7,6 +7,7 @@
  * decisions/f001-trainer-side.md
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f006-session-marks.md
  */
 
 import { sql } from "drizzle-orm";
@@ -325,6 +326,58 @@ export const blockExercise = pgTable(
     check(
       "block_exercise_amount",
       sql`(${table.amountKind} = 'count' and ${table.amount} between 1 and 100) or (${table.amountKind} = 'time' and ${table.amount} between 5 and 600 and ${table.amount} % 5 = 0)`
+    ),
+  ]
+);
+
+/**
+ * The child's mark of a session, one at most: how it went, the day it was
+ * done, how it felt, and four picks of its library exercises, each of which
+ * is cleared when its exercise is deleted. A session not done has no day,
+ * feeling or picks. Migration 0007 makes the session's key deferrable, which
+ * deleting a whole account needs: its exercises clear a pick after its
+ * periods have taken the mark's session.
+ */
+export const sessionMark = pgTable(
+  "session_mark",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .unique()
+      .references(() => trainingSession.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    trainedOn: date("trained_on", { mode: "string" }),
+    // 5 for the happiest face, down to 1.
+    feeling: integer("feeling"),
+    likedBestExerciseId: text("liked_best_exercise_id").references(() => exercise.id, {
+      onDelete: "set null",
+    }),
+    likedLeastExerciseId: text("liked_least_exercise_id").references(() => exercise.id, {
+      onDelete: "set null",
+    }),
+    easiestExerciseId: text("easiest_exercise_id").references(() => exercise.id, {
+      onDelete: "set null",
+    }),
+    hardestExerciseId: text("hardest_exercise_id").references(() => exercise.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    check("session_mark_status", sql`${table.status} in ('done', 'partly', 'not_done')`),
+    check("session_mark_feeling", sql`${table.feeling} between 1 and 5`),
+    check(
+      "session_mark_not_done",
+      sql`(${table.status} = 'not_done') = (${table.trainedOn} is null)`
+    ),
+    check(
+      "session_mark_not_done_empty",
+      sql`${table.status} <> 'not_done' or (${table.feeling} is null and ${table.likedBestExerciseId} is null and ${table.likedLeastExerciseId} is null and ${table.easiestExerciseId} is null and ${table.hardestExerciseId} is null)`
+    ),
+    check(
+      "session_mark_trained_on",
+      sql`${table.trainedOn} between date '0001-01-01' and date '9999-12-31'`
     ),
   ]
 );

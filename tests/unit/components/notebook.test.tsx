@@ -1,8 +1,9 @@
 /**
  * The child's notebook view: which period it shows, for today in Finland,
- * and what an exercise's page shows.
+ * each session's mark, the previous period, and what an exercise's page shows.
  *
  * decisions/f005-notebook-view.md
+ * decisions/f006-session-marks.md
  */
 
 import { cleanup, render, screen, within } from "@testing-library/react";
@@ -11,6 +12,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 const requireUser = vi.fn();
 const getNotebook = vi.fn();
 const getNotebookExercise = vi.fn();
+const getChildMarks = vi.fn();
 const notFound = vi.fn(() => {
   throw new Error("not found");
 });
@@ -19,6 +21,9 @@ vi.mock("@/lib/auth/session", () => ({ requireUser: () => requireUser() }));
 vi.mock("@/lib/periods/store", () => ({
   getNotebook: (...args: unknown[]) => getNotebook(...args),
   getNotebookExercise: (...args: unknown[]) => getNotebookExercise(...args),
+}));
+vi.mock("@/lib/marks/store", () => ({
+  getChildMarks: (...args: unknown[]) => getChildMarks(...args),
 }));
 
 const { Notebook, NotebookExerciseView } = await import("@/components/notebook");
@@ -36,6 +41,7 @@ beforeEach(() => {
   requireUser.mockReset().mockResolvedValue({ id: "u1", name: "Test Parent", sessionId: "s1" });
   getNotebook.mockReset();
   getNotebookExercise.mockReset();
+  getChildMarks.mockReset().mockResolvedValue({ marks: {}, previous: null });
   notFound.mockClear();
 });
 
@@ -116,10 +122,83 @@ describe("Notebook", () => {
     expect(screen.queryByRole("heading")).toBeNull();
   });
 
-  it("offers nothing to change", async () => {
+  it("offers nothing to change but the way to mark a session", async () => {
     getNotebook.mockResolvedValue({ period: PERIOD, sessions: SESSIONS });
     const { container } = render(await Notebook({ userId: "u1" }));
     expect(container.querySelector("form, button, input, select, textarea")).toBeNull();
+  });
+
+  it("offers to mark each session of the current period, for today in Finland", async () => {
+    getNotebook.mockResolvedValue({ period: PERIOD, sessions: SESSIONS });
+    render(await Notebook({ userId: "u1" }));
+    expect(getChildMarks).toHaveBeenCalledWith("u1", "2026-11-05");
+    expect(
+      screen.getAllByRole("link", { name: "Merkitse" }).map((each) => each.getAttribute("href"))
+    ).toEqual(["/treeni/t1", "/treeni/t2"]);
+  });
+
+  it("shows a marked session's mark, and the way to change it", async () => {
+    getNotebook.mockResolvedValue({ period: PERIOD, sessions: SESSIONS });
+    getChildMarks.mockResolvedValue({
+      marks: {
+        t1: { status: "done", trainedOn: "2026-11-03", feeling: 5 },
+        t2: { status: "not_done", trainedOn: null, feeling: null },
+      },
+      previous: null,
+    });
+    render(await Notebook({ userId: "u1" }));
+    expect(screen.getByText("Tehty 3.11.2026 😄")).toBeDefined();
+    expect(screen.getByText("Ei tehty")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Merkitse" })).toBeNull();
+    expect(
+      screen.getAllByRole("link", { name: "Muuta" }).map((each) => each.getAttribute("href"))
+    ).toEqual(["/treeni/t1", "/treeni/t2"]);
+  });
+
+  it("offers no marking for the next period before it starts", async () => {
+    getNotebook.mockResolvedValue({
+      period: { id: "p2", startsOn: "2026-11-06", weeks: 1 },
+      sessions: SESSIONS,
+    });
+    render(await Notebook({ userId: "u1" }));
+    expect(screen.queryByRole("link", { name: "Merkitse" })).toBeNull();
+  });
+
+  it("shows the previous period's sessions to mark, after the period shown", async () => {
+    getNotebook.mockResolvedValue({ period: PERIOD, sessions: [] });
+    getChildMarks.mockResolvedValue({
+      marks: { o2: { status: "partly", trainedOn: "2026-11-02", feeling: null } },
+      previous: {
+        period: { id: "p0", startsOn: "2026-10-20", weeks: 2 },
+        sessions: [
+          { id: "o1", position: 1 },
+          { id: "o2", position: 2 },
+        ],
+      },
+    });
+    render(await Notebook({ userId: "u1" }));
+    expect(screen.getAllByRole("heading", { level: 2 }).map((each) => each.textContent)).toEqual([
+      "Jakso 3.11.–16.11.2026",
+      "Edellinen jakso 20.10.–2.11.2026",
+    ]);
+    expect(screen.getByRole("link", { name: "Merkitse" }).getAttribute("href")).toBe("/treeni/o1");
+    expect(screen.getByText("Osittain 2.11.2026")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Muuta" }).getAttribute("href")).toBe("/treeni/o2");
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("shows the previous period with no sessions, and with no period shown", async () => {
+    getNotebook.mockResolvedValue(null);
+    getChildMarks.mockResolvedValue({
+      marks: {},
+      previous: { period: { id: "p0", startsOn: "2026-10-20", weeks: 2 }, sessions: [] },
+    });
+    render(await Notebook({ userId: "u1" }));
+    expect(screen.getByText("Jaksoa ei ole vielä tehty.")).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Edellinen jakso 20.10.–2.11.2026" })
+    ).toBeDefined();
+    expect(screen.getByText("Jaksossa ei ole vielä treenejä.")).toBeDefined();
   });
 });
 

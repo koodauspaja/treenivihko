@@ -84,12 +84,13 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
 
 ## Later
 
-- **A dump before a risky migration.** Railway's Postgres has no backups yet
-  (`decisions/031-database-dump.md`), so before a migration that drops,
-  renames or rewrites anything, dump it to your machine. **The file holds
-  personal data and live session tokens**: anyone who can read it can sign in
-  as the parent until those sessions end. Only you can read it (`umask 077`);
-  keep it outside the repository, and delete it when it is no longer needed.
+- **A dump before a risky migration.** Railway's Postgres has no backups
+  (`decisions/031-database-dump.md`, `decisions/f006-session-marks.md`), so
+  before a migration that drops, renames or rewrites anything, dump it to your
+  machine. **The file holds personal data and live session tokens**: anyone
+  who can read it can sign in as the parent until those sessions end. Only you
+  can read it (`umask 077`); keep it outside the repository, and delete it
+  when it is no longer needed.
 
   ```bash
   f=~/treenivihko-$(date +%Y-%m-%d).dump

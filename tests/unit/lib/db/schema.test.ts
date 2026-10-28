@@ -9,6 +9,7 @@ import {
   exerciseLabel,
   period,
   session,
+  sessionMark,
   trainerPassword,
   trainerUnlock,
   trainingSession,
@@ -148,6 +149,26 @@ describe("the schema", () => {
     ]);
     expect(config(blockExercise).indexes.map((index) => index.config.name)).toEqual([
       "block_exercise_exercise_id_idx",
+    ]);
+  });
+
+  it("holds one mark per session, deleted with it, and clears a pick whose exercise is deleted", () => {
+    expect(
+      config(sessionMark).columns.find((column) => column.name === "session_id")?.isUnique
+    ).toBe(true);
+    expect(deletes(sessionMark)).toEqual([
+      ["id", "training_session", "cascade"],
+      ["id", "exercise", "set null"],
+      ["id", "exercise", "set null"],
+      ["id", "exercise", "set null"],
+      ["id", "exercise", "set null"],
+    ]);
+    expect(config(sessionMark).checks.map((each) => each.name)).toEqual([
+      "session_mark_status",
+      "session_mark_feeling",
+      "session_mark_not_done",
+      "session_mark_not_done_empty",
+      "session_mark_trained_on",
     ]);
   });
 });

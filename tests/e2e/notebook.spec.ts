@@ -3,6 +3,7 @@
  *
  * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
+ * decisions/f006-session-marks.md
  */
 
 import { expect, type Page, test } from "@playwright/test";
@@ -156,8 +157,17 @@ test("the child's side shows the next period before it starts, and a message wit
   ).toBeVisible();
   await expect(main(page).getByText(`Alkaa ${formatDay(startsOn)}.`)).toBeVisible();
 
-  // The next period is a copy of the earlier one, so its sessions show; the earlier one's exercise is not found.
-  await expect(main(page).getByRole("heading", { level: 3 })).toHaveText(["Treeni 1", "Treeni 2"]);
+  // The next period is a copy of the earlier one, so its sessions show, and the earlier one's
+  // again under Edellinen jakso, to mark; its exercise is not found.
+  await expect(main(page).getByRole("heading", { level: 3 })).toHaveText([
+    "Treeni 1",
+    "Treeni 2",
+    "Treeni 1",
+    "Treeni 2",
+  ]);
+  await expect(
+    main(page).getByRole("heading", { level: 2, name: /^Edellinen jakso / })
+  ).toBeVisible();
   await page.goto(`/harjoite/${earlier.ladderInBlock}`);
   await expect(main(page).getByText("Sivua ei löytynyt.")).toBeVisible();
 });
