@@ -212,7 +212,10 @@ const keysIn = (group: "place" | "equipment") =>
 // schema cannot express: an exclusion on a period's days, and positions
 // unique within their parent, checked at commit so two can swap.
 
-/** A period of training, the parent's own, 1 to 4 weeks from its start. */
+/**
+ * A period of training, the parent's own, 1 to 4 weeks from its start, every
+ * day of it in the years 1 to 9999.
+ */
 export const period = pgTable(
   "period",
   {
@@ -227,6 +230,10 @@ export const period = pgTable(
   (table) => [
     index("period_user_id_idx").on(table.userId),
     check("period_weeks", sql`${table.weeks} between 1 and 4`),
+    check(
+      "period_days",
+      sql`${table.startsOn} >= date '0001-01-01' and ${table.startsOn} + (7 * ${table.weeks} - 1) <= date '9999-12-31'`
+    ),
   ]
 );
 

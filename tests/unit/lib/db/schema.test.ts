@@ -114,7 +114,7 @@ describe("the schema", () => {
   });
 
   it("checks each column rule of a period, its sessions and blocks in the database too", () => {
-    expect(config(period).checks.map((each) => each.name)).toEqual(["period_weeks"]);
+    expect(config(period).checks.map((each) => each.name)).toEqual(["period_weeks", "period_days"]);
     expect(config(trainingSession).checks.map((each) => each.name)).toEqual([
       "training_session_position",
       "training_session_place",

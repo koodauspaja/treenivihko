@@ -336,12 +336,18 @@ describe("a period", () => {
     expect(await listPeriods("u2", report)).toEqual([]);
   });
 
-  it("is deleted with its sessions, and only by its parent", async () => {
+  it("is deleted with its sessions, and only by its parent, leaving the parent's others", async () => {
     const built = await builtPeriod("u1", "2026-11-02");
+    const copy = await periodOf("u1", "2026-11-16");
+    const kept = await getPeriod("u1", copy, report);
     expect(await deletePeriod("u2", built.periodId, report)).toBe(false);
     expect(await deletePeriod("u1", built.periodId, report)).toBe(true);
-    expect(await database().select().from(trainingSession)).toEqual([]);
-    expect(await database().select().from(blockExercise)).toEqual([]);
+    expect(await getPeriod("u1", built.periodId, report)).toBeNull();
+    expect(await getPeriod("u1", copy, report)).toEqual(kept);
+    expect((await database().select().from(trainingSession)).map((each) => each.periodId)).toEqual([
+      copy,
+    ]);
+    expect(await database().select().from(blockExercise)).toHaveLength(2);
     expect(lines.at(-1)).toBe(`period deleted: user u1, period ${built.periodId}`);
   });
 
@@ -725,6 +731,10 @@ describe("the database's own checks", () => {
     ["a length of 1 week", { weeks: 1 }, true],
     ["a length of 4 weeks", { weeks: 4 }, true],
     ["a length of 5 weeks", { weeks: 5 }, false],
+    ["a start on 1.1.0001", { startsOn: "0001-01-01" }, true],
+    ["a start before the year 1", { startsOn: "0001-12-31 BC" }, false],
+    ["a last day on 31.12.9999", { startsOn: "9999-12-18", weeks: 2 }, true],
+    ["a last day past 9999", { startsOn: "9999-12-19", weeks: 2 }, false],
   ] as const)("take a period of %s: %s", async (_case, values, accepted) => {
     const write = periodRow(values);
     if (accepted) {
