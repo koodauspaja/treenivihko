@@ -26,7 +26,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { LABEL_KEYS, labelsIn } from "../exercises/labels";
-import { KEYED_KINDS, KINDS } from "../streaks/kinds";
+import { KINDS } from "../streaks/kinds";
 import { WHITESPACE_SQL } from "../text";
 
 const timestamps = {
@@ -439,15 +439,16 @@ export const accomplishment = pgTable(
   (table) => [
     unique("accomplishment_user_kind_key").on(table.userId, table.kind, table.key),
     check("accomplishment_kind", sql.raw(`kind in (${quoted(KINDS)})`)),
-    check("accomplishment_key", sql.raw(`(kind in (${quoted(KEYED_KINDS)})) = (key <> '')`)),
+    // The parts each kind keeps, and no others: a key for the two earned once per period or
+    // exercise, with a period's start and weeks, or an exercise's name. Every branch is true or
+    // false, never null, which a check would let through.
     check(
-      "accomplishment_period",
-      // Each branch is true or false, never null, which a check would let through.
-      sql`case when ${table.kind} = 'full_period' then ${table.periodStartsOn} is not null and ${table.periodWeeks} is not null and ${table.periodWeeks} between 1 and 4 else ${table.periodStartsOn} is null and ${table.periodWeeks} is null end`
-    ),
-    check(
-      "accomplishment_exercise",
-      sql`(${table.kind} = 'hard_to_easy') = (${table.exerciseName} is not null)`
+      "accomplishment_parts",
+      sql`case ${table.kind}
+        when 'full_period' then char_length(${table.key}) > 0 and ${table.periodStartsOn} is not null and ${table.periodWeeks} is not null and ${table.periodWeeks} between 1 and 4 and ${table.exerciseName} is null
+        when 'hard_to_easy' then char_length(${table.key}) > 0 and ${table.exerciseName} is not null and ${table.periodStartsOn} is null and ${table.periodWeeks} is null
+        else char_length(${table.key}) = 0 and ${table.periodStartsOn} is null and ${table.periodWeeks} is null and ${table.exerciseName} is null
+      end`
     ),
     check(
       "accomplishment_earned_on",

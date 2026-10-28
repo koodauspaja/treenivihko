@@ -270,6 +270,28 @@ describe("the database's own checks", () => {
     ],
     ["a full period with no start", { kind: "full_period", key: "p1", periodWeeks: 2 }, false],
     [
+      "a full period with a name",
+      {
+        kind: "full_period",
+        key: "p1",
+        periodStartsOn: CURRENT,
+        periodWeeks: 2,
+        exerciseName: "Lähdöt",
+      },
+      false,
+    ],
+    [
+      "hard became easy with a period's dates",
+      {
+        kind: "hard_to_easy",
+        key: "e1",
+        exerciseName: "Lähdöt",
+        periodStartsOn: CURRENT,
+        periodWeeks: 2,
+      },
+      false,
+    ],
+    [
       "a full period of 5 weeks",
       { kind: "full_period", key: "p1", periodStartsOn: CURRENT, periodWeeks: 5 },
       false,

@@ -10,9 +10,11 @@ CREATE TABLE "accomplishment" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "accomplishment_user_kind_key" UNIQUE("user_id","kind","key"),
 	CONSTRAINT "accomplishment_kind" CHECK (kind in ('sessions_1', 'sessions_10', 'sessions_25', 'sessions_50', 'sessions_100', 'streak_4', 'streak_8', 'streak_12', 'streak_26', 'full_period', 'hard_to_easy')),
-	CONSTRAINT "accomplishment_key" CHECK ((kind in ('full_period', 'hard_to_easy')) = (key <> '')),
-	CONSTRAINT "accomplishment_period" CHECK (case when "accomplishment"."kind" = 'full_period' then "accomplishment"."period_starts_on" is not null and "accomplishment"."period_weeks" is not null and "accomplishment"."period_weeks" between 1 and 4 else "accomplishment"."period_starts_on" is null and "accomplishment"."period_weeks" is null end),
-	CONSTRAINT "accomplishment_exercise" CHECK (("accomplishment"."kind" = 'hard_to_easy') = ("accomplishment"."exercise_name" is not null)),
+	CONSTRAINT "accomplishment_parts" CHECK (case "accomplishment"."kind"
+        when 'full_period' then char_length("accomplishment"."key") > 0 and "accomplishment"."period_starts_on" is not null and "accomplishment"."period_weeks" is not null and "accomplishment"."period_weeks" between 1 and 4 and "accomplishment"."exercise_name" is null
+        when 'hard_to_easy' then char_length("accomplishment"."key") > 0 and "accomplishment"."exercise_name" is not null and "accomplishment"."period_starts_on" is null and "accomplishment"."period_weeks" is null
+        else char_length("accomplishment"."key") = 0 and "accomplishment"."period_starts_on" is null and "accomplishment"."period_weeks" is null and "accomplishment"."exercise_name" is null
+      end),
 	CONSTRAINT "accomplishment_earned_on" CHECK ("accomplishment"."earned_on" between date '0001-01-01' and date '9999-12-31')
 );
 --> statement-breakpoint

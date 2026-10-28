@@ -1,5 +1,5 @@
 {
-  "id": "9b1b2f66-7055-4273-93e9-90a07f052db8",
+  "id": "d6dfbf49-72cf-4432-a828-d6c6226ef75d",
   "prevId": "1f768e43-d526-41df-b6fc-d98e70f52023",
   "version": "7",
   "dialect": "postgresql",
@@ -98,17 +98,9 @@
           "name": "accomplishment_kind",
           "value": "kind in ('sessions_1', 'sessions_10', 'sessions_25', 'sessions_50', 'sessions_100', 'streak_4', 'streak_8', 'streak_12', 'streak_26', 'full_period', 'hard_to_easy')"
         },
-        "accomplishment_key": {
-          "name": "accomplishment_key",
-          "value": "(kind in ('full_period', 'hard_to_easy')) = (key <> '')"
-        },
-        "accomplishment_period": {
-          "name": "accomplishment_period",
-          "value": "case when \"accomplishment\".\"kind\" = 'full_period' then \"accomplishment\".\"period_starts_on\" is not null and \"accomplishment\".\"period_weeks\" is not null and \"accomplishment\".\"period_weeks\" between 1 and 4 else \"accomplishment\".\"period_starts_on\" is null and \"accomplishment\".\"period_weeks\" is null end"
-        },
-        "accomplishment_exercise": {
-          "name": "accomplishment_exercise",
-          "value": "(\"accomplishment\".\"kind\" = 'hard_to_easy') = (\"accomplishment\".\"exercise_name\" is not null)"
+        "accomplishment_parts": {
+          "name": "accomplishment_parts",
+          "value": "case \"accomplishment\".\"kind\"\n        when 'full_period' then char_length(\"accomplishment\".\"key\") > 0 and \"accomplishment\".\"period_starts_on\" is not null and \"accomplishment\".\"period_weeks\" is not null and \"accomplishment\".\"period_weeks\" between 1 and 4 and \"accomplishment\".\"exercise_name\" is null\n        when 'hard_to_easy' then char_length(\"accomplishment\".\"key\") > 0 and \"accomplishment\".\"exercise_name\" is not null and \"accomplishment\".\"period_starts_on\" is null and \"accomplishment\".\"period_weeks\" is null\n        else char_length(\"accomplishment\".\"key\") = 0 and \"accomplishment\".\"period_starts_on\" is null and \"accomplishment\".\"period_weeks\" is null and \"accomplishment\".\"exercise_name\" is null\n      end"
         },
         "accomplishment_earned_on": {
           "name": "accomplishment_earned_on",

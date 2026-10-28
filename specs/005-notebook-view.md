@@ -23,9 +23,9 @@ exercise shows its instructions and video at home.
 
 - Printing or a PDF.
 - Marking a session: Feature 006.
-- Any editing: the child's side only reads. Feature 006 later adds marking a
-  session, and Feature 008 recording what the child has earned
-  (`specs/008-streaks-and-accomplishments.md`).
+- Any editing. The child's side writes only what later features add: a
+  session's mark (Feature 006), and what the child has earned, recorded on
+  its load (Feature 008, `specs/008-streaks-and-accomplishments.md`).
 - Earlier periods.
 
 ## Who and where
@@ -108,17 +108,17 @@ Not used.
 
 ## Logging
 
-None: the pages only read, and a failure is logged by the store it reads
-from, as Feature 001 logs it. Feature 006's marking logs its own writes, and
-Feature 008's accomplishments theirs.
+None for this feature's reads: a failure is logged by the store it reads
+from, as Feature 001 logs it. Feature 006's marking and Feature 008's
+accomplishments, the child's side's writes, log their own.
 
 ## Security and secrets
 
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   child's side, as now; it reads only the parent's own periods and the
-  exercises in them, and never writes. Feature 006 adds a write, a session's
-  mark, and Feature 008 another, an accomplishment earned.
+  exercises in them. Its writes are a session's mark (Feature 006) and an
+  accomplishment earned (Feature 008), each to the parent's own data.
 
 ## Acceptance criteria
 
