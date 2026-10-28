@@ -8,7 +8,9 @@ Overrides two earlier records:
   stores the child's data decides backups before it merges, and a restore
   drill comes with whatever it decides." This feature stores the child's
   marks and decides no backups. They are a setup step of their own (#63),
-  with no date, and no feature waits for them.
+  with no date, and no feature waits for them. The line 031 itself overrode,
+  `decisions/026-railway.md`'s "No backups yet. They are a step of their own,
+  before real data goes in.", is overridden with it.
 - `decisions/f005-notebook-view.md`, *Decision*: "The page has no forms,
   buttons or inputs, and its one link away from reading is `Valmentaja`, as
   before." The period's page still has no forms, buttons or inputs, but each

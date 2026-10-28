@@ -173,7 +173,10 @@ test("the child marks a session of the previous period after the next has starte
     }),
   });
   await expect(previous.getByRole("heading", { level: 3 })).toHaveText(["Treeni 1", "Treeni 2"]);
-  await expect(previous.getByRole("listitem")).toHaveCount(0);
+  // Only its sessions, to mark: none of their blocks or exercises.
+  for (const text of ["Lämmittely", "Tikkaat: perusaskel", "Lähdöt"]) {
+    await expect(previous.getByText(text)).toHaveCount(0);
+  }
   await previous.getByRole("link", { name: "Merkitse" }).first().click();
 
   // A day after the previous period ended is the child training late, and taken.

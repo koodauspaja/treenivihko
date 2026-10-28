@@ -1,3 +1,11 @@
+/**
+ * The marking form: its choices as a first mark and as a saved one, what
+ * En tehnyt hides, and what it keeps beside a refusal.
+ *
+ * decisions/f004-periods-and-sessions.md
+ * decisions/f006-session-marks.md
+ */
+
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Mark } from "@/lib/marks/rules";
