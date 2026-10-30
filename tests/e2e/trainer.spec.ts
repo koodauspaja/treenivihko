@@ -31,6 +31,21 @@ test("the child's side greets the child, and its link asks for the trainer passw
   await expect(page.getByLabel("Salasana")).toBeVisible();
 });
 
+// Next keeps the page it left in the document, hidden, so what shows is checked, not what exists
+// (decisions/054-unlock-after-child-link.md).
+test("the child's link, then the right password, opens the trainer menu on the first try", async ({
+  page,
+}, info) => {
+  await signInParent(page, info);
+  await page.goto("/");
+  await page.getByRole("link", { name: "Valmentaja" }).click();
+  await expect(page).toHaveURL(/\/valmentaja\/avaa$/);
+  await unlock(page);
+  await expect(page.getByRole("link", { name: "Harjoitteet" })).toBeVisible();
+  await expect(page.getByLabel("Salasana")).toBeHidden();
+  await expect(page).toHaveURL(/\/valmentaja$/);
+});
+
 test("with no password set, the lock page says so and offers no field", async ({ page }, info) => {
   await signInParent(page, info, { withPassword: false });
   await page.goto("/valmentaja/avaa");
@@ -66,6 +81,8 @@ test("the right password opens the trainer menu, and the nickname is saved on it
   await expect(page).toHaveURL(/\/valmentaja\/avaa$/);
   await unlock(page);
   await expect(page).toHaveURL(/\/valmentaja$/);
+  await expect(page.getByRole("link", { name: "Harjoitteet" })).toBeVisible();
+  await expect(page.getByLabel("Salasana")).toBeHidden();
   await page.getByRole("link", { name: "Lapsen nimi" }).click();
   await expect(page).toHaveURL(/\/valmentaja\/nimi$/);
   await page.getByLabel("Lapsen nimi").fill("x".repeat(21));
