@@ -1,8 +1,10 @@
 /**
- * The child's progress, for today in Finland: the periods that have started
- * with their marks, and the picked exercises with their counts.
+ * The child's progress, for today in Finland: the streak and the
+ * accomplishments, the periods that have started with their marks, and the
+ * picked exercises with their counts.
  *
  * decisions/f007-progress.md
+ * decisions/f008-streaks-and-accomplishments.md
  */
 
 import { cleanup, render, screen, within } from "@testing-library/react";

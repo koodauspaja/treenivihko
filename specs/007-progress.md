@@ -131,7 +131,8 @@ page's load, log their own.
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   progress page, with no unlock, as it sees the child's side. It reads only
-  the parent's own periods, marks and exercises; its one write is the
+  the parent's own periods, marks and exercises, and, for Feature 008, the
+  parent's own pauses and accomplishments; its one write is the
   accomplishments Feature 008 records as earned, to the parent's own. The marks
   on the trainer side are behind its unlock, as the rest of it.
 
