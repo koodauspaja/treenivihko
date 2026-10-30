@@ -377,12 +377,11 @@ describe("the achievements", () => {
       ["full_period", CURRENT, null],
       ["hard_to_easy", null, "Tikkaat: perusaskel"],
     ]);
-    expect(lines).toHaveLength(3);
-    expect(
-      lines.every((line) =>
-        /^accomplishment earned: user u1, accomplishment [0-9a-f-]{36}$/.test(line)
-      )
-    ).toBe(true);
+    const earnedNow = second.earned.filter((each) => each.id !== first.earned[0]?.id);
+    expect(earnedNow).toHaveLength(3);
+    expect([...lines].sort()).toEqual(
+      earnedNow.map((each) => `accomplishment earned: user u1, accomplishment ${each.id}`).sort()
+    );
     lines = [];
     await getAchievements("u1", DAY, report);
     expect(lines).toEqual([]);

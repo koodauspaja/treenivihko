@@ -32,7 +32,7 @@ describe("SignedInPanel", () => {
     expect(ensureChild).toHaveBeenCalledWith("u1");
     expect(screen.getByRole("heading", { level: 2, name: "Hei!" })).toBeDefined();
     expect(screen.getByText("notebook u1")).toBeDefined();
-    // The streak comes under the greeting, before the period.
+    // The streak comes under the greeting, before the period (decisions/f008-streaks-and-accomplishments.md).
     expect(container.textContent?.indexOf("streak u1")).toBeLessThan(
       container.textContent?.indexOf("notebook u1") ?? -1
     );

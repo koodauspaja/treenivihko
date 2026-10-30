@@ -117,8 +117,9 @@ accomplishments, the child's side's writes, log their own.
 - **No new environment variables.**
 - **Who may do what**: any signed-in browser of the parent's account sees the
   child's side, as now; it reads only the parent's own periods and the
-  exercises in them. Its writes are a session's mark (Feature 006) and an
-  accomplishment earned (Feature 008), each to the parent's own data.
+  exercises in them, and, for Feature 008's streak, the parent's own marks,
+  pauses and accomplishments. Its writes are a session's mark (Feature 006)
+  and an accomplishment earned (Feature 008), each to the parent's own data.
 
 ## Acceptance criteria
 
