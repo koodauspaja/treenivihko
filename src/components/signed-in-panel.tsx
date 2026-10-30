@@ -20,6 +20,7 @@ import { ensureChild } from "@/lib/trainer/store";
  * decisions/f005-notebook-view.md
  * decisions/f007-progress.md
  * decisions/f008-streaks-and-accomplishments.md
+ * decisions/054-unlock-after-child-link.md
  */
 export async function SignedInPanel() {
   const user = await requireUser();
@@ -32,9 +33,10 @@ export async function SignedInPanel() {
       <Link href={PROGRESS_PATH} className="mt-10 block underline">
         {PROGRESS}
       </Link>
-      <Link href={TRAINER_PATH} className="mt-12 block text-sm underline">
+      {/* A full load: a client navigation would keep the lock page as where the trainer side leads. */}
+      <a href={TRAINER_PATH} className="mt-12 block text-sm underline">
         {TRAINER_LINK}
-      </Link>
+      </a>
     </>
   );
 }
