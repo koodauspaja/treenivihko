@@ -75,7 +75,7 @@ Not used.
 | Changed again after the refusal, before `Tallenna silti` | `Tallenna silti` carries the revision the refusal found, so it is refused again in the same way, with the newer change not overwritten |
 | A field refused by Feature 002's rules | Refused as now, before the revision is checked; nothing saved |
 | A save sent again after its answer was lost | Refused as changed meanwhile, since the first raised the revision; `Tallenna silti` saves the same values again |
-| The parent saves twice in one tab | The page passes the new revision after each save, so the next save is not refused |
+| The parent saves twice in one tab | The form saves from the revision its own last save reached, so the next save is not refused; a save made elsewhere in between is still told |
 | The version still serving during a deploy | It saves without raising `revision`; a save by it in that window is not seen as a change. Only the new version reads the revision |
 | An exercise's block amount changed in a period | Not a change to the exercise; its revision stays |
 

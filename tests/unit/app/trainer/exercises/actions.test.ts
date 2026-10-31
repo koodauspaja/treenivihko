@@ -71,7 +71,7 @@ describe("saveExercise", () => {
   });
 
   it("saves an existing exercise, keeps its values, and refreshes the page", async () => {
-    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1", revision: 5 });
     const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "4" }));
     expect(updateExercise).toHaveBeenCalledWith(
       "u1",
@@ -79,13 +79,13 @@ describe("saveExercise", () => {
       expect.objectContaining({ name: "Tikkaat" }),
       { revision: 4, over: false }
     );
-    expect(state).toMatchObject({ version: 4, message: "Tallennettu.", errors: {} });
+    expect(state).toMatchObject({ version: 4, message: "Tallennettu.", errors: {}, revision: 5 });
     expect(state.values.name).toBe("Tikkaat");
     expect(refresh).toHaveBeenCalledOnce();
   });
 
   it("shows a saved exercise as it was saved, not as it was typed", async () => {
-    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1", revision: 5 });
     const state = await saveExercise(
       START,
       form({ ...VALID, id: "e1", name: "  Tikkaat ", instructions: "Tee\r\nnäin. ", count: " 10" })
@@ -119,6 +119,7 @@ describe("saveExercise", () => {
     const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "1", name: "" }));
     expect(state.errors).toEqual({ name: "Nimessä on oltava 1–40 merkkiä." });
     expect(state.changed).toBeUndefined();
+    expect(state.revision).toBe(1);
     expect(updateExercise).not.toHaveBeenCalled();
   });
 
@@ -127,6 +128,7 @@ describe("saveExercise", () => {
     const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "2" }));
     expect(state.errors).toEqual({ name: "Samanniminen harjoite on jo kirjastossa." });
     expect(state.changed).toBeUndefined();
+    expect(state.revision).toBe(2);
     expect(refresh).not.toHaveBeenCalled();
   });
 
@@ -149,13 +151,14 @@ describe("saveExercise", () => {
         "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.",
       errors: {},
       changed: { revision: 5 },
+      revision: 4,
     });
     expect(state.values.name).toBe("Uusi");
     expect(refresh).not.toHaveBeenCalled();
   });
 
   it("saves over a change with Tallenna silti, from the revision the refusal found", async () => {
-    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1", revision: 5 });
     const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "4", over: "5" }));
     expect(updateExercise).toHaveBeenCalledWith("u1", "e1", expect.anything(), {
       revision: 5,
@@ -172,7 +175,7 @@ describe("saveExercise", () => {
     ["one with a sign", { revision: "+4" }],
     ["a decimal", { revision: "4.0" }],
     ["one past Postgres's integers", { revision: "2147483648" }],
-    ["ten digits", { revision: "1000000000" }],
+    ["eleven digits", { revision: "21474836470" }],
   ])("sends %s as revision 0, which no exercise is at", async (_, fields) => {
     updateExercise.mockResolvedValue({ kind: "changed", revision: 1 });
     await saveExercise(START, form({ ...VALID, id: "e1", ...fields }));
@@ -182,11 +185,14 @@ describe("saveExercise", () => {
     });
   });
 
-  it("takes the largest revision it reads, nine digits", async () => {
-    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
-    await saveExercise(START, form({ ...VALID, id: "e1", revision: "999999999" }));
+  it.each([
+    ["ten digits", "1000000000", 1000000000],
+    ["Postgres's largest integer", "2147483647", 2147483647],
+  ])("takes %s as the revision", async (_, sent, revision) => {
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1", revision: revision + 1 });
+    await saveExercise(START, form({ ...VALID, id: "e1", revision: sent }));
     expect(updateExercise).toHaveBeenCalledWith("u1", "e1", expect.anything(), {
-      revision: 999999999,
+      revision,
       over: false,
     });
   });

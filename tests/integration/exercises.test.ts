@@ -213,7 +213,7 @@ describe("the name", () => {
         { revision: 1 },
         report
       )
-    ).toEqual({ kind: "saved", id: first });
+    ).toEqual({ kind: "saved", id: first, revision: 2 });
   });
 
   it("keeps one of two saves from one revision at once, whole, and refuses the other as changed", async () => {
@@ -224,7 +224,7 @@ describe("the name", () => {
       updateExercise("u1", id, checked(indoors), { revision: 1 }, report),
       updateExercise("u1", id, checked(gym), { revision: 1 }, report),
     ]);
-    expect(results).toContainEqual({ kind: "saved", id });
+    expect(results).toContainEqual({ kind: "saved", id, revision: 2 });
     expect(results).toContainEqual({ kind: "changed", revision: 2 });
     const stored = await getExercise("u1", id, report);
     expect([
@@ -247,10 +247,12 @@ describe("a save's revision", () => {
     expect(await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report)).toEqual({
       kind: "saved",
       id,
+      revision: 2,
     });
     expect(await updateExercise("u1", id, checked(LADDER), { revision: 2 }, report)).toEqual({
       kind: "saved",
       id,
+      revision: 3,
     });
     expect((await getExercise("u1", id, report))?.revision).toBe(3);
   });
@@ -289,7 +291,7 @@ describe("a save's revision", () => {
         { revision: 2, over: true },
         report
       )
-    ).toEqual({ kind: "saved", id });
+    ).toEqual({ kind: "saved", id, revision: 3 });
     expect(lines).toEqual([`exercise updated: user u1, exercise ${id}, over a change`]);
     expect(
       await updateExercise(
@@ -344,6 +346,7 @@ describe("saving and deleting", () => {
     expect(await updateExercise("u1", id, checked(changed), { revision: 1 }, report)).toEqual({
       kind: "saved",
       id,
+      revision: 2,
     });
     expect(await getExercise("u1", id, report)).toEqual({ id, ...changed, revision: 2 });
     expect(lines.at(-1)).toBe(`exercise updated: user u1, exercise ${id}`);

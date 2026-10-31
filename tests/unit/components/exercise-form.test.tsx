@@ -47,7 +47,7 @@ describe("ExerciseForm", () => {
   });
 
   it("starts from a stored exercise, its id sent along", () => {
-    render(<ExerciseForm exerciseId="e1" initialValues={STORED} />);
+    render(<ExerciseForm exerciseId="e1" revision={1} initialValues={STORED} />);
     expect(field("Nimi").value).toBe("Tikkaat");
     expect(field("Ohje").value).toBe("Tee näin.");
     expect(field("Videolinkki").value).toBe("https://example.com/v");
@@ -130,12 +130,13 @@ describe("ExerciseForm", () => {
     expect(screen.queryByRole("button", { name: "Tallenna silti" })).toBeNull();
   });
 
-  it("sends the revision the refreshed page passes on the next save", async () => {
+  it("after a save, sends the revision it reached, not a later one the refreshed page passes", async () => {
     saveExercise.mockResolvedValue({
       version: 1,
       message: "Tallennettu.",
       errors: {},
       values: STORED,
+      revision: 5,
     });
     const { rerender } = render(
       <ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />
@@ -144,14 +145,8 @@ describe("ExerciseForm", () => {
     await waitFor(() => {
       expect(screen.getByRole("status").textContent).toBe("Tallennettu.");
     });
-    // The refreshed page passes the revision the save raised.
-    rerender(<ExerciseForm exerciseId="e1" revision={5} initialValues={STORED} />);
-    saveExercise.mockResolvedValue({
-      version: 2,
-      message: "Tallennettu.",
-      errors: {},
-      values: STORED,
-    });
+    // Another tab saved in between, so the page passes 6, which these values do not show.
+    rerender(<ExerciseForm exerciseId="e1" revision={6} initialValues={STORED} />);
     save();
     await waitFor(() => {
       expect(saveExercise).toHaveBeenCalledTimes(2);

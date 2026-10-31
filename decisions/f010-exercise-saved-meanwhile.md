@@ -21,8 +21,9 @@ raised on #52.
 
 - **A revision on each exercise**, `exercise.revision`, an integer from 1,
   raised by one on every save.
-- **The form carries the revision its page was opened at**, in a hidden
-  field; after each save the page is refreshed and passes the new one.
+- **The form carries the revision its fields belong to**, in a hidden field:
+  the page's when it opens, the one a save reached after a save, and the one
+  sent after a refusal, which keeps what was typed.
 - **The store saves only from the revision it is given**, checking and
   raising it in the update's own `where` (`updateExercise`), so two saves from
   one revision cannot both pass: Postgres re-reads the row the second one
@@ -38,8 +39,8 @@ raised on #52.
 - **`Tallenna silti` comes after `Tallenna`** in the form, since Enter in a
   field submits with the first submit button: Enter never overwrites.
 - **A revision the action cannot read is 0**: none, an empty one, a sign, a
-  decimal, or more than 9 digits, which no exercise is at, so the save is
-  refused rather than an error page from Postgres's integer range.
+  decimal, or one past Postgres's integer, which no exercise is at, so the
+  save is refused rather than an error page from that integer's range.
 
 ## Why
 
@@ -47,7 +48,7 @@ raised on #52.
 |---|---|
 | A revision, not `updated_at` | `updated_at` is stored to the microsecond and read back by JavaScript to the millisecond, so a timestamp the form carried would rarely equal the one stored |
 | Checked in the update itself | A read, then a write, could let a save land between them |
-| The page's revision only, not the save's own | Next sends the refreshed page with the action's answer, so the next save already carries the new revision; an end-to-end test saves twice in one tab with no pause between |
+| The fields' own revision, not the page's | The refreshed page can carry a revision another save reached after this one, which the fields do not show; saving from it would overwrite that save unseen |
 | A second button, not a reload | The parent chose to keep what they typed and to overwrite only on purpose; a reload would lose a long instruction |
 | `Näytä nykyinen` in a new tab | What was typed stays in the form while the parent compares |
 | The block's amount and the mark unchanged | Neither has lost an edit in use: a block amount is one field, and a mark is the child's, made once and changed rarely |
