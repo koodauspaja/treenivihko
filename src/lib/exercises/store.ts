@@ -1,11 +1,12 @@
 /**
  * The library's reads and writes, always within one parent's own exercises.
- * Each write logs ids only; the unique index decides a name already in use, so
- * two saves at once cannot both pass.
+ * Each write logs ids only; the unique index decides a name already in use,
+ * and a save's revision one changed meanwhile, so two at once cannot both pass.
  *
  * decisions/f002-exercise-library.md
  * decisions/f003-exercise-import.md
  * decisions/f004-periods-and-sessions.md
+ * decisions/f010-exercise-saved-meanwhile.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -19,12 +20,17 @@ import { type PeriodRow, periodsUsing } from "@/lib/periods/store";
 import { inListOrder, type LabelKey } from "./labels";
 import type { AmountKind, CheckedExercise, Exercise, Level } from "./rules";
 
-export type StoredExercise = Exercise & { id: string };
+/** An exercise as stored: its revision is raised by every save. */
+export type StoredExercise = Exercise & { id: string; revision: number };
 
 export type SaveResult =
   | { kind: "saved"; id: string }
   | { kind: "nameInUse" }
-  | { kind: "missing" };
+  | { kind: "missing" }
+  | { kind: "changed"; revision: number };
+
+/** The revision a save's form was opened at, and whether it saves over a change on purpose. */
+export type SaveAt = { revision: number; over?: boolean };
 
 const NAME_INDEX = "exercise_user_name_idx";
 
@@ -56,6 +62,7 @@ const toExercise = (row: Row, labels: LabelKey[]): StoredExercise => ({
   level: row.level as Level,
   warmUp: row.warmUp,
   labels,
+  revision: row.revision,
 });
 
 const columnsOf = (values: Exercise) => ({
@@ -160,11 +167,15 @@ export function createExercise(
   });
 }
 
-/** Saves an exercise and replaces its labels, or says why not. */
+/**
+ * Saves an exercise and replaces its labels, raising its revision, when it is
+ * still at `at.revision`; or says why not: gone, changed meanwhile, or a name in use.
+ */
 export function updateExercise(
   userId: string,
   id: string,
   values: CheckedExercise,
+  at: SaveAt,
   report: Report = toStderr
 ): Promise<SaveResult> {
   if (!isRowId(id)) {
@@ -172,22 +183,39 @@ export function updateExercise(
   }
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {
     const result = await refusingNameInUse("exercise refused, name in use", userId, report, () =>
-      getDatabase().transaction(async (tx) => {
+      getDatabase().transaction(async (tx): Promise<SaveResult> => {
+        const owned = and(eq(exercise.userId, userId), eq(exercise.id, id));
+        // The revision is checked and raised in the one statement, so two saves from one revision cannot both pass.
         const [updated] = await tx
           .update(exercise)
-          .set({ ...columnsOf(values), updatedAt: new Date() })
-          .where(and(eq(exercise.userId, userId), eq(exercise.id, id)))
+          .set({
+            ...columnsOf(values),
+            revision: sql`${exercise.revision} + 1`,
+            updatedAt: new Date(),
+          })
+          .where(and(owned, eq(exercise.revision, at.revision)))
           .returning({ id: exercise.id });
         if (!updated) {
-          return { kind: "missing" } as const;
+          const [current] = await tx
+            .select({ revision: exercise.revision })
+            .from(exercise)
+            .where(owned);
+          return current === undefined
+            ? { kind: "missing" }
+            : { kind: "changed", revision: current.revision };
         }
         await tx.delete(exerciseLabel).where(eq(exerciseLabel.exerciseId, id));
         await insertLabels(tx, id, values.labels);
-        return { kind: "saved", id } as const;
+        return { kind: "saved", id };
       })
     );
     if (result.kind === "saved") {
-      report(`exercise updated: user ${userId}, exercise ${id}`);
+      report(
+        `exercise updated: user ${userId}, exercise ${id}${at.over === true ? ", over a change" : ""}`
+      );
+    }
+    if (result.kind === "changed") {
+      report(`exercise refused, changed meanwhile: user ${userId}, exercise ${id}`);
     }
     return result;
   });

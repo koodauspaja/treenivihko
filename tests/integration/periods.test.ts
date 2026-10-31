@@ -599,7 +599,7 @@ describe("an exercise in a block", () => {
     if (!reading.ok) {
       throw new Error("the fixture is valid");
     }
-    await updateExercise("u1", built.ladder, reading.exercise, report);
+    await updateExercise("u1", built.ladder, reading.exercise, { revision: 1 }, report);
     const [ladder] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
     expect(ladder).toMatchObject({ amountKind: "count", amount: 10 });
     expect(await blockExerciseKind("u1", ladder?.id ?? "", report)).toBe("count");
@@ -737,7 +737,7 @@ describe("the child's notebook", () => {
     if (!reading.ok) {
       throw new Error("the fixture is valid");
     }
-    await updateExercise("u1", built.ladder, reading.exercise, report);
+    await updateExercise("u1", built.ladder, reading.exercise, { revision: 1 }, report);
     const notebook = await getNotebook("u1", "2026-11-03", report);
     const [ladder] = notebook?.sessions[0]?.blocks[0]?.exercises ?? [];
     expect(ladder?.name).toBe("Tikkaat: sivuaskel");

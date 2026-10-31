@@ -4,8 +4,16 @@ import { useActionState, useState } from "react";
 import { type ExerciseFormState, saveExercise } from "@/app/trainer/exercises/actions";
 import { Refusal } from "@/components/refusal";
 import { type LabelGroup, labelsIn } from "@/lib/exercises/labels";
-import { FIELD, GROUP_HEADING, LEVEL_NAMES, SAVE } from "@/lib/exercises/messages";
+import {
+  FIELD,
+  GROUP_HEADING,
+  LEVEL_NAMES,
+  SAVE,
+  SAVE_ANYWAY,
+  SHOW_CURRENT,
+} from "@/lib/exercises/messages";
 import type { AmountKind, ExerciseValues } from "@/lib/exercises/rules";
+import { exercisePath } from "@/lib/trainer/paths";
 
 type Errors = ExerciseFormState["errors"];
 
@@ -147,14 +155,18 @@ function Fields({ values, errors }: Readonly<{ values: ExerciseValues; errors: E
 }
 
 /**
- * An exercise's form, new when there is no `exerciseId`. After each answer it
- * starts again from what the action sent back: what was typed after a
- * refusal, nothing after an add. decisions/f002-exercise-library.md
+ * An exercise's form, new when there is no `exerciseId`, else saved from
+ * `revision`. After each answer it starts again from what the action sent
+ * back: what was typed after a refusal, nothing after an add.
+ *
+ * decisions/f002-exercise-library.md
+ * decisions/f010-exercise-saved-meanwhile.md
  */
 export function ExerciseForm({
   exerciseId,
+  revision,
   initialValues,
-}: Readonly<{ exerciseId?: string; initialValues: ExerciseValues }>) {
+}: Readonly<{ exerciseId?: string; revision?: number; initialValues: ExerciseValues }>) {
   const [state, action, pending] = useActionState(saveExercise, {
     version: 0,
     message: null,
@@ -163,7 +175,12 @@ export function ExerciseForm({
   });
   return (
     <form action={action} className="mt-6 flex flex-col gap-3">
-      {exerciseId === undefined ? null : <input type="hidden" name="id" value={exerciseId} />}
+      {exerciseId === undefined ? null : (
+        <>
+          <input type="hidden" name="id" value={exerciseId} />
+          <input type="hidden" name="revision" value={revision} />
+        </>
+      )}
       <Fields key={state.version} values={state.values} errors={state.errors} />
       {state.message === null ? null : <output>{state.message}</output>}
       <button
@@ -173,6 +190,23 @@ export function ExerciseForm({
       >
         {SAVE}
       </button>
+      {/* After Tallenna, so Enter in a field saves with it and never overwrites. */}
+      {state.changed === undefined || exerciseId === undefined ? null : (
+        <div className="flex flex-wrap items-center gap-3">
+          <a href={exercisePath(exerciseId)} target="_blank" rel="noopener" className="underline">
+            {SHOW_CURRENT}
+          </a>
+          <button
+            type="submit"
+            name="over"
+            value={state.changed.revision}
+            disabled={pending}
+            className="rounded border px-4 py-2 disabled:opacity-50"
+          >
+            {SAVE_ANYWAY}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
