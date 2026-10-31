@@ -115,7 +115,8 @@ When the block exercise's kind is no longer the library exercise's (Feature
 
 - shares at least one skill label with it, and has its level;
 - fits the session: has its place, and needs only equipment at hand;
-- is not already in the copied session.
+- is not in the copied session, nor one swapped out of it, so a swap never
+  brings back the exercise another swap took out.
 
 **One a level up**, for the easiest, is the same, with a level one higher. A
 level 3 exercise has none.
@@ -177,7 +178,7 @@ Feature 004's other lines stand, the plain copy's included.
 
 - [ ] With a marked latest period, the new period's page shows `Sovita edellisen jakson merkintöihin`, checked, and the text under it; without one, it shows neither
 - [ ] Unchecked, `Luo jakso` makes Feature 004's plain copy and opens its page
-- [ ] Checked, after a `done` 😄 or 🙂 session, each of its amounts goes up 20%; after `partly`, `not_done`, or `done` 🙁 or 😫, down 20%; after `done` 😐 or skipped, unchanged
+- [ ] Checked, after a `done` 😄 or 🙂 session, each of its amounts goes up 20%; after `partly`, `not_done`, or `done` 🙁 or 😫, down 20%; after `done` 😐 or skipped, unchanged; the hardest aside, as the next criterion says
 - [ ] The hardest exercise's amount goes down even in a session that went well, and it is never swapped
 - [ ] The liked-least exercise is swapped for one sharing a skill label, with its level, fitting the session and not in it, preferring one not in the latest period, then by name; with none, it stays
 - [ ] In a session that went well, the easiest is swapped for one a level up by the same rules; a level 3 one goes up in amount instead

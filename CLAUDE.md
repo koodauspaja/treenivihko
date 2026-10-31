@@ -9,15 +9,16 @@ physical and motor skills around it. A parent, the trainer, sets up a program
 for a period. The child copies it into a notebook and takes it to the field,
 where there is no phone and no network. Back home on wifi, the child marks
 what they did, and how it felt, with emojis. The app adapts the next period
-from those marks.
+from those marks, by fixed rules in code (Feature 009).
 
 Two things hold for every feature:
 
 - **The field is offline.** Nothing the child needs during training may depend
   on the app. The app is for planning before and marking after.
-- **The AI chooses, it never invents.** The Claude API picks and adjusts
-  exercises from the curated library. An exercise that is not in the library
-  never reaches the child.
+- **The library is the only source.** Fixed rules, or the Claude API when a
+  feature uses it, pick and adjust exercises from the curated library: the AI
+  chooses, it never invents. An exercise that is not in the library never
+  reaches the child.
 
 ## Hard rules
 
