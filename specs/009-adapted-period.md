@@ -181,7 +181,7 @@ Feature 004's other lines stand, the plain copy's included.
 - [ ] Unchecked, `Luo jakso` makes Feature 004's plain copy and opens its page
 - [ ] Checked, after a `done` 😄 or 🙂 session, each of its amounts goes up 20%; after `partly`, `not_done`, or `done` 🙁 or 😫, down 20%; after `done` 😐 or skipped, unchanged; the hardest aside, as the next criterion says
 - [ ] The hardest exercise's amount goes down even in a session that went well, and it is never swapped
-- [ ] The liked-least exercise is swapped for one sharing a skill label, with its level, fitting the session and not in it, preferring one not in the latest period, then by name; with none, it stays
+- [ ] The liked-least exercise is swapped for one sharing a skill label, with its level, fitting the session and not in it, preferring one not in the latest period, then by name; with none, it is not swapped, and its amount follows the direction
 - [ ] In a session that went well, the easiest is swapped for one a level up by the same rules; a level 3 one goes up in amount instead
 - [ ] An amount never goes below half or above double its library default, nor outside Feature 002's rule, and moves by at least 1 time or 5 seconds unless one of those bounds stops it
 - [ ] A session with no mark is copied unchanged

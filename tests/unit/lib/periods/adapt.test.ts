@@ -2,6 +2,7 @@
  * The rules that adapt a copied period to its marks: the direction, the
  * amount's step and bounds, and each pick's change, with the swaps' order.
  *
+ * decisions/f002-exercise-library.md
  * decisions/f009-adapted-period.md
  */
 
