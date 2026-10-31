@@ -132,6 +132,7 @@ describe("adaptationOf", () => {
   it("changes nothing after done with 😐", () => {
     const result = adaptationOf([session([at("b1", dribble.id)], mark("done", 3))], [dribble]);
     expect(result.changes).toEqual([]);
+    expect(result.replacements.size).toBe(0);
   });
 
   it("steps every amount in the direction, and lists each change in session order", () => {
@@ -202,6 +203,7 @@ describe("adaptationOf", () => {
       [changed]
     );
     expect(result.changes).toEqual([]);
+    expect(result.replacements.size).toBe(0);
   });
 
   it("takes the hardest down even after a good session, and never swaps it", () => {
@@ -226,9 +228,13 @@ describe("adaptationOf", () => {
           mark("done", 4, { likedBest: dribble.id, hardest: dribble.id })
         ),
       ],
-      [dribble]
+      [dribble, library("e-other", "Kuljetus kartioilla", 1, ["dribbling", "field"])]
     );
-    expect(result.replacements.get("b1")?.amount).toBe(12);
+    expect(result.replacements.get("b1")).toEqual({
+      exerciseId: dribble.id,
+      amountKind: "count",
+      amount: 12,
+    });
   });
 
   it("swaps the liked least for one sharing a skill, at its level, fitting and not in the session", () => {
@@ -305,6 +311,7 @@ describe("adaptationOf", () => {
       [dribble, feint]
     );
     expect(result.changes).toEqual([]);
+    expect(result.replacements.size).toBe(0);
   });
 
   it("swaps the easiest for one a level up after a good session", () => {
