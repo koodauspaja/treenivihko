@@ -1,6 +1,15 @@
+/**
+ * The library's store against Postgres: its checks, its names, its revisions
+ * and the races between saves.
+ *
+ * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
+ * decisions/f010-exercise-saved-meanwhile.md
+ */
+
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
@@ -27,6 +36,7 @@ import {
   listExercises,
   updateExercise,
 } from "@/lib/exercises/store";
+import { whileHeld } from "../support/held.ts";
 import { deleteUsers } from "../support/users.ts";
 
 let lines: string[] = [];
@@ -50,7 +60,6 @@ const LADDER: Exercise = {
 
 /**
  * The exercise through readExercise, as every write is; a fixture that fails it fails the test.
- * decisions/f002-exercise-library.md
  */
 const checked = (values: Exercise): CheckedExercise => {
   const reading = readExercise(valuesFrom(values));
@@ -174,7 +183,6 @@ describe("the name", () => {
   });
 
   // The test database's locale folds Ä too, so the index's own definition is what shows it does not rely on one.
-  // decisions/f002-exercise-library.md
   it("is lowercased by ICU, whatever the database's locale", async () => {
     const [index] = await database().execute<{ indexdef: string }>(
       sql`select indexdef from pg_indexes where indexname = 'exercise_user_name_idx'`
@@ -255,6 +263,40 @@ describe("a save's revision", () => {
       revision: 3,
     });
     expect((await getExercise("u1", id, report))?.revision).toBe(3);
+  });
+
+  it("refuses a save that waited on another from the same revision, once that one commits", async () => {
+    const id = await saved("u1", LADDER);
+    // The first save holds the row, so the second has read nothing it could have checked first.
+    const result = await whileHeld(
+      (tx) =>
+        tx
+          .update(exercise)
+          .set({ name: "Ensin", revision: sql`${exercise.revision} + 1` })
+          .where(and(eq(exercise.id, id), eq(exercise.revision, 1))),
+      () =>
+        updateExercise("u1", id, checked({ ...LADDER, name: "Toinen" }), { revision: 1 }, report)
+    );
+    expect(result).toEqual({ kind: "changed", revision: 2 });
+    expect((await getExercise("u1", id, report))?.name).toBe("Ensin");
+  });
+
+  it("refuses a save that waited on a writer that does not know the revision", async () => {
+    const id = await saved("u1", LADDER);
+    // As the version still serving during a deploy saves: the trigger raises the revision.
+    const result = await whileHeld(
+      (tx) => tx.update(exercise).set({ name: "Vanha versio" }).where(eq(exercise.id, id)),
+      () =>
+        updateExercise(
+          "u1",
+          id,
+          checked({ ...LADDER, name: "Uusi versio" }),
+          { revision: 1 },
+          report
+        )
+    );
+    expect(result).toEqual({ kind: "changed", revision: 2 });
+    expect((await getExercise("u1", id, report))?.name).toBe("Vanha versio");
   });
 
   it("refuses a save from an older revision, changing nothing, and says the revision it found", async () => {
