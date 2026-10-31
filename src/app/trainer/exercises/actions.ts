@@ -37,12 +37,17 @@ export type ExerciseFormState = {
   values: ExerciseValues;
   // A save refused as changed meanwhile: the revision it found, which `Tallenna silti` saves over.
   changed?: { revision: number };
+  // The revision `values` belong to: the one sent, after a refusal; the one reached, after a save.
+  revision?: number;
 };
 
-/** A form's revision as a whole number of at least 1, or 0, which no exercise is at. */
+const REVISION_MAX = 2_147_483_647;
+
+/** A form's revision as a whole number within Postgres's integer, or 0, which no exercise is at. */
 const revisionOf = (form: FormData, name: string) => {
   const value = formText(form, name);
-  return /^[1-9]\d{0,8}$/.test(value) ? Number(value) : 0;
+  const revision = /^[1-9]\d{0,9}$/.test(value) ? Number(value) : 0;
+  return revision <= REVISION_MAX ? revision : 0;
 };
 
 /** Adds or saves an exercise, or shows why not beside each field. */
@@ -53,22 +58,26 @@ export async function saveExercise(
   const { user } = await requireTrainer();
   const values = valuesOf(form);
   const version = previous.version + 1;
+  const id = form.get("id");
+  const existing = typeof id === "string" && id !== "";
+  // An existing exercise's refusal keeps the revision its form was at, beside what was typed.
+  const revision = revisionOf(form, "revision");
+  const sent = existing ? { revision } : {};
   const reading = readExercise(values);
   if (!reading.ok) {
-    return { version, message: null, errors: reading.errors, values };
+    return { version, message: null, errors: reading.errors, values, ...sent };
   }
-  const id = form.get("id");
-  if (typeof id !== "string" || id === "") {
+  if (!existing) {
     const result = await createExercise(user.id, reading.exercise);
     if (result.kind === "nameInUse") {
       return { version, message: null, errors: { name: REFUSAL.nameInUse }, values };
     }
     return { version, message: added(reading.exercise.name), errors: {}, values: EMPTY_VALUES };
   }
-  // `Tallenna silti` sends the revision the refusal found as `over`; `Tallenna`, the page's as `revision`.
+  // `Tallenna silti` sends the revision the refusal found as `over`; `Tallenna`, the form's as `revision`.
   const over = form.has("over");
   const result = await updateExercise(user.id, id, reading.exercise, {
-    revision: revisionOf(form, over ? "over" : "revision"),
+    revision: over ? revisionOf(form, "over") : revision,
     over,
   });
   if (result.kind === "changed") {
@@ -78,17 +87,25 @@ export async function saveExercise(
       errors: {},
       values,
       changed: { revision: result.revision },
+      ...sent,
     };
   }
   if (result.kind === "nameInUse") {
-    return { version, message: null, errors: { name: REFUSAL.nameInUse }, values };
+    return { version, message: null, errors: { name: REFUSAL.nameInUse }, values, ...sent };
   }
   if (result.kind === "missing") {
-    return { version, message: NOT_FOUND, errors: {}, values };
+    return { version, message: NOT_FOUND, errors: {}, values, ...sent };
   }
   refresh();
-  // As saved, trimmed and tidied, not as typed; the refreshed page passes the new revision.
-  return { version, message: SAVED, errors: {}, values: valuesFrom(reading.exercise) };
+  // As saved, trimmed and tidied, not as typed, with the revision the save reached: the refreshed
+  // page may already pass a later one, from another save these values do not show.
+  return {
+    version,
+    message: SAVED,
+    errors: {},
+    values: valuesFrom(reading.exercise),
+    revision: result.revision,
+  };
 }
 
 /** Deletes an exercise, then shows the library; or says which periods use it. */

@@ -166,7 +166,10 @@ export function ExerciseForm({
   exerciseId,
   revision,
   initialValues,
-}: Readonly<{ exerciseId?: string; revision?: number; initialValues: ExerciseValues }>) {
+}: Readonly<
+  | { exerciseId?: undefined; revision?: undefined; initialValues: ExerciseValues }
+  | { exerciseId: string; revision: number; initialValues: ExerciseValues }
+>) {
   const [state, action, pending] = useActionState(saveExercise, {
     version: 0,
     message: null,
@@ -178,7 +181,8 @@ export function ExerciseForm({
       {exerciseId === undefined ? null : (
         <>
           <input type="hidden" name="id" value={exerciseId} />
-          <input type="hidden" name="revision" value={revision} />
+          {/* The revision the fields' values belong to, which the page's may have passed. */}
+          <input type="hidden" name="revision" value={state.revision ?? revision} />
         </>
       )}
       <Fields key={state.version} values={state.values} errors={state.errors} />

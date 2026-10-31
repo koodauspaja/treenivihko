@@ -29,6 +29,11 @@ export type SaveResult =
   | { kind: "missing" }
   | { kind: "changed"; revision: number };
 
+/** A save of an existing exercise: saved at the revision it reached, or why not. */
+export type UpdateResult =
+  | { kind: "saved"; id: string; revision: number }
+  | Exclude<SaveResult, { kind: "saved" }>;
+
 /** The revision a save's form was opened at, and whether it saves over a change on purpose. */
 export type SaveAt = { revision: number; over?: boolean };
 
@@ -177,13 +182,13 @@ export function updateExercise(
   values: CheckedExercise,
   at: SaveAt,
   report: Report = toStderr
-): Promise<SaveResult> {
+): Promise<UpdateResult> {
   if (!isRowId(id)) {
     return Promise.resolve({ kind: "missing" });
   }
   return logged("exercise updated", `user ${userId}, exercise ${id}`, report, async () => {
     const result = await refusingNameInUse("exercise refused, name in use", userId, report, () =>
-      getDatabase().transaction(async (tx): Promise<SaveResult> => {
+      getDatabase().transaction(async (tx): Promise<UpdateResult> => {
         const owned = and(eq(exercise.userId, userId), eq(exercise.id, id));
         // The revision is checked and raised in the one statement, so two saves from one revision cannot both pass.
         const [updated] = await tx
@@ -194,7 +199,7 @@ export function updateExercise(
             updatedAt: new Date(),
           })
           .where(and(owned, eq(exercise.revision, at.revision)))
-          .returning({ id: exercise.id });
+          .returning({ revision: exercise.revision });
         if (!updated) {
           const [current] = await tx
             .select({ revision: exercise.revision })
@@ -206,7 +211,7 @@ export function updateExercise(
         }
         await tx.delete(exerciseLabel).where(eq(exerciseLabel.exerciseId, id));
         await insertLabels(tx, id, values.labels);
-        return { kind: "saved", id };
+        return { kind: "saved", id, revision: updated.revision };
       })
     );
     if (result.kind === "saved") {
