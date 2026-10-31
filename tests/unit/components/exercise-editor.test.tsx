@@ -15,13 +15,15 @@ vi.mock("@/components/trainer-timeout", () => ({ TrainerTimeout: () => <p>timeou
 vi.mock("@/components/exercise-form", () => ({
   ExerciseForm: ({
     exerciseId,
+    revision,
     initialValues,
   }: {
     exerciseId?: string;
+    revision?: number;
     initialValues: { name: string };
   }) => (
     <p>
-      form {String(exerciseId)} {initialValues.name || "(empty)"}
+      form {String(exerciseId)} {String(revision)} {initialValues.name || "(empty)"}
     </p>
   ),
 }));
@@ -46,6 +48,7 @@ const STORED = {
   level: 1,
   warmUp: false,
   labels: ["footwork", "field"],
+  revision: 3,
 };
 
 beforeEach(() => {
@@ -64,7 +67,7 @@ afterEach(() => {
 describe("NewExercise", () => {
   it("is an empty form behind the unlock", async () => {
     render(await NewExercise());
-    expect(screen.getByText("form undefined (empty)")).toBeDefined();
+    expect(screen.getByText("form undefined undefined (empty)")).toBeDefined();
     expect(screen.getByText("timeout")).toBeDefined();
   });
 });
@@ -79,7 +82,7 @@ describe("ExistingExercise", () => {
     expect(video.getAttribute("href")).toBe("https://example.com/v");
     expect(video.getAttribute("target")).toBe("_blank");
     expect(video.getAttribute("rel")).toBe("noopener noreferrer");
-    expect(screen.getByText("form e1 Tikkaat")).toBeDefined();
+    expect(screen.getByText("form e1 3 Tikkaat")).toBeDefined();
     expect(screen.getByText("delete e1 Tikkaat")).toBeDefined();
   });
 

@@ -112,4 +112,110 @@ describe("ExerciseForm", () => {
     expect(screen.getByRole("alert").textContent).toBe("Kertoja on oltava 1–100.");
     expect(field("Nimi").value).toBe("");
   });
+
+  it("sends the revision the page opened the exercise at", async () => {
+    saveExercise.mockResolvedValue({
+      version: 1,
+      message: "Tallennettu.",
+      errors: {},
+      values: STORED,
+    });
+    render(<ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />);
+    save();
+    await waitFor(() => {
+      expect(saveExercise).toHaveBeenCalledOnce();
+    });
+    const sent = (saveExercise.mock.calls[0] as [unknown, FormData])[1];
+    expect([sent.get("id"), sent.get("revision"), sent.get("over")]).toEqual(["e1", "4", null]);
+    expect(screen.queryByRole("button", { name: "Tallenna silti" })).toBeNull();
+  });
+
+  it("sends the revision the refreshed page passes on the next save", async () => {
+    saveExercise.mockResolvedValue({
+      version: 1,
+      message: "Tallennettu.",
+      errors: {},
+      values: STORED,
+    });
+    const { rerender } = render(
+      <ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />
+    );
+    save();
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe("Tallennettu.");
+    });
+    // The refreshed page passes the revision the save raised.
+    rerender(<ExerciseForm exerciseId="e1" revision={5} initialValues={STORED} />);
+    saveExercise.mockResolvedValue({
+      version: 2,
+      message: "Tallennettu.",
+      errors: {},
+      values: STORED,
+    });
+    save();
+    await waitFor(() => {
+      expect(saveExercise).toHaveBeenCalledTimes(2);
+    });
+    expect((saveExercise.mock.calls[1] as [unknown, FormData])[1].get("revision")).toBe("5");
+  });
+
+  it("refused as changed meanwhile, keeps what was typed and offers the saved version and Tallenna silti", async () => {
+    const typed = { ...STORED, name: "Uusi nimi" };
+    saveExercise.mockResolvedValueOnce({
+      version: 1,
+      message:
+        "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.",
+      errors: {},
+      values: typed,
+      changed: { revision: 6 },
+    });
+    render(<ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />);
+    save();
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe(
+        "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta."
+      );
+    });
+    expect(field("Nimi").value).toBe("Uusi nimi");
+    const current = screen.getByRole("link", { name: "Näytä nykyinen" });
+    expect(current.getAttribute("href")).toBe("/valmentaja/harjoitteet/e1");
+    expect(current.getAttribute("target")).toBe("_blank");
+    expect(current.getAttribute("rel")).toBe("noopener");
+    saveExercise.mockResolvedValueOnce({
+      version: 2,
+      message: "Tallennettu.",
+      errors: {},
+      values: typed,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Tallenna silti" }));
+    await waitFor(() => {
+      expect(saveExercise).toHaveBeenCalledTimes(2);
+    });
+    const sent = (saveExercise.mock.calls[1] as [unknown, FormData])[1];
+    expect([sent.get("revision"), sent.get("over"), sent.get("name")]).toEqual([
+      "4",
+      "6",
+      "Uusi nimi",
+    ]);
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Tallenna silti" })).toBeNull();
+    });
+  });
+
+  it("offers no Tallenna silti on a new exercise's form", async () => {
+    saveExercise.mockResolvedValue({
+      version: 1,
+      message: "x",
+      errors: {},
+      values: EMPTY_VALUES,
+      changed: { revision: 2 },
+    });
+    render(<ExerciseForm initialValues={EMPTY_VALUES} />);
+    save();
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe("x");
+    });
+    expect(screen.queryByRole("button", { name: "Tallenna silti" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Näytä nykyinen" })).toBeNull();
+  });
 });

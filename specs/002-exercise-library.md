@@ -187,7 +187,7 @@ Not used.
 | Two exercises saved with the same name at once | One is saved; the other gets `Samanniminen harjoite on jo kirjastossa.` (the unique index decides) |
 | Renaming to the name another exercise has | `Samanniminen harjoite on jo kirjastossa.`; renaming to the same name in another case is allowed |
 | Saving an exercise that was deleted meanwhile | `Sivua ei löytynyt.` |
-| Two saves of the same exercise at once | The later one wins |
+| Two saves of the same exercise at once | The one from a form opened before the other save is refused, with what was typed kept (Feature 010, `specs/010-exercise-saved-meanwhile.md`) |
 | The same add sent again, as after an answer lost on the way | One exercise, the first; the second gets `Samanniminen harjoite on jo kirjastossa.` |
 | A time chosen, then the amount kind changed to count | Only the shown field is sent and checked |
 | A label key the server does not know, in a crafted request | Refused with `Valitse vähintään yksi taito.`, as a key on no list belongs to no group; nothing saved |
