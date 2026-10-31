@@ -143,7 +143,8 @@ Not used.
 | The latest period has no marked session | No choice; `Luo jakso` makes the plain copy |
 | The latest period starts in the future | It is still the latest; with no marks, no choice |
 | An amount already at the half or double bound | It stays; no change is listed |
-| An amount the parent set outside the bounds, such as triple the default | It never moves the wrong way: going up leaves it as it is, and going down brings it to the bound, double the default |
+| An amount the parent set above double the default, such as triple | It never moves the wrong way: going up leaves it as it is, and going down brings it to double the default |
+| An amount the parent set below half the default | Going down leaves it as it is, since the rules never take an amount lower than it is to reach a bound; going up brings it to half the default, or further |
 | 5 seconds down | 4 s rounds to 5 s; the minimum move makes 0 s; Feature 002's rule brings it back to 5 s: unchanged, and not listed |
 | 1 time down | 0.8 rounds to 1; the minimum move makes 0; Feature 002's rule brings it back to 1: unchanged, and not listed |
 | No similar exercise for the liked least | Its amount follows the direction, listed as an amount change when it moves |

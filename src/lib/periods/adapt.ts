@@ -174,86 +174,121 @@ function actionOf(exerciseId: string, mark: Mark, direction: Direction | null): 
   return follow;
 }
 
+/** The amount a step gives `source`, or null when its kind is no longer the library's or it ends where it was. */
+function steppedAmount(
+  source: SourceExercise,
+  own: LibraryExercise,
+  step: Direction
+): number | null {
+  if (source.amountKind !== own.amountKind) {
+    return null;
+  }
+  const to = stepAmount(source.amountKind, source.amount, own.amount, step);
+  return to === source.amount ? null : to;
+}
+
+/** The step an action takes; with no swap found, the liked least follows the direction, and the easiest goes up. */
+function stepOf(action: Action, direction: Direction | null): Direction | null {
+  if (action === null) {
+    return null;
+  }
+  return "step" in action ? action.step : direction;
+}
+
+/** What a session's swaps are chosen from, and those already decided, by the exercise swapped. */
+type Swaps = {
+  session: SourceSession;
+  inSession: Set<string>;
+  library: readonly LibraryExercise[];
+  inPeriod: ReadonlySet<string>;
+  decided: Map<string, LibraryExercise | undefined>;
+};
+
+/** The exercise `own` is swapped for in its session, decided once; one chosen joins the session. */
+function swapOnce(swaps: Swaps, own: LibraryExercise, offset: number): LibraryExercise | undefined {
+  if (!swaps.decided.has(own.id)) {
+    const found = swapFor(
+      own,
+      own.level + offset,
+      swaps.session,
+      swaps.inSession,
+      swaps.library,
+      swaps.inPeriod
+    );
+    swaps.decided.set(own.id, found);
+    if (found !== undefined) {
+      swaps.inSession.add(found.id);
+    }
+  }
+  return swaps.decided.get(own.id);
+}
+
+/** One marked session's changes, added to `into`. */
+function adaptSession(
+  session: SourceSession,
+  mark: Mark,
+  library: readonly LibraryExercise[],
+  inPeriod: ReadonlySet<string>,
+  into: { replacements: Map<string, Replacement>; changes: Change[] }
+) {
+  const byId = new Map(library.map((each) => [each.id, each]));
+  const direction = directionOf(mark);
+  const inSession = new Set(session.exercises.map((each) => each.exerciseId));
+  // One decision per exercise, so an exercise in two blocks changes the same in each.
+  const swaps: Swaps = { session, inSession, library, inPeriod, decided: new Map() };
+  for (const source of session.exercises) {
+    const own = byId.get(source.exerciseId) as LibraryExercise;
+    const action = actionOf(source.exerciseId, mark, direction);
+    const found =
+      action !== null && "swap" in action ? swapOnce(swaps, own, action.swap) : undefined;
+    if (found !== undefined) {
+      const { id, name, amountKind, amount } = found;
+      into.replacements.set(source.id, { exerciseId: id, amountKind, amount });
+      into.changes.push({
+        kind: "swap",
+        id: source.id,
+        session: session.position,
+        from: own.name,
+        to: name,
+        amountKind,
+        amount,
+      });
+      continue;
+    }
+    const step = stepOf(action, direction);
+    const to = step === null ? null : steppedAmount(source, own, step);
+    if (to !== null) {
+      into.replacements.set(source.id, {
+        exerciseId: source.exerciseId,
+        amountKind: source.amountKind,
+        amount: to,
+      });
+      into.changes.push({
+        kind: "amount",
+        id: source.id,
+        session: session.position,
+        name: own.name,
+        amountKind: source.amountKind,
+        from: source.amount,
+        to,
+      });
+    }
+  }
+}
+
 /** The changes the latest period's marks make to its copy, session by session. */
 export function adaptationOf(
   sessions: readonly SourceSession[],
   library: readonly LibraryExercise[]
 ): Adaptation {
-  const byId = new Map(library.map((each) => [each.id, each]));
   const inPeriod = new Set(
     sessions.flatMap((session) => session.exercises.map((each) => each.exerciseId))
   );
-  const replacements = new Map<string, Replacement>();
-  const changes: Change[] = [];
+  const into = { replacements: new Map<string, Replacement>(), changes: [] as Change[] };
   for (const session of sessions) {
-    const { mark } = session;
-    if (mark === null) {
-      continue;
-    }
-    const direction = directionOf(mark);
-    const inSession = new Set(session.exercises.map((each) => each.exerciseId));
-    // One decision per exercise, so an exercise in two blocks changes the same in each.
-    const swapped = new Map<string, LibraryExercise | null>();
-    for (const source of session.exercises) {
-      const own = byId.get(source.exerciseId) as LibraryExercise;
-      const action = actionOf(source.exerciseId, mark, direction);
-      if (action !== null && "swap" in action) {
-        if (!swapped.has(source.exerciseId)) {
-          const found = swapFor(
-            own,
-            own.level + action.swap,
-            session,
-            inSession,
-            library,
-            inPeriod
-          );
-          swapped.set(source.exerciseId, found ?? null);
-          if (found !== undefined) {
-            inSession.add(found.id);
-          }
-        }
-        const found = swapped.get(source.exerciseId);
-        if (found) {
-          replacements.set(source.id, {
-            exerciseId: found.id,
-            amountKind: found.amountKind,
-            amount: found.amount,
-          });
-          changes.push({
-            kind: "swap",
-            id: source.id,
-            session: session.position,
-            from: own.name,
-            to: found.name,
-            amountKind: found.amountKind,
-            amount: found.amount,
-          });
-          continue;
-        }
-      }
-      // With no swap found, the liked least follows the direction, and the easiest goes up.
-      const step = action === null ? null : "step" in action ? action.step : (direction ?? null);
-      if (step === null || source.amountKind !== own.amountKind) {
-        continue;
-      }
-      const to = stepAmount(source.amountKind, source.amount, own.amount, step);
-      if (to !== source.amount) {
-        replacements.set(source.id, {
-          exerciseId: source.exerciseId,
-          amountKind: source.amountKind,
-          amount: to,
-        });
-        changes.push({
-          kind: "amount",
-          id: source.id,
-          session: session.position,
-          name: own.name,
-          amountKind: source.amountKind,
-          from: source.amount,
-          to,
-        });
-      }
+    if (session.mark !== null) {
+      adaptSession(session, session.mark, library, inPeriod, into);
     }
   }
-  return { replacements, changes };
+  return into;
 }
