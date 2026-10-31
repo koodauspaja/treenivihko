@@ -1,6 +1,8 @@
 /**
  * The Finnish the exercise library shows, as the spec gives it.
+ *
  * decisions/f002-exercise-library.md
+ * decisions/f010-exercise-saved-meanwhile.md
  */
 
 export const LIBRARY_HEADING = "Harjoitteet";
@@ -52,3 +54,9 @@ export const REFUSAL = {
 /** How many exercises the list shows. */
 export const exerciseCount = (count: number) =>
   count === 1 ? "1 harjoite" : `${count} harjoitetta`;
+
+/** A save refused because the exercise was saved elsewhere after its form was opened. */
+export const CHANGED_MEANWHILE =
+  "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.";
+export const SHOW_CURRENT = "Näytä nykyinen";
+export const SAVE_ANYWAY = "Tallenna silti";

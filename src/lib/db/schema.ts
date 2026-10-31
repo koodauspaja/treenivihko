@@ -9,6 +9,7 @@
  * decisions/f004-periods-and-sessions.md
  * decisions/f006-session-marks.md
  * decisions/f008-streaks-and-accomplishments.md
+ * decisions/f010-exercise-saved-meanwhile.md
  */
 
 import { sql } from "drizzle-orm";
@@ -154,6 +155,8 @@ export const exercise = pgTable(
     durationMinutes: integer("duration_minutes").notNull(),
     level: integer("level").notNull(),
     warmUp: boolean("warm_up").default(false).notNull(),
+    // Raised by every save; a save from a form opened at another is refused.
+    revision: integer("revision").default(1).notNull(),
     ...timestamps,
   },
   (table) => [

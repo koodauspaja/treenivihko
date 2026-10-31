@@ -72,11 +72,12 @@ describe("saveExercise", () => {
 
   it("saves an existing exercise, keeps its values, and refreshes the page", async () => {
     updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
-    const state = await saveExercise(START, form({ ...VALID, id: "e1" }));
+    const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "4" }));
     expect(updateExercise).toHaveBeenCalledWith(
       "u1",
       "e1",
-      expect.objectContaining({ name: "Tikkaat" })
+      expect.objectContaining({ name: "Tikkaat" }),
+      { revision: 4, over: false }
     );
     expect(state).toMatchObject({ version: 4, message: "Tallennettu.", errors: {} });
     expect(state.values.name).toBe("Tikkaat");
@@ -114,11 +115,80 @@ describe("saveExercise", () => {
     expect(state.values.name).toBe("Tikkaat");
   });
 
+  it("refuses a wrong field of an existing exercise before its revision is checked", async () => {
+    const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "1", name: "" }));
+    expect(state.errors).toEqual({ name: "Nimessä on oltava 1–40 merkkiä." });
+    expect(state.changed).toBeUndefined();
+    expect(updateExercise).not.toHaveBeenCalled();
+  });
+
+  it("refuses renaming an exercise to a name already in the library", async () => {
+    updateExercise.mockResolvedValue({ kind: "nameInUse" });
+    const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "2" }));
+    expect(state.errors).toEqual({ name: "Samanniminen harjoite on jo kirjastossa." });
+    expect(state.changed).toBeUndefined();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("says an exercise deleted meanwhile is not found", async () => {
     updateExercise.mockResolvedValue({ kind: "missing" });
     const state = await saveExercise(START, form({ ...VALID, id: "gone" }));
     expect(state.message).toBe("Sivua ei löytynyt.");
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("refuses a save of an exercise changed meanwhile, keeps what was typed, and offers its revision", async () => {
+    updateExercise.mockResolvedValue({ kind: "changed", revision: 5 });
+    const state = await saveExercise(
+      START,
+      form({ ...VALID, id: "e1", revision: "4", name: "Uusi" })
+    );
+    expect(state).toMatchObject({
+      version: 4,
+      message:
+        "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.",
+      errors: {},
+      changed: { revision: 5 },
+    });
+    expect(state.values.name).toBe("Uusi");
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("saves over a change with Tallenna silti, from the revision the refusal found", async () => {
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    const state = await saveExercise(START, form({ ...VALID, id: "e1", revision: "4", over: "5" }));
+    expect(updateExercise).toHaveBeenCalledWith("u1", "e1", expect.anything(), {
+      revision: 5,
+      over: true,
+    });
+    expect(state.message).toBe("Tallennettu.");
+    expect(state.changed).toBeUndefined();
+  });
+
+  it.each([
+    ["no revision", {}],
+    ["an empty one", { revision: "" }],
+    ["zero", { revision: "0" }],
+    ["one with a sign", { revision: "+4" }],
+    ["a decimal", { revision: "4.0" }],
+    ["one past Postgres's integers", { revision: "2147483648" }],
+    ["ten digits", { revision: "1000000000" }],
+  ])("sends %s as revision 0, which no exercise is at", async (_, fields) => {
+    updateExercise.mockResolvedValue({ kind: "changed", revision: 1 });
+    await saveExercise(START, form({ ...VALID, id: "e1", ...fields }));
+    expect(updateExercise).toHaveBeenCalledWith("u1", "e1", expect.anything(), {
+      revision: 0,
+      over: false,
+    });
+  });
+
+  it("takes the largest revision it reads, nine digits", async () => {
+    updateExercise.mockResolvedValue({ kind: "saved", id: "e1" });
+    await saveExercise(START, form({ ...VALID, id: "e1", revision: "999999999" }));
+    expect(updateExercise).toHaveBeenCalledWith("u1", "e1", expect.anything(), {
+      revision: 999999999,
+      over: false,
+    });
   });
 
   it("needs an unlock, and saves nothing without one", async () => {

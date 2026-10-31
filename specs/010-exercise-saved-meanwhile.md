@@ -41,9 +41,9 @@ On an exercise's page, at `/valmentaja/harjoitteet/‹id›` (Feature 002), when
 
 | Where | Text |
 |---|---|
-| Above the button | `Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.` |
-| A link, beside it | `Näytä nykyinen`, which opens the exercise's page as it is saved now in a new tab |
-| A second button | `Tallenna silti`, which saves what is in the form over the other change |
+| Above `Tallenna` | `Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.` |
+| After `Tallenna`, a link | `Näytä nykyinen`, which opens the exercise's page as it is saved now in a new tab |
+| Beside it, a second button | `Tallenna silti`, which saves what is in the form over the other change; Enter in a field saves with `Tallenna`, never with it |
 | The form's fields | What the parent typed, as sent |
 
 After `Tallenna silti`, the page shows Feature 002's `Tallennettu.`, and the
@@ -99,7 +99,7 @@ Feature 002's other lines stand.
 ## Acceptance criteria
 
 - [ ] Saving an exercise whose form was opened before another save of it is refused with `Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.`, and nothing is saved
-- [ ] The refused form keeps what was typed, and offers `Näytä nykyinen`, opening the saved version in a new tab, and `Tallenna silti`
+- [ ] The refused form keeps what was typed, and offers `Näytä nykyinen`, opening the saved version in a new tab, and `Tallenna silti`; Enter in a field saves with `Tallenna`, never with `Tallenna silti`
 - [ ] `Tallenna silti` saves what was typed over the other change, and shows `Tallennettu.`
 - [ ] `Tallenna silti` after the exercise changed again is refused the same way
 - [ ] Saving twice in one tab is not refused

@@ -217,7 +217,7 @@ Not used.
 | Deleting a library exercise a period uses | Refused, naming the periods; nothing deleted |
 | Deleting the current period | Allowed, after the confirmation; Feature 005 then shows the next period, or none |
 | A session, block or exercise of another parent's, by its address | `Sivua ei löytynyt.`; never shown or changed |
-| Two saves of the same field at once | The later one wins, as in Feature 002 |
+| Two saves of the same field at once | The later one wins; a library exercise's own save is checked instead (Feature 010) |
 | Moving the first item up, or the last down | Nothing changes; the button is not shown |
 | The unlock ends while a page is open | The next save goes to the lock page, as in Feature 001 |
 | The database unreachable | The existing error page |
