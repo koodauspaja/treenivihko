@@ -136,7 +136,15 @@ test("unchecked, the choice makes the plain copy; without marks, there is no cho
   await unlockTrainer(page);
 
   await page.goto("/valmentaja/jaksot/uusi");
-  await page.getByRole("checkbox", { name: "Sovita edellisen jakson merkintöihin" }).uncheck();
+  const choice = page.getByRole("checkbox", { name: "Sovita edellisen jakson merkintöihin" });
+  const suggested = await page.getByLabel("Alkaa").inputValue();
+  await choice.uncheck();
+  // A refusal keeps the choice as it was sent.
+  await page.getByLabel("Alkaa").fill(startsOn);
+  await page.getByRole("button", { name: "Luo jakso" }).click();
+  await expect(main(page).getByRole("alert")).toContainText("menee päällekkäin");
+  await expect(choice).not.toBeChecked();
+  await page.getByLabel("Alkaa").fill(suggested);
   await page.getByRole("button", { name: "Luo jakso" }).click();
   const nextStart = addDays(lastDayOf(startsOn, 2), 1);
   const span = formatSpan(nextStart, lastDayOf(nextStart, 2));

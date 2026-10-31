@@ -175,6 +175,22 @@ describe("PeriodForm", () => {
     expect((createPeriodFromForm.mock.calls[0] as [unknown, FormData])[1].get("adapt")).toBeNull();
   });
 
+  it("keeps the choice unchecked after a refusal, so the next try is the plain copy", async () => {
+    createPeriodFromForm.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: { startsOn: "Anna alkamispäivä." },
+      values: { startsOn: "", weeks: "2" },
+    });
+    render(<PeriodForm initial={INITIAL} adaptable />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Luo jakso" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toBe("Anna alkamispäivä.");
+    });
+    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(false);
+  });
+
   it("shows an adapted copy's changes in place of the form, with the way to it", async () => {
     createPeriodFromForm.mockResolvedValue({
       version: 1,

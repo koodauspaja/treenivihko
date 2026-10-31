@@ -24,11 +24,9 @@ import { WEEKS_MAX } from "@/lib/periods/rules";
 import { periodPath } from "@/lib/trainer/paths";
 
 /**
- * A period's start and length: a new period's when there is no `periodId`,
- * which the action creates as a copy of the latest, adapted to its marks when
- * `adaptable` and checked, then shows what changed in place of the form. What
- * was sent is kept when refused, until the page brings newer dates; otherwise
- * the page's dates are shown.
+ * A period's start and length; with no `periodId`, a new period, copied from
+ * the latest and adapted to its marks when `adaptable` and checked. A refusal
+ * keeps what was sent until the page brings newer dates.
  *
  * decisions/f004-periods-and-sessions.md
  * decisions/f009-adapted-period.md
@@ -51,8 +49,12 @@ export function PeriodForm({
   const [against, setAgainst] = useState(savedKey);
   const errors = against === savedKey ? state.errors : {};
   const shown = Object.keys(errors).length === 0 ? initial : state.values;
+  // The choice as last sent: the fields are rebuilt after each answer, and React resets
+  // the form to their defaults, so the default is what the parent chose.
+  const [adapt, setAdapt] = useState(true);
   const submit = (form: FormData) => {
     setAgainst(savedKey);
+    setAdapt(form.get("adapt") === "on");
     action(form);
   };
   if (state.created !== undefined) {
@@ -85,16 +87,16 @@ export function PeriodForm({
           ))}
         </select>
         <Refusal message={errors.weeks} />
+        {adaptable ? (
+          <>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="adapt" defaultChecked={adapt} />
+              {ADAPT}
+            </label>
+            <p className="text-sm">{ADAPT_HELP}</p>
+          </>
+        ) : null}
       </div>
-      {adaptable ? (
-        <>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="adapt" defaultChecked />
-            {ADAPT}
-          </label>
-          <p className="text-sm">{ADAPT_HELP}</p>
-        </>
-      ) : null}
       {state.message === null ? null : <output>{state.message}</output>}
       <button
         type="submit"

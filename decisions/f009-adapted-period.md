@@ -31,8 +31,9 @@ AI-built period can be a later feature.
   within Feature 002's rule, and never against the direction.
 - **The picks decide per exercise**, in the order liked best, hardest, liked
   least, easiest, the first that names it winning. A swap takes an exercise
-  sharing a skill label, at the level asked, fitting the session and not in
-  it, one not in the latest period first, then by Finnish name.
+  sharing a skill label, at the level asked, fitting the session, and neither
+  in it nor swapped out of it; one not in the latest period first, then by
+  Finnish name.
 - **What changed is shown once**, in the action's answer in place of the
   form, and never stored.
 
