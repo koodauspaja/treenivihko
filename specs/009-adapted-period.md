@@ -156,6 +156,7 @@ Not used.
 | The marks change while the page is open | The rules read the marks as they are when `Luo jakso` is pressed |
 | Reloading the page after creating | The form is shown again, for another period; the list is gone |
 | The copy refused for an overlap | Feature 004's refusal; nothing saved, nothing listed |
+| A refusal, after the choice was unchecked or checked | The choice stays as it was sent |
 
 ## Logging
 

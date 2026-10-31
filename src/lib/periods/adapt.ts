@@ -1,8 +1,7 @@
 /**
- * The rules that adapt a copy of the latest period to its marks: each marked
- * session's direction, each amount's step within its bounds, and the swaps
- * for the liked least and the easiest. The same marks and library always give
- * the same changes.
+ * The rules that adapt a copy of the latest period to its marks: each session's
+ * direction, each amount's bounded step, and the swaps for the liked least and
+ * the easiest. The same marks and library always give the same changes.
  *
  * decisions/f004-periods-and-sessions.md
  * decisions/f009-adapted-period.md
