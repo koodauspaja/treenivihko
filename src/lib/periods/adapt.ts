@@ -3,6 +3,7 @@
  * direction, each amount's bounded step, and the swaps for the liked least and
  * the easiest. The same marks and library always give the same changes.
  *
+ * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  * decisions/f009-adapted-period.md
  */
