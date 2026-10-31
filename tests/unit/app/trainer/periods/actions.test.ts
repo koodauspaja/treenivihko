@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const USER = { id: "u1", name: "Test Parent", sessionId: "s1" };
 const requireTrainer = vi.fn();
 const createPeriod = vi.fn();
+const createAdaptedPeriod = vi.fn();
 const updatePeriodDates = vi.fn();
 const deletePeriod = vi.fn();
 const addSession = vi.fn();
@@ -16,6 +17,7 @@ vi.mock("next/navigation", () => ({ redirect: (path: string) => redirect(path) }
 vi.mock("@/lib/trainer/access", () => ({ requireTrainer: () => requireTrainer() }));
 vi.mock("@/lib/periods/store", () => ({
   createPeriod: (...args: unknown[]) => createPeriod(...args),
+  createAdaptedPeriod: (...args: unknown[]) => createAdaptedPeriod(...args),
   updatePeriodDates: (...args: unknown[]) => updatePeriodDates(...args),
   deletePeriod: (...args: unknown[]) => deletePeriod(...args),
   addSession: (...args: unknown[]) => addSession(...args),
@@ -45,7 +47,14 @@ const OVERLAP = { kind: "overlap", with: { id: "p0", startsOn: "2026-11-03", wee
 const UNLOCK = new Error("redirect /valmentaja/avaa");
 
 beforeEach(() => {
-  for (const mock of [requireTrainer, createPeriod, updatePeriodDates, deletePeriod, addSession]) {
+  for (const mock of [
+    requireTrainer,
+    createPeriod,
+    createAdaptedPeriod,
+    updatePeriodDates,
+    deletePeriod,
+    addSession,
+  ]) {
     mock.mockReset();
   }
   refresh.mockClear();
@@ -60,6 +69,66 @@ describe("createPeriodFromForm", () => {
       createPeriodFromForm(START, form({ startsOn: "2026-11-17", weeks: "3" }))
     ).rejects.toThrow("redirect /valmentaja/jaksot/p1");
     expect(createPeriod).toHaveBeenCalledWith("u1", { startsOn: "2026-11-17", weeks: 3 });
+  });
+
+  it("creates an adapted copy when the choice is checked, and shows what changed in place of the form", async () => {
+    createAdaptedPeriod.mockResolvedValue({
+      kind: "saved",
+      id: "p2",
+      changes: [
+        {
+          kind: "amount",
+          id: "b1",
+          session: 1,
+          name: "Kuljetus",
+          amountKind: "count",
+          from: 10,
+          to: 12,
+        },
+        {
+          kind: "swap",
+          id: "b2",
+          session: 2,
+          from: "Harhautus",
+          to: "Syöttö",
+          amountKind: "count",
+          amount: 8,
+        },
+      ],
+    });
+    const state = await createPeriodFromForm(
+      START,
+      form({ startsOn: "2026-11-17", weeks: "2", adapt: "on" })
+    );
+    expect(createAdaptedPeriod).toHaveBeenCalledWith("u1", { startsOn: "2026-11-17", weeks: 2 });
+    expect(createPeriod).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+    expect(state).toEqual({
+      version: 4,
+      message: null,
+      errors: {},
+      values: { startsOn: "2026-11-17", weeks: "2" },
+      created: {
+        id: "p2",
+        span: "17.11.–30.11.2026",
+        changes: [
+          { id: "b1", line: "Treeni 1: Kuljetus 10 kertaa → 12 kertaa" },
+          { id: "b2", line: "Treeni 2: Harhautus vaihtui harjoitteeseen Syöttö (8 kertaa)" },
+        ],
+      },
+    });
+  });
+
+  it("refuses an adapted copy's overlap as the plain copy's", async () => {
+    createAdaptedPeriod.mockResolvedValue(OVERLAP);
+    const state = await createPeriodFromForm(
+      START,
+      form({ startsOn: "2026-11-10", weeks: "2", adapt: "on" })
+    );
+    expect(state.errors).toEqual({
+      startsOn: "Jakso menee päällekkäin jakson 3.11.–16.11.2026 kanssa.",
+    });
+    expect(state.created).toBeUndefined();
   });
 
   it("refuses a wrong field, keeps what was typed, and creates nothing", async () => {

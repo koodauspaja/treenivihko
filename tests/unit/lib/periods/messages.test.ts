@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADAPT,
+  ADAPT_HELP,
+  CHANGES_HEADING,
+  changeLine,
   confirmDeleteBlock,
   confirmDeletePeriod,
   confirmDeleteSession,
   copiedFrom,
+  createdHeading,
   exerciseInUse,
   lengthLine,
+  NO_CHANGES,
+  OPEN_PERIOD,
   overlapsWith,
   overTarget,
   periodHeading,
@@ -70,5 +77,52 @@ describe("the periods' messages", () => {
     expect(exerciseInUse(["3.11.–16.11.2026", "17.11.–30.11.2026"])).toBe(
       "Harjoite on käytössä jaksoissa: 3.11.–16.11.2026, 17.11.–30.11.2026. Poista se ensin niiden treeneistä."
     );
+  });
+
+  it("words the choice to adapt, and what an adapted copy shows", () => {
+    expect(ADAPT).toBe("Sovita edellisen jakson merkintöihin");
+    expect(ADAPT_HELP).toBe(
+      "Määrät nousevat hyvin menneissä treeneissä ja laskevat raskaissa. Vähiten mieluisa harjoite vaihtuu samankaltaiseen ja helpoin vaikeampaan."
+    );
+    expect(createdHeading("3.11.–16.11.2026")).toBe("Jakso 3.11.–16.11.2026 luotu");
+    expect(CHANGES_HEADING).toBe("Merkintöjen mukaan muutettu:");
+    expect(NO_CHANGES).toBe("Merkinnät eivät muuttaneet mitään.");
+    expect(OPEN_PERIOD).toBe("Avaa jakso");
+  });
+
+  it("words an amount's change and a swap, with the amounts as the library shows them", () => {
+    expect(
+      changeLine({
+        kind: "amount",
+        id: "b1",
+        session: 2,
+        name: "Kuljetus kartioilla",
+        amountKind: "count",
+        from: 10,
+        to: 12,
+      })
+    ).toBe("Treeni 2: Kuljetus kartioilla 10 kertaa → 12 kertaa");
+    expect(
+      changeLine({
+        kind: "amount",
+        id: "b2",
+        session: 1,
+        name: "Pikajuoksu",
+        amountKind: "time",
+        from: 85,
+        to: 100,
+      })
+    ).toBe("Treeni 1: Pikajuoksu 1 min 25 s → 1 min 40 s");
+    expect(
+      changeLine({
+        kind: "swap",
+        id: "b3",
+        session: 3,
+        from: "Kuljetus",
+        to: "Harhautus",
+        amountKind: "time",
+        amount: 30,
+      })
+    ).toBe("Treeni 3: Kuljetus vaihtui harjoitteeseen Harhautus (30 s)");
   });
 });

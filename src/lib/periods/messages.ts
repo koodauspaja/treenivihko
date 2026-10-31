@@ -2,7 +2,11 @@
  * The Finnish the periods and their sessions show, as the spec gives it.
  *
  * decisions/f004-periods-and-sessions.md
+ * decisions/f009-adapted-period.md
  */
+
+import { formatAmount } from "@/lib/exercises/rules";
+import type { Change } from "./adapt";
 
 export const PERIODS_HEADING = "Jaksot";
 export const NEW_PERIOD = "Uusi jakso";
@@ -85,3 +89,22 @@ export const overlapsWith = (span: string) => `Jakso menee päällekkäin jakson
 /** Why a library exercise cannot be deleted: the periods it is in. */
 export const exerciseInUse = (spans: readonly string[]) =>
   `Harjoite on käytössä jaksoissa: ${spans.join(", ")}. Poista se ensin niiden treeneistä.`;
+
+/** The choice on a new period, and what it does. */
+export const ADAPT = "Sovita edellisen jakson merkintöihin";
+export const ADAPT_HELP =
+  "Määrät nousevat hyvin menneissä treeneissä ja laskevat raskaissa. Vähiten mieluisa harjoite vaihtuu samankaltaiseen ja helpoin vaikeampaan.";
+
+/** What an adapted copy shows, once, in place of the form. */
+export const createdHeading = (span: string) => `Jakso ${span} luotu`;
+export const CHANGES_HEADING = "Merkintöjen mukaan muutettu:";
+export const NO_CHANGES = "Merkinnät eivät muuttaneet mitään.";
+export const OPEN_PERIOD = "Avaa jakso";
+
+/** One change the rules made: `Treeni 2: Kuljetus 10 kertaa → 12 kertaa`. */
+export function changeLine(change: Change): string {
+  if (change.kind === "amount") {
+    return `Treeni ${change.session}: ${change.name} ${formatAmount(change.amountKind, change.from)} → ${formatAmount(change.amountKind, change.to)}`;
+  }
+  return `Treeni ${change.session}: ${change.from} vaihtui harjoitteeseen ${change.to} (${formatAmount(change.amountKind, change.amount)})`;
+}

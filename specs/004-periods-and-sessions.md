@@ -29,7 +29,8 @@ period starts as a copy of the latest, so most of the work is adjusting it.
 
 - The child seeing a period: Feature 005.
 - Marking a session: Feature 006.
-- Generating a period with AI: Feature 009.
+- Adapting a period to the marks: Feature 009. Generating one with AI: a
+  later feature.
 - Saved blocks to reuse across periods, and moving a session to another
   period.
 - Weekdays or rest days: sessions are done in order, whenever the child

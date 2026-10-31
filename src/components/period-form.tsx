@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import {
   createPeriodFromForm,
@@ -7,19 +8,40 @@ import {
   savePeriodDates,
 } from "@/app/trainer/periods/actions";
 import { Refusal } from "@/components/refusal";
-import { CREATE_PERIOD, FIELD, SAVE, weeksLabel } from "@/lib/periods/messages";
+import {
+  ADAPT,
+  ADAPT_HELP,
+  CHANGES_HEADING,
+  CREATE_PERIOD,
+  createdHeading,
+  FIELD,
+  NO_CHANGES,
+  OPEN_PERIOD,
+  SAVE,
+  weeksLabel,
+} from "@/lib/periods/messages";
 import { WEEKS_MAX } from "@/lib/periods/rules";
+import { periodPath } from "@/lib/trainer/paths";
 
 /**
  * A period's start and length: a new period's when there is no `periodId`,
- * which the action creates as a copy of the latest. What was sent is kept when
- * refused, until the page brings newer dates; otherwise the page's dates are shown.
+ * which the action creates as a copy of the latest, adapted to its marks when
+ * `adaptable` and checked, then shows what changed in place of the form. What
+ * was sent is kept when refused, until the page brings newer dates; otherwise
+ * the page's dates are shown.
+ *
  * decisions/f004-periods-and-sessions.md
+ * decisions/f009-adapted-period.md
  */
 export function PeriodForm({
   periodId,
   initial,
-}: Readonly<{ periodId?: string; initial: { startsOn: string; weeks: string } }>) {
+  adaptable = false,
+}: Readonly<{
+  periodId?: string;
+  initial: { startsOn: string; weeks: string };
+  adaptable?: boolean;
+}>) {
   const [state, action, pending] = useActionState(
     periodId === undefined ? createPeriodFromForm : savePeriodDates,
     { version: 0, message: null, errors: {}, values: initial } satisfies PeriodFormState
@@ -33,6 +55,9 @@ export function PeriodForm({
     setAgainst(savedKey);
     action(form);
   };
+  if (state.created !== undefined) {
+    return <Created {...state.created} />;
+  }
   return (
     <form action={submit} className="mt-4 flex flex-col gap-3">
       {periodId === undefined ? null : <input type="hidden" name="id" value={periodId} />}
@@ -61,6 +86,15 @@ export function PeriodForm({
         </select>
         <Refusal message={errors.weeks} />
       </div>
+      {adaptable ? (
+        <>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="adapt" defaultChecked />
+            {ADAPT}
+          </label>
+          <p className="text-sm">{ADAPT_HELP}</p>
+        </>
+      ) : null}
       {state.message === null ? null : <output>{state.message}</output>}
       <button
         type="submit"
@@ -70,5 +104,33 @@ export function PeriodForm({
         {periodId === undefined ? CREATE_PERIOD : SAVE}
       </button>
     </form>
+  );
+}
+
+/** An adapted copy, once: its span, what the marks changed, and the way to it. */
+function Created({
+  id,
+  span,
+  changes,
+}: Readonly<{ id: string; span: string; changes: { id: string; line: string }[] }>) {
+  return (
+    <section className="mt-4">
+      <h2 className="text-2xl font-semibold">{createdHeading(span)}</h2>
+      {changes.length === 0 ? (
+        <p className="mt-2">{NO_CHANGES}</p>
+      ) : (
+        <>
+          <p className="mt-2">{CHANGES_HEADING}</p>
+          <ul className="mt-2 list-disc pl-6">
+            {changes.map((change) => (
+              <li key={change.id}>{change.line}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <Link href={periodPath(id)} className="mt-4 inline-block underline">
+        {OPEN_PERIOD}
+      </Link>
+    </section>
   );
 }

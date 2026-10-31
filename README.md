@@ -36,8 +36,9 @@ npm run verify         # every check, as CI runs them
 
 Next.js App Router, strict TypeScript, Drizzle on Postgres, Better Auth,
 Biome, Vitest at 100% unit coverage, Playwright, deployed on Railway. The
-adaptation runs on the Claude API, choosing and adjusting exercises from a
-curated library; it does not invent exercises.
+next period adapts to the marks by fixed rules in code, choosing and
+adjusting exercises from a curated library; it never invents exercises. A
+later feature may add the Claude API, under the same rule.
 
 ---
 
