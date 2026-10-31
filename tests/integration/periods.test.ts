@@ -4,6 +4,7 @@
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
+ * decisions/f009-adapted-period.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -31,12 +32,15 @@ import {
 } from "@/lib/db/schema";
 import { type Exercise, readExercise, valuesFrom } from "@/lib/exercises/rules";
 import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/store";
+import { NO_PICKS } from "@/lib/marks/rules";
+import { saveMark } from "@/lib/marks/store";
 import { NEW_SESSION } from "@/lib/periods/rules";
 import {
   addBlock,
   addBlockExercise,
   addSession,
   blockExerciseKind,
+  createAdaptedPeriod,
   createPeriod,
   deleteBlock,
   deleteBlockExercise,
@@ -358,6 +362,102 @@ describe("a period", () => {
     const id = await periodOf("u1", "2026-11-02");
     expect(await getPeriod("u2", id, report)).toBeNull();
     expect(await getPeriod("u1", "not-an-id", report)).toBeNull();
+  });
+});
+
+describe("an adapted period", () => {
+  /** The library exercises and amounts of a period's sessions, in order. */
+  const contents = async (periodId: string) => {
+    const found = await getPeriod("u1", periodId, report);
+    return Promise.all(
+      (found?.sessions ?? []).map(async (each) =>
+        ((await getSession("u1", each.id, report))?.blocks ?? []).flatMap((one) =>
+          one.exercises.map((exercise) => [
+            exercise.exerciseId,
+            exercise.amountKind,
+            exercise.amount,
+          ])
+        )
+      )
+    );
+  };
+
+  it("copies the latest period with its marks' changes, in one write, logged with their count", async () => {
+    const first = await builtPeriod("u1", "2026-11-02");
+    const unmarked = await sessionOf("u1", first.periodId);
+    const unmarkedBlock = await blockOf("u1", unmarked, "Kuljetus");
+    await added("u1", unmarkedBlock, first.ladder);
+    const starts = await exerciseOf("u1", { ...SPRINT, name: "Pikalähdöt" });
+    await exerciseOf("u2", { ...SPRINT, name: "Aaa-lähdöt" });
+    const markResult = await saveMark(
+      "u1",
+      first.sessionId,
+      {
+        status: "done",
+        trainedOn: "2026-11-05",
+        feeling: 5,
+        picks: { ...NO_PICKS, likedLeast: first.sprint },
+      },
+      "2026-11-05",
+      report
+    );
+    expect(markResult.kind).toBe("saved");
+    const before = await contents(first.periodId);
+    lines = [];
+    const result = await createAdaptedPeriod("u1", { startsOn: "2026-11-16", weeks: 2 }, report);
+    if (result.kind !== "saved") {
+      throw new Error(`expected a save, got ${result.kind}`);
+    }
+    expect(result.changes).toEqual([
+      expect.objectContaining({ kind: "amount", session: 1, name: LADDER.name, from: 10, to: 12 }),
+      expect.objectContaining({
+        kind: "swap",
+        session: 1,
+        from: SPRINT.name,
+        to: "Pikalähdöt",
+        amount: 30,
+      }),
+    ]);
+    expect(lines).toEqual([
+      `period created: user u1, period ${result.id}, from period ${first.periodId}, adapted, changes 2`,
+    ]);
+    expect(await contents(result.id)).toEqual([
+      [
+        [first.ladder, "count", 12],
+        [starts, "time", 30],
+      ],
+      [[first.ladder, "count", 10]],
+    ]);
+    expect(await contents(first.periodId)).toEqual(before);
+  });
+
+  it("is a plain copy with no changes when the latest has no marks, and an empty period when there is none", async () => {
+    const empty = await createAdaptedPeriod("u1", { startsOn: "2026-11-02", weeks: 2 }, report);
+    expect(empty).toEqual({ kind: "saved", id: expect.any(String), changes: [] });
+    expect(lines.at(-1)).toBe(
+      `period created: user u1, period ${(empty as { id: string }).id}, from none`
+    );
+    const first = await builtPeriod("u1", "2026-11-16");
+    lines = [];
+    const copy = await createAdaptedPeriod("u1", { startsOn: "2026-11-30", weeks: 2 }, report);
+    if (copy.kind !== "saved") {
+      throw new Error(`expected a save, got ${copy.kind}`);
+    }
+    expect(copy.changes).toEqual([]);
+    expect(lines).toEqual([
+      `period created: user u1, period ${copy.id}, from period ${first.periodId}, adapted, changes 0`,
+    ]);
+    expect(await contents(copy.id)).toEqual(await contents(first.periodId));
+  });
+
+  it("is refused when its days overlap another's, saving nothing", async () => {
+    await builtPeriod("u1", "2026-11-02");
+    const result = await createAdaptedPeriod("u1", { startsOn: "2026-11-09", weeks: 1 }, report);
+    expect(result).toEqual({
+      kind: "overlap",
+      with: expect.objectContaining({ startsOn: "2026-11-02" }),
+    });
+    expect(await listPeriodDates("u1", report)).toHaveLength(1);
   });
 });
 

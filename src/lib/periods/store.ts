@@ -9,6 +9,7 @@
  * decisions/f002-exercise-library.md
  * decisions/f004-periods-and-sessions.md
  * decisions/f005-notebook-view.md
+ * decisions/f009-adapted-period.md
  */
 
 import { randomUUID } from "node:crypto";
@@ -23,11 +24,14 @@ import {
   exercise,
   exerciseLabel,
   period,
+  sessionMark,
   trainingSession,
   trainingSessionEquipment,
 } from "@/lib/db/schema";
 import { inListOrder, type LabelKey } from "@/lib/exercises/labels";
-import type { AmountKind } from "@/lib/exercises/rules";
+import type { AmountKind, Level } from "@/lib/exercises/rules";
+import type { Status } from "@/lib/marks/rules";
+import { type Adaptation, adaptationOf, type Change, type SourceSession } from "./adapt";
 import {
   BLOCK_EXERCISES_MAX,
   BLOCKS_MAX,
@@ -168,7 +172,7 @@ async function overlapOrThrow(
   dates: PeriodDates,
   except: string | undefined,
   report: Report
-): Promise<PeriodWrite> {
+): Promise<Exclude<PeriodWrite, { kind: "saved" }>> {
   if (!isOverlap(error)) {
     throw error;
   }
@@ -178,8 +182,16 @@ async function overlapOrThrow(
   return other === undefined ? { kind: "missing" } : { kind: "overlap", with: other };
 }
 
-/** Copies `from`'s sessions, equipment, blocks and block exercises into `to`, in order. */
-async function copySessions(tx: Transaction, from: string, to: string) {
+/**
+ * Copies `from`'s sessions, equipment, blocks and block exercises into `to`, in
+ * order; a block exercise in `replacements` holds what it names instead.
+ */
+async function copySessions(
+  tx: Transaction,
+  from: string,
+  to: string,
+  replacements: Adaptation["replacements"] = new Map()
+) {
   const sessions = await tx
     .select()
     .from(trainingSession)
@@ -233,24 +245,119 @@ async function copySessions(tx: Transaction, from: string, to: string) {
       exercises.map((each) => ({
         id: randomUUID(),
         blockId: blockIds.get(each.blockId) as string,
-        exerciseId: each.exerciseId,
         position: each.position,
-        amountKind: each.amountKind,
-        amount: each.amount,
+        ...(replacements.get(each.id) ?? {
+          exerciseId: each.exerciseId,
+          amountKind: each.amountKind,
+          amount: each.amount,
+        }),
       }))
     );
   }
 }
 
-/**
- * Adds a period, as a copy of the one that ends last, in one transaction;
- * refused when its days overlap another's.
- */
-export function createPeriod(
+/** What the rules read of the latest period: its sessions in order, with their marks, and the library. */
+async function adaptationIn(tx: Transaction, userId: string, from: string): Promise<Adaptation> {
+  const sessions = await tx
+    .select({
+      id: trainingSession.id,
+      position: trainingSession.position,
+      place: trainingSession.place,
+      equipment: sql<
+        string[]
+      >`coalesce((select array_agg(${trainingSessionEquipment.label}) from ${trainingSessionEquipment} where ${trainingSessionEquipment.sessionId} = ${trainingSession.id}), '{}')`,
+      status: sessionMark.status,
+      feeling: sessionMark.feeling,
+      likedBest: sessionMark.likedBestExerciseId,
+      likedLeast: sessionMark.likedLeastExerciseId,
+      easiest: sessionMark.easiestExerciseId,
+      hardest: sessionMark.hardestExerciseId,
+    })
+    .from(trainingSession)
+    .leftJoin(sessionMark, eq(sessionMark.sessionId, trainingSession.id))
+    .where(eq(trainingSession.periodId, from))
+    .orderBy(asc(trainingSession.position));
+  const exercises =
+    sessions.length === 0
+      ? []
+      : await tx
+          .select({
+            id: blockExercise.id,
+            sessionId: block.sessionId,
+            exerciseId: blockExercise.exerciseId,
+            amountKind: blockExercise.amountKind,
+            amount: blockExercise.amount,
+          })
+          .from(blockExercise)
+          .innerJoin(block, eq(block.id, blockExercise.blockId))
+          .where(
+            inArray(
+              block.sessionId,
+              sessions.map((each) => each.id)
+            )
+          )
+          .orderBy(asc(block.position), asc(blockExercise.position));
+  const library = await tx
+    .select({
+      id: exercise.id,
+      name: exercise.name,
+      level: exercise.level,
+      amountKind: exercise.amountKind,
+      amount: exercise.amount,
+      labels: sql<
+        string[]
+      >`coalesce((select array_agg(${exerciseLabel.label}) from ${exerciseLabel} where ${exerciseLabel.exerciseId} = ${exercise.id}), '{}')`,
+    })
+    .from(exercise)
+    .where(eq(exercise.userId, userId));
+  const source: SourceSession[] = sessions.map((each) => ({
+    position: each.position,
+    place: each.place,
+    equipment: each.equipment,
+    exercises: exercises
+      .filter((row) => row.sessionId === each.id)
+      .map((row) => ({
+        id: row.id,
+        exerciseId: row.exerciseId,
+        amountKind: row.amountKind as AmountKind,
+        amount: row.amount,
+      })),
+    mark:
+      each.status === null
+        ? null
+        : {
+            status: each.status as Status,
+            trainedOn: null,
+            feeling: each.feeling,
+            picks: {
+              likedBest: each.likedBest,
+              likedLeast: each.likedLeast,
+              easiest: each.easiest,
+              hardest: each.hardest,
+            },
+          },
+  }));
+  return adaptationOf(
+    source,
+    library.map((each) => ({
+      ...each,
+      level: each.level as Level,
+      amountKind: each.amountKind as AmountKind,
+    }))
+  );
+}
+
+export type AdaptedWrite =
+  | { kind: "saved"; id: string; changes: readonly Change[] }
+  | Exclude<PeriodWrite, { kind: "saved" }>;
+
+/** A new period copied from the one that ends last, adapted to its marks when `adapt`. */
+function createFrom(
   userId: string,
   dates: PeriodDates,
-  report: Report = toStderr
-): Promise<PeriodWrite> {
+  adapt: boolean,
+  report: Report
+): Promise<AdaptedWrite> {
   return logged("period created", `user ${userId}`, report, async () => {
     const id = randomUUID();
     try {
@@ -263,10 +370,17 @@ export function createPeriod(
           }
           const source = latestOf(periods);
           await tx.insert(period).values({ id, userId, ...dates });
-          if (source !== undefined) {
-            await copySessions(tx, source.id, id);
+          if (source === undefined) {
+            return { kind: "saved", id, from: undefined, changes: null } as const;
           }
-          return { kind: "saved", id, from: source?.id } as const;
+          const adaptation = adapt ? await adaptationIn(tx, userId, source.id) : null;
+          await copySessions(tx, source.id, id, adaptation?.replacements);
+          return {
+            kind: "saved",
+            id,
+            from: source.id,
+            changes: adaptation?.changes ?? null,
+          } as const;
         },
         // One snapshot, so an edit of the latest period cannot land between the copy's reads.
         { isolationLevel: "repeatable read" }
@@ -276,12 +390,35 @@ export function createPeriod(
         return result;
       }
       const from = result.from === undefined ? "none" : `period ${result.from}`;
-      report(`period created: user ${userId}, period ${id}, from ${from}`);
-      return { kind: "saved", id };
+      const adapted = result.changes === null ? "" : `, adapted, changes ${result.changes.length}`;
+      report(`period created: user ${userId}, period ${id}, from ${from}${adapted}`);
+      return { kind: "saved", id, changes: result.changes ?? [] };
     } catch (error) {
       return overlapOrThrow(error, userId, dates, undefined, report);
     }
   });
+}
+
+/**
+ * Adds a period, as a copy of the one that ends last, in one transaction;
+ * refused when its days overlap another's.
+ */
+export async function createPeriod(
+  userId: string,
+  dates: PeriodDates,
+  report: Report = toStderr
+): Promise<PeriodWrite> {
+  const result = await createFrom(userId, dates, false, report);
+  return result.kind === "saved" ? { kind: "saved", id: result.id } : result;
+}
+
+/** Adds a period as `createPeriod` does, then adapted to the latest period's marks. */
+export function createAdaptedPeriod(
+  userId: string,
+  dates: PeriodDates,
+  report: Report = toStderr
+): Promise<AdaptedWrite> {
+  return createFrom(userId, dates, true, report);
 }
 
 /** Saves a period's dates, refused when they overlap another's. */

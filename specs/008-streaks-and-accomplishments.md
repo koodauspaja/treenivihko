@@ -31,8 +31,8 @@ illness or a holiday, and a paused week does not break the streak.
 
 - Comparing with anyone else, and leaderboards.
 - A pause's reason: only its days are stored.
-- Limits the AI must respect during a pause, such as "no jumps": Feature 009
-  or later.
+- Limits a generated period must respect during a pause, such as "no
+  jumps": a later feature.
 - Editing a pause in place: it is deleted and added again.
 - Telling the child about a new accomplishment anywhere but `Omat treenit`.
 - Taking an accomplishment away: once earned, it stays.
@@ -176,7 +176,7 @@ A pause may be in the past or the future.
 
 ## AI
 
-Not used. Feature 009 may read the pauses later; that is its spec's to say.
+Not used. A later feature may read the pauses; that is its spec's to say.
 
 ## Edge cases
 

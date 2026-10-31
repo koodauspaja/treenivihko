@@ -1,3 +1,11 @@
+/**
+ * A period's dates form, and on a new period the choice to adapt the copy to
+ * the latest period's marks, with what changed shown in place of the form.
+ *
+ * decisions/f004-periods-and-sessions.md
+ * decisions/f009-adapted-period.md
+ */
+
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -77,7 +85,6 @@ describe("PeriodForm", () => {
     });
     expect((savePeriodDates.mock.calls[0] as [unknown, FormData])[1].get("id")).toBe("p1");
     // The refreshed page passes the saved dates, which the form then shows.
-    // decisions/f004-periods-and-sessions.md
     rerender(<PeriodForm periodId="p1" initial={{ startsOn: "2026-11-10", weeks: "1" }} />);
     expect(start().value).toBe("2026-11-10");
     expect(weeks().value).toBe("1");
@@ -121,5 +128,99 @@ describe("PeriodForm", () => {
     expect(start().value).toBe("");
     expect(weeks().value).toBe("4");
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("offers no choice to adapt unless the page says the copy can be adapted", () => {
+    render(<PeriodForm initial={INITIAL} />);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+
+  it("offers the choice to adapt, checked, with what it does, and sends it", async () => {
+    createPeriodFromForm.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: {},
+      values: INITIAL,
+    });
+    render(<PeriodForm initial={INITIAL} adaptable />);
+    const choice = screen.getByRole("checkbox", {
+      name: "Sovita edellisen jakson merkintöihin",
+    }) as HTMLInputElement;
+    expect(choice.checked).toBe(true);
+    expect(
+      screen.getByText(
+        "Määrät nousevat hyvin menneissä treeneissä ja laskevat raskaissa. Vähiten mieluisa harjoite vaihtuu samankaltaiseen ja helpoin vaikeampaan."
+      )
+    ).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Luo jakso" }));
+    await waitFor(() => {
+      expect(createPeriodFromForm).toHaveBeenCalledOnce();
+    });
+    expect((createPeriodFromForm.mock.calls[0] as [unknown, FormData])[1].get("adapt")).toBe("on");
+  });
+
+  it("sends no choice when it is unchecked", async () => {
+    createPeriodFromForm.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: {},
+      values: INITIAL,
+    });
+    render(<PeriodForm initial={INITIAL} adaptable />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Luo jakso" }));
+    await waitFor(() => {
+      expect(createPeriodFromForm).toHaveBeenCalledOnce();
+    });
+    expect((createPeriodFromForm.mock.calls[0] as [unknown, FormData])[1].get("adapt")).toBeNull();
+  });
+
+  it("shows an adapted copy's changes in place of the form, with the way to it", async () => {
+    createPeriodFromForm.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: {},
+      values: INITIAL,
+      created: {
+        id: "p2",
+        span: "17.11.–30.11.2026",
+        changes: [
+          { id: "b1", line: "Treeni 1: Kuljetus 10 kertaa → 12 kertaa" },
+          { id: "b2", line: "Treeni 1: Kuljetus 10 kertaa → 12 kertaa" },
+        ],
+      },
+    });
+    render(<PeriodForm initial={INITIAL} adaptable />);
+    fireEvent.click(screen.getByRole("button", { name: "Luo jakso" }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Jakso 17.11.–30.11.2026 luotu" })
+      ).toBeDefined();
+    });
+    expect(screen.getByText("Merkintöjen mukaan muutettu:")).toBeDefined();
+    expect(screen.getAllByRole("listitem").map((each) => each.textContent)).toEqual([
+      "Treeni 1: Kuljetus 10 kertaa → 12 kertaa",
+      "Treeni 1: Kuljetus 10 kertaa → 12 kertaa",
+    ]);
+    expect(screen.getByRole("link", { name: "Avaa jakso" }).getAttribute("href")).toBe(
+      "/valmentaja/jaksot/p2"
+    );
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("says when the marks changed nothing", async () => {
+    createPeriodFromForm.mockResolvedValue({
+      version: 1,
+      message: null,
+      errors: {},
+      values: INITIAL,
+      created: { id: "p2", span: "17.11.–30.11.2026", changes: [] },
+    });
+    render(<PeriodForm initial={INITIAL} adaptable />);
+    fireEvent.click(screen.getByRole("button", { name: "Luo jakso" }));
+    await waitFor(() => {
+      expect(screen.getByText("Merkinnät eivät muuttaneet mitään.")).toBeDefined();
+    });
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });

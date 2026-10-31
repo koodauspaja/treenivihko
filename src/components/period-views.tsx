@@ -38,6 +38,7 @@ import { periodPath, sessionPath } from "@/lib/trainer/paths";
  * decisions/f004-periods-and-sessions.md
  * decisions/f006-session-marks.md
  * decisions/f007-progress.md
+ * decisions/f009-adapted-period.md
  */
 
 /** A session's mark as the parent sees it, when it has one: its line, then each pick that is set, by name. */
@@ -92,11 +93,16 @@ export async function NewPeriod() {
   const { user, expiresAt } = await requireTrainer();
   const latest = latestOf(await listPeriodDates(user.id));
   const dates = newPeriodDates(latest, today());
+  // The choice to adapt is offered only when the latest period has a mark to adapt to.
+  const marks = latest === undefined ? {} : await getPeriodMarks(user.id, latest.id);
   return (
     <>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <p className="mt-4">{latest === undefined ? STARTS_EMPTY : copiedFrom(spanOf(latest))}</p>
-      <PeriodForm initial={{ startsOn: dates.startsOn, weeks: String(dates.weeks) }} />
+      <PeriodForm
+        initial={{ startsOn: dates.startsOn, weeks: String(dates.weeks) }}
+        adaptable={Object.keys(marks).length > 0}
+      />
     </>
   );
 }

@@ -30,12 +30,15 @@ vi.mock("@/components/period-form", () => ({
   PeriodForm: ({
     periodId,
     initial,
+    adaptable,
   }: {
     periodId?: string;
     initial: { startsOn: string; weeks: string };
+    adaptable?: boolean;
   }) => (
     <p>
       form {String(periodId)} {initial.startsOn} {initial.weeks}
+      {adaptable ? " adaptable" : ""}
     </p>
   ),
 }));
@@ -135,6 +138,7 @@ describe("NewPeriod", () => {
     expect(listPeriodDates).toHaveBeenCalledWith("u1");
     expect(screen.getByText("Uusi jakso alkaa tyhjänä.")).toBeDefined();
     expect(screen.getByText("form undefined 2026-11-05 2")).toBeDefined();
+    expect(getPeriodMarks).not.toHaveBeenCalled();
   });
 
   it("copies the period that ends last, starting the day after it with its length", async () => {
@@ -147,6 +151,14 @@ describe("NewPeriod", () => {
       screen.getByText("Uusi jakso alkaa kopiona jaksosta 21.12.2026–10.1.2027.")
     ).toBeDefined();
     expect(screen.getByText("form undefined 2027-01-11 3")).toBeDefined();
+    expect(getPeriodMarks).toHaveBeenCalledWith("u1", "p2");
+  });
+
+  it("offers to adapt the copy when the period that ends last has a mark", async () => {
+    listPeriodDates.mockResolvedValue([{ id: "p1", startsOn: "2026-11-03", weeks: 2 }]);
+    getPeriodMarks.mockResolvedValue({ s1: { status: "done" } });
+    render(await NewPeriod());
+    expect(screen.getByText("form undefined 2026-11-17 2 adaptable")).toBeDefined();
   });
 
   it("shows nothing without an unlock", async () => {
