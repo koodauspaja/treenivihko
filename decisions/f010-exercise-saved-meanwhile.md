@@ -24,6 +24,10 @@ raised on #52.
 - **The form carries the revision its fields belong to**, in a hidden field:
   the page's when it opens, the one a save reached after a save, and the one
   sent after a refusal, which keeps what was typed.
+- **The database raises it for any other update** of the row, by a trigger
+  (migration 0011): an update that leaves the revision as it was gets it
+  raised, so a writer that does not know it, such as the version still
+  serving during a deploy, still counts as a change.
 - **The store saves only from the revision it is given**, checking and
   raising it in the update's own `where` (`updateExercise`), so two saves from
   one revision cannot both pass: Postgres re-reads the row the second one
@@ -48,6 +52,7 @@ raised on #52.
 |---|---|
 | A revision, not `updated_at` | `updated_at` is stored to the microsecond and read back by JavaScript to the millisecond, so a timestamp the form carried would rarely equal the one stored |
 | Checked in the update itself | A read, then a write, could let a save land between them |
+| A trigger as well as the store's raise | The store raises it to check and return it in one statement; the trigger is for writers that do not, which no review of this code can see, the version still serving during a deploy first |
 | The fields' own revision, not the page's | The refreshed page can carry a revision another save reached after this one, which the fields do not show; saving from it would overwrite that save unseen |
 | A second button, not a reload | The parent chose to keep what they typed and to overwrite only on purpose; a reload would lose a long instruction |
 | `Näytä nykyinen` in a new tab | What was typed stays in the form while the parent compares |
@@ -55,8 +60,8 @@ raised on #52.
 
 ## Consequences
 
-- **During a deploy**, the version still serving saves without raising the
-  revision, so a save by it in that window is not seen as a change.
+- **During a deploy**, the version still serving saves without knowing the
+  revision, and the trigger raises it, so its save is seen as a change.
 - **A save sent again after its answer was lost** is refused as changed,
   since the first raised the revision; `Tallenna silti` saves the same values
   again.
