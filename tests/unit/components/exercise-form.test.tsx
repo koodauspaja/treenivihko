@@ -146,6 +146,7 @@ describe("ExerciseForm", () => {
       expect(screen.getByRole("status").textContent).toBe("Tallennettu.");
     });
     // Another tab saved in between, so the page passes 6, which these values do not show.
+    // decisions/f010-exercise-saved-meanwhile.md
     rerender(<ExerciseForm exerciseId="e1" revision={6} initialValues={STORED} />);
     save();
     await waitFor(() => {
