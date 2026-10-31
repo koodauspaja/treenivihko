@@ -76,7 +76,7 @@ Not used.
 | A field refused by Feature 002's rules | Refused as now, before the revision is checked; nothing saved |
 | A save sent again after its answer was lost | Refused as changed meanwhile, since the first raised the revision; `Tallenna silti` saves the same values again |
 | The parent saves twice in one tab | The form saves from the revision its own last save reached, so the next save is not refused; a save made elsewhere in between is still told |
-| The version still serving during a deploy | It saves without knowing `revision`; the database raises it for any update that leaves it as it was, so that save is seen as a change too |
+| The version still serving during a deploy | It saves without knowing `revision`; the database raises it for any update that leaves it as it was, so that save is seen as a change too. A save it makes itself replaces the exercise, as every save did before this feature |
 | An exercise's block amount changed in a period | Not a change to the exercise; its revision stays |
 
 ## Logging
