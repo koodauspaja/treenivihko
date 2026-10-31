@@ -3,8 +3,8 @@
 -- does not know the revision, such as the version still serving during a deploy, still counts.
 CREATE FUNCTION "exercise_raise_revision"() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF NEW."revision" = OLD."revision" THEN
-    NEW."revision" := OLD."revision" + 1;
+  IF NEW.revision = OLD.revision THEN
+    NEW.revision := OLD.revision + 1;
   END IF;
   RETURN NEW;
 END;
