@@ -36,7 +36,9 @@ export async function ExistingExercise({ id }: Readonly<{ id: Promise<string> }>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <h1 className="text-3xl font-bold">{exercise.name}</h1>
       <VideoLink url={exercise.videoUrl} />
+      {/* Keyed by the exercise, so another one's page never keeps this form's state. */}
       <ExerciseForm
+        key={exercise.id}
         exerciseId={exercise.id}
         revision={exercise.revision}
         initialValues={valuesFrom(exercise)}
