@@ -57,7 +57,7 @@ it is, and checks again.
 | `exercise` (Feature 002) | adds `revision`, integer, not null, default 1 | Raised by one on every save. The form carries the revision it was opened at, and a save of another is refused |
 
 - **Every save raises it**, `Tallenna silti`'s included, and one that changes
-  nothing too.
+  nothing too; the database raises it for any other update of the row.
 - **Adding** starts at 1; **the import** adds at 1.
 
 **Personal data**: none. A revision is a count.
@@ -76,7 +76,7 @@ Not used.
 | A field refused by Feature 002's rules | Refused as now, before the revision is checked; nothing saved |
 | A save sent again after its answer was lost | Refused as changed meanwhile, since the first raised the revision; `Tallenna silti` saves the same values again |
 | The parent saves twice in one tab | The form saves from the revision its own last save reached, so the next save is not refused; a save made elsewhere in between is still told |
-| The version still serving during a deploy | It saves without raising `revision`; a save by it in that window is not seen as a change. Only the new version reads the revision |
+| The version still serving during a deploy | It saves without knowing `revision`; the database raises it for any update that leaves it as it was, so that save is seen as a change too |
 | An exercise's block amount changed in a period | Not a change to the exercise; its revision stays |
 
 ## Logging

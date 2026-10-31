@@ -305,6 +305,25 @@ describe("a save's revision", () => {
     expect((await getExercise("u1", id, report))?.name).toBe("Toinen");
   });
 
+  it("is raised by the database for a writer that does not know it, so a save from before is refused", async () => {
+    const id = await saved("u1", LADDER);
+    // As the version still serving during a deploy saves: its fields, not the revision.
+    await database()
+      .update(exercise)
+      .set({ name: "Vanhan version tallennus" })
+      .where(eq(exercise.id, id));
+    expect((await getExercise("u1", id, report))?.revision).toBe(2);
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report)).toEqual({
+      kind: "changed",
+      revision: 2,
+    });
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 2 }, report)).toEqual({
+      kind: "saved",
+      id,
+      revision: 3,
+    });
+  });
+
   it("says an exercise deleted meanwhile is missing, not changed", async () => {
     const id = await saved("u1", LADDER);
     await deleteExercise("u1", id, report);
