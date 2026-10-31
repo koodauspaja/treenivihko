@@ -19,9 +19,11 @@ export async function NewExercise() {
 }
 
 /**
- * One of the parent's exercises: its name, its video, its form and its
- * deletion. Another parent's, or one that is gone, is not found.
+ * One of the parent's exercises: its name, its video, its form at its
+ * revision, and its deletion. Another parent's, or one that is gone, is not found.
+ *
  * decisions/f002-exercise-library.md
+ * decisions/f010-exercise-saved-meanwhile.md
  */
 export async function ExistingExercise({ id }: Readonly<{ id: Promise<string> }>) {
   const { user, expiresAt } = await requireTrainer();
@@ -34,7 +36,13 @@ export async function ExistingExercise({ id }: Readonly<{ id: Promise<string> }>
       <TrainerTimeout expiresAt={expiresAt.toISOString()} />
       <h1 className="text-3xl font-bold">{exercise.name}</h1>
       <VideoLink url={exercise.videoUrl} />
-      <ExerciseForm exerciseId={exercise.id} initialValues={valuesFrom(exercise)} />
+      {/* Keyed by the exercise, so another one's page never keeps this form's state. */}
+      <ExerciseForm
+        key={exercise.id}
+        exerciseId={exercise.id}
+        revision={exercise.revision}
+        initialValues={valuesFrom(exercise)}
+      />
       <div className="mt-8">
         <DeleteExercise id={exercise.id} name={exercise.name} />
       </div>

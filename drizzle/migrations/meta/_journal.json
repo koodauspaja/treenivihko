@@ -71,6 +71,20 @@
       "when": 1793222256730,
       "tag": "0009_add_pause_overlap",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793457657989,
+      "tag": "0010_add_exercise_revision",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793459747207,
+      "tag": "0011_add_exercise_revision_trigger",
+      "breakpoints": true
     }
   ]
 }

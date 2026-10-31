@@ -9,7 +9,7 @@
 
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
@@ -59,6 +59,7 @@ import {
   updatePeriodDates,
   updateSessionSettings,
 } from "@/lib/periods/store";
+import { whileHeld } from "../support/held.ts";
 import { deleteUsers } from "../support/users.ts";
 
 let lines: string[] = [];
@@ -131,52 +132,6 @@ const added = async (userId: string, blockId: string, exerciseId: string) => {
   if (result.kind !== "saved") {
     throw new Error(`expected a save, got ${result.kind}`);
   }
-};
-
-type Transaction = Parameters<Parameters<ReturnType<typeof database>["transaction"]>[0]>[0];
-
-const waitingOnLock = async () => {
-  const [row] = await database().execute<{ waiting: number }>(
-    sql`select count(*)::int as waiting from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`
-  );
-  return (row?.waiting ?? 0) > 0;
-};
-
-/**
- * What `act` comes to when `write` is in a transaction left open until `act`
- * waits on its locks, and committed then: two writes at once, in that order.
- */
-const whileHeld = async <T>(
-  write: (tx: Transaction) => Promise<unknown>,
-  act: () => Promise<T>
-) => {
-  let written = () => {};
-  let release = () => {};
-  const done = new Promise<void>((resolve) => {
-    written = resolve;
-  });
-  const released = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const held = database().transaction(async (tx) => {
-    await write(tx);
-    written();
-    await released;
-  });
-  // A write that fails, or an act that never waits, ends the test rather than hanging it.
-  await Promise.race([done, held]);
-  let settled = false;
-  const acting = act();
-  const settle = () => {
-    settled = true;
-  };
-  acting.then(settle, settle);
-  while (!settled && !(await waitingOnLock())) {
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-  release();
-  await held;
-  return acting;
 };
 
 /** A period with one session of two blocks, the first with both exercises. */
@@ -599,7 +554,7 @@ describe("an exercise in a block", () => {
     if (!reading.ok) {
       throw new Error("the fixture is valid");
     }
-    await updateExercise("u1", built.ladder, reading.exercise, report);
+    await updateExercise("u1", built.ladder, reading.exercise, { revision: 1 }, report);
     const [ladder] = (await getSession("u1", built.sessionId, report))?.blocks[0]?.exercises ?? [];
     expect(ladder).toMatchObject({ amountKind: "count", amount: 10 });
     expect(await blockExerciseKind("u1", ladder?.id ?? "", report)).toBe("count");
@@ -737,7 +692,7 @@ describe("the child's notebook", () => {
     if (!reading.ok) {
       throw new Error("the fixture is valid");
     }
-    await updateExercise("u1", built.ladder, reading.exercise, report);
+    await updateExercise("u1", built.ladder, reading.exercise, { revision: 1 }, report);
     const notebook = await getNotebook("u1", "2026-11-03", report);
     const [ladder] = notebook?.sessions[0]?.blocks[0]?.exercises ?? [];
     expect(ladder?.name).toBe("Tikkaat: sivuaskel");

@@ -255,7 +255,15 @@ describe("the child's progress", () => {
     await marked(sessionId, { picks: { ...NO_PICKS, likedBest: ladder, hardest: sprint } });
     await removeFromSession(sessionId, ladder);
     await removeFromSession(sessionId, sprint);
-    saved(await updateExercise("u1", ladder, checked({ ...LADDER, name: "Tikkaat" }), report));
+    saved(
+      await updateExercise(
+        "u1",
+        ladder,
+        checked({ ...LADDER, name: "Tikkaat" }),
+        { revision: 1 },
+        report
+      )
+    );
     expect(await deleteExercise("u1", sprint, report)).toEqual({ kind: "deleted" });
     expect((await getProgress("u1", DAY, report)).exercises).toEqual([
       {
@@ -292,7 +300,15 @@ describe("a period's marks on the trainer side", () => {
       picks: { likedBest: sprint, likedLeast: null, easiest: ladder, hardest: sprint },
     });
     await marked(second, { status: "not_done", trainedOn: null });
-    saved(await updateExercise("u1", ladder, checked({ ...LADDER, name: "Tikkaat" }), report));
+    saved(
+      await updateExercise(
+        "u1",
+        ladder,
+        checked({ ...LADDER, name: "Tikkaat" }),
+        { revision: 1 },
+        report
+      )
+    );
     await removeFromSession(first, sprint);
     lines = [];
     expect(await getPeriodMarks("u1", periodId, report)).toEqual({

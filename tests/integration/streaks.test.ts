@@ -425,7 +425,13 @@ describe("the achievements", () => {
     const before = await kinds();
     expect(before).toEqual(["full_period", "full_period", "hard_to_easy", "sessions_1"]);
     saved(
-      await updateExercise("u1", fixture.ladder, checked({ ...LADDER, name: "Tikkaat" }), report)
+      await updateExercise(
+        "u1",
+        fixture.ladder,
+        checked({ ...LADDER, name: "Tikkaat" }),
+        { revision: 1 },
+        report
+      )
     );
     await deleteMark("u1", fixture.previousSession, "2026-10-21", report);
     await deletePeriod("u1", fixture.older, report);

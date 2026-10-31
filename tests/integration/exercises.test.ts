@@ -1,6 +1,15 @@
+/**
+ * The library's store against Postgres: its checks, its names, its revisions
+ * and the races between saves.
+ *
+ * decisions/f002-exercise-library.md
+ * decisions/f003-exercise-import.md
+ * decisions/f010-exercise-saved-meanwhile.md
+ */
+
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeDatabase, getDatabase, openMigrationDatabase } from "@/lib/db/index";
@@ -27,6 +36,7 @@ import {
   listExercises,
   updateExercise,
 } from "@/lib/exercises/store";
+import { whileHeld } from "../support/held.ts";
 import { deleteUsers } from "../support/users.ts";
 
 let lines: string[] = [];
@@ -50,7 +60,6 @@ const LADDER: Exercise = {
 
 /**
  * The exercise through readExercise, as every write is; a fixture that fails it fails the test.
- * decisions/f002-exercise-library.md
  */
 const checked = (values: Exercise): CheckedExercise => {
   const reading = readExercise(valuesFrom(values));
@@ -101,8 +110,8 @@ afterAll(async () => {
 describe("adding and reading", () => {
   it("adds an exercise with its labels, reads it back, and logs ids only", async () => {
     const id = await saved("u1", LADDER);
-    expect(await getExercise("u1", id, report)).toEqual({ id, ...LADDER });
-    expect(await listExercises("u1", report)).toEqual([{ id, ...LADDER }]);
+    expect(await getExercise("u1", id, report)).toEqual({ id, ...LADDER, revision: 1 });
+    expect(await listExercises("u1", report)).toEqual([{ id, ...LADDER, revision: 1 }]);
     expect(lines).toEqual([`exercise created: user u1, exercise ${id}`]);
     expect(lines.join("\n")).not.toContain("Tikkaat");
   });
@@ -120,7 +129,15 @@ describe("adding and reading", () => {
     const id = await saved("u1", LADDER);
     expect(await getExercise("u2", id, report)).toBeNull();
     expect(await listExercises("u2", report)).toEqual([]);
-    expect(await updateExercise("u2", id, checked({ ...LADDER, name: "Vieras" }), report)).toEqual({
+    expect(
+      await updateExercise(
+        "u2",
+        id,
+        checked({ ...LADDER, name: "Vieras" }),
+        { revision: 1 },
+        report
+      )
+    ).toEqual({
       kind: "missing",
     });
     expect(await deleteExercise("u2", id, report)).toEqual({ kind: "missing" });
@@ -147,7 +164,9 @@ describe("an id the store could not have made", () => {
     "%j is no one's exercise, and asks Postgres nothing",
     async (id) => {
       expect(await getExercise("u1", id, report)).toBeNull();
-      expect(await updateExercise("u1", id, checked(LADDER), report)).toEqual({ kind: "missing" });
+      expect(await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report)).toEqual({
+        kind: "missing",
+      });
       expect(await deleteExercise("u1", id, report)).toEqual({ kind: "missing" });
       expect(lines).toEqual([]);
     }
@@ -164,7 +183,6 @@ describe("the name", () => {
   });
 
   // The test database's locale folds Ä too, so the index's own definition is what shows it does not rely on one.
-  // decisions/f002-exercise-library.md
   it("is lowercased by ICU, whatever the database's locale", async () => {
     const [index] = await database().execute<{ indexdef: string }>(
       sql`select indexdef from pg_indexes where indexname = 'exercise_user_name_idx'`
@@ -185,7 +203,13 @@ describe("the name", () => {
     const first = await saved("u1", LADDER);
     const second = await saved("u1", { ...LADDER, name: "Laukaus" });
     expect(
-      await updateExercise("u1", second, checked({ ...LADDER, name: LADDER.name }), report)
+      await updateExercise(
+        "u1",
+        second,
+        checked({ ...LADDER, name: LADDER.name }),
+        { revision: 1 },
+        report
+      )
     ).toEqual({
       kind: "nameInUse",
     });
@@ -194,28 +218,175 @@ describe("the name", () => {
         "u1",
         first,
         checked({ ...LADDER, name: LADDER.name.toUpperCase() }),
+        { revision: 1 },
         report
       )
-    ).toEqual({ kind: "saved", id: first });
+    ).toEqual({ kind: "saved", id: first, revision: 2 });
   });
 
-  it("keeps one of two saves of the same exercise at once, whole, never a mix of both", async () => {
+  it("keeps one of two saves from one revision at once, whole, and refuses the other as changed", async () => {
     const id = await saved("u1", LADDER);
     const indoors = { ...LADDER, name: "Sisällä", labels: ["speed", "indoors"] as const };
     const gym = { ...LADDER, name: "Salilla", labels: ["strength", "gym", "jump_rope"] as const };
     const results = await Promise.all([
-      updateExercise("u1", id, checked(indoors), report),
-      updateExercise("u1", id, checked(gym), report),
+      updateExercise("u1", id, checked(indoors), { revision: 1 }, report),
+      updateExercise("u1", id, checked(gym), { revision: 1 }, report),
     ]);
-    expect(results).toEqual([
-      { kind: "saved", id },
-      { kind: "saved", id },
-    ]);
+    expect(results).toContainEqual({ kind: "saved", id, revision: 2 });
+    expect(results).toContainEqual({ kind: "changed", revision: 2 });
     const stored = await getExercise("u1", id, report);
     expect([
-      { id, ...indoors },
-      { id, ...gym },
+      { id, ...indoors, revision: 2 },
+      { id, ...gym, revision: 2 },
     ]).toContainEqual(stored);
+  });
+});
+
+describe("a save's revision", () => {
+  it("starts at 1 on an add, an import and a row from before the column, and each save raises it", async () => {
+    const id = await saved("u1", LADDER);
+    await importExercises("u1", [checked({ ...LADDER, name: "Lähdöt" })], report);
+    const [imported] = (await listExercises("u1", report)).filter((each) => each.id !== id);
+    expect(imported?.revision).toBe(1);
+    const [old] = await database().execute<{ revision: number }>(
+      sql`insert into exercise (id, user_id, name, instructions, amount_kind, amount, duration_minutes, level) values (${randomUUID()}, 'u1', 'Vanha', 'Ohje.', 'count', 5, 2, 1) returning revision`
+    );
+    expect(old?.revision).toBe(1);
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report)).toEqual({
+      kind: "saved",
+      id,
+      revision: 2,
+    });
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 2 }, report)).toEqual({
+      kind: "saved",
+      id,
+      revision: 3,
+    });
+    expect((await getExercise("u1", id, report))?.revision).toBe(3);
+  });
+
+  it("refuses a save that waited on another from the same revision, once that one commits", async () => {
+    const id = await saved("u1", LADDER);
+    // The first save holds the row, so the second has read nothing it could have checked first.
+    const result = await whileHeld(
+      (tx) =>
+        tx
+          .update(exercise)
+          .set({ name: "Ensin", revision: sql`${exercise.revision} + 1` })
+          .where(and(eq(exercise.id, id), eq(exercise.revision, 1))),
+      () =>
+        updateExercise("u1", id, checked({ ...LADDER, name: "Toinen" }), { revision: 1 }, report)
+    );
+    expect(result).toEqual({ kind: "changed", revision: 2 });
+    expect((await getExercise("u1", id, report))?.name).toBe("Ensin");
+  });
+
+  it("refuses a save that waited on a writer that does not know the revision", async () => {
+    const id = await saved("u1", LADDER);
+    // As the version still serving during a deploy saves: the trigger raises the revision.
+    const result = await whileHeld(
+      (tx) => tx.update(exercise).set({ name: "Vanha versio" }).where(eq(exercise.id, id)),
+      () =>
+        updateExercise(
+          "u1",
+          id,
+          checked({ ...LADDER, name: "Uusi versio" }),
+          { revision: 1 },
+          report
+        )
+    );
+    expect(result).toEqual({ kind: "changed", revision: 2 });
+    expect((await getExercise("u1", id, report))?.name).toBe("Vanha versio");
+  });
+
+  it("refuses a save from an older revision, changing nothing, and says the revision it found", async () => {
+    const id = await saved("u1", LADDER);
+    await updateExercise("u1", id, checked({ ...LADDER, name: "Ensin" }), { revision: 1 }, report);
+    lines = [];
+    expect(
+      await updateExercise(
+        "u1",
+        id,
+        checked({ ...LADDER, name: "Toinen" }),
+        { revision: 1 },
+        report
+      )
+    ).toEqual({ kind: "changed", revision: 2 });
+    expect(await getExercise("u1", id, report)).toEqual({
+      id,
+      ...LADDER,
+      name: "Ensin",
+      revision: 2,
+    });
+    expect(lines).toEqual([`exercise refused, changed meanwhile: user u1, exercise ${id}`]);
+  });
+
+  it("saves over a change with the revision the refusal found, logged so, and refuses it once changed again", async () => {
+    const id = await saved("u1", LADDER);
+    await updateExercise("u1", id, checked({ ...LADDER, name: "Ensin" }), { revision: 1 }, report);
+    lines = [];
+    expect(
+      await updateExercise(
+        "u1",
+        id,
+        checked({ ...LADDER, name: "Toinen" }),
+        { revision: 2, over: true },
+        report
+      )
+    ).toEqual({ kind: "saved", id, revision: 3 });
+    expect(lines).toEqual([`exercise updated: user u1, exercise ${id}, over a change`]);
+    expect(
+      await updateExercise(
+        "u1",
+        id,
+        checked({ ...LADDER, name: "Kolmas" }),
+        { revision: 2, over: true },
+        report
+      )
+    ).toEqual({ kind: "changed", revision: 3 });
+    expect((await getExercise("u1", id, report))?.name).toBe("Toinen");
+  });
+
+  it("is raised by the database for a writer that does not know it, so a save from before is refused", async () => {
+    const id = await saved("u1", LADDER);
+    // As the version still serving during a deploy saves: its fields, not the revision.
+    await database()
+      .update(exercise)
+      .set({ name: "Vanhan version tallennus" })
+      .where(eq(exercise.id, id));
+    expect((await getExercise("u1", id, report))?.revision).toBe(2);
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report)).toEqual({
+      kind: "changed",
+      revision: 2,
+    });
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 2 }, report)).toEqual({
+      kind: "saved",
+      id,
+      revision: 3,
+    });
+  });
+
+  it("says an exercise deleted meanwhile is missing, not changed", async () => {
+    const id = await saved("u1", LADDER);
+    await deleteExercise("u1", id, report);
+    expect(await updateExercise("u1", id, checked(LADDER), { revision: 7 }, report)).toEqual({
+      kind: "missing",
+    });
+  });
+
+  it("tells a change meanwhile before a name in use", async () => {
+    await saved("u1", { ...LADDER, name: "Varattu" });
+    const id = await saved("u1", LADDER);
+    await updateExercise("u1", id, checked(LADDER), { revision: 1 }, report);
+    expect(
+      await updateExercise(
+        "u1",
+        id,
+        checked({ ...LADDER, name: "Varattu" }),
+        { revision: 1 },
+        report
+      )
+    ).toEqual({ kind: "changed", revision: 2 });
   });
 });
 
@@ -233,13 +404,17 @@ describe("saving and deleting", () => {
       warmUp: false,
       labels: ["agility", "gym"],
     };
-    expect(await updateExercise("u1", id, checked(changed), report)).toEqual({ kind: "saved", id });
-    expect(await getExercise("u1", id, report)).toEqual({ id, ...changed });
+    expect(await updateExercise("u1", id, checked(changed), { revision: 1 }, report)).toEqual({
+      kind: "saved",
+      id,
+      revision: 2,
+    });
+    expect(await getExercise("u1", id, report)).toEqual({ id, ...changed, revision: 2 });
     expect(lines.at(-1)).toBe(`exercise updated: user u1, exercise ${id}`);
   });
 
   it("says an exercise that is gone is missing, and changes nothing", async () => {
-    expect(await updateExercise("u1", "gone", checked(LADDER), report)).toEqual({
+    expect(await updateExercise("u1", "gone", checked(LADDER), { revision: 1 }, report)).toEqual({
       kind: "missing",
     });
     expect(await listExercises("u1", report)).toEqual([]);
@@ -362,7 +537,10 @@ describe("an import", () => {
     const library = await listExercises("u1", report);
     expect(
       library.map(({ id: _, ...rest }) => rest).sort((a, b) => a.name.localeCompare(b.name))
-    ).toEqual([SPRINT, LADDER]);
+    ).toEqual([
+      { ...SPRINT, revision: 1 },
+      { ...LADDER, revision: 1 },
+    ]);
     expect(lines).toEqual(["exercises imported: user u1, 2 exercises"]);
     expect(await listExercises("u2", report)).toEqual([]);
   });
