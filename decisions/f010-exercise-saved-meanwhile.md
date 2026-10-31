@@ -61,7 +61,9 @@ raised on #52.
 ## Consequences
 
 - **During a deploy**, the version still serving saves without knowing the
-  revision, and the trigger raises it, so its save is seen as a change.
+  revision, and the trigger raises it, so its save is seen as a change. A
+  save it makes itself still replaces the exercise, since it checks nothing,
+  as every save did before this feature; that lasts the rollout's seconds.
 - **A save sent again after its answer was lost** is refused as changed,
   since the first raised the revision; `Tallenna silti` saves the same values
   again.
