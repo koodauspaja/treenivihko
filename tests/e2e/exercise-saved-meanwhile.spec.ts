@@ -94,7 +94,9 @@ test("a save from a tab opened before another save is refused, keeps what was ty
   await expect(main(other).getByRole("status")).toHaveText("Tallennettu.");
   await expect(main(other).getByRole("button", { name: "Tallenna silti" })).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("heading", { level: 1, name: "Syöttö seinään" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Syöttö seinään", exact: true })
+  ).toBeVisible();
   await expect(page.getByLabel("Ohje", { exact: true })).toHaveValue(
     "Kymmenen syöttöä kummallakin jalalla."
   );
