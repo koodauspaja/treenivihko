@@ -54,7 +54,7 @@ raised on #52.
 |---|---|
 | A revision, not `updated_at` | `updated_at` is stored to the microsecond and read back by JavaScript to the millisecond, so a timestamp the form carried would rarely equal the one stored |
 | Checked in the update itself | A read, then a write, could let a save land between them |
-| A trigger as well as the store's raise | The store raises it to check and return it in one statement; the trigger is for writers that do not, which no review of this code can see, the version still serving during a deploy first |
+| A trigger as well as the store's raise | The store's update says what it does without the trigger, which only raises a revision a writer left as it was; the trigger is for writers that do not, which no review of this code can see, the version still serving during a deploy first |
 | The fields' own revision, not the page's | The refreshed page can carry a revision another save reached after this one, which the fields do not show; saving from it would overwrite that save unseen |
 | A second button, not a reload | The parent chose to keep what they typed and to overwrite only on purpose; a reload would lose a long instruction |
 | `Näytä nykyinen` in a new tab | What was typed stays in the form while the parent compares |
@@ -66,6 +66,8 @@ raised on #52.
   revision, and the trigger raises it, so its save is seen as a change. A
   save it makes itself still replaces the exercise, since it checks nothing,
   as every save did before this feature; that lasts the rollout's seconds.
+  A form that version rendered sends no revision, so its save on the new
+  version is refused as changed, and `Tallenna silti` saves it.
 - **A save sent again after its answer was lost** is refused as changed,
   since the first raised the revision; `Tallenna silti` saves the same values
   again.
