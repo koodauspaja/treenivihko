@@ -243,7 +243,7 @@ describe("the name", () => {
 });
 
 describe("a save's revision", () => {
-  it("starts at 1 on an add, an import and a row from before the column, and each save raises it", async () => {
+  it("starts at 1 on an add, an import and a row added by a writer that does not know it, and each save raises it", async () => {
     const id = await saved("u1", LADDER);
     await importExercises("u1", [checked({ ...LADDER, name: "Lähdöt" })], report);
     const [imported] = (await listExercises("u1", report)).filter((each) => each.id !== id);

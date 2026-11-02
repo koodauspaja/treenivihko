@@ -114,7 +114,7 @@ Feature 002's other lines stand.
 | Level | What |
 |---|---|
 | Unit | The action: a save with the current revision, one with an older, `Tallenna silti`, a deleted exercise, a field refused first; the form: the refusal's message, link and button, the typed values kept, and the revision sent |
-| Integration, against Postgres | `revision`'s default on existing rows and on adds and imports; a save raising it; a save with an older revision refused and nothing changed; two saves at once with the same revision, one saved and one refused; `Tallenna silti` with the found revision; one parent's exercises out of another's reach; the log lines |
+| Integration, against Postgres | `revision`'s default on adds, imports and a row added without it, as the version still serving during a deploy adds one (existing rows get it from the migration's `DEFAULT 1 NOT NULL`, which Postgres fills in); a save raising it; a save with an older revision refused and nothing changed; two saves at once with the same revision, one saved and one refused; `Tallenna silti` with the found revision; one parent's exercises out of another's reach; the log lines |
 | End to end | Two tabs open on one exercise: the first saves, the second is refused with its typed values kept, `Näytä nykyinen` opens the saved version, and `Tallenna silti` saves; saving twice in one tab |
 
 ## Open questions
