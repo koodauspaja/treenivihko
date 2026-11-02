@@ -37,7 +37,8 @@ export type ExerciseFormState = {
   values: ExerciseValues;
   // A save refused as changed meanwhile: the revision it found, which `Tallenna silti` saves over.
   changed?: { revision: number };
-  // The revision `values` belong to: the one sent, after a refusal; the one reached, after a save.
+  // The revision `values` belong to: the page's, at first; the one sent, after a refusal; the one
+  // reached, after a save.
   revision?: number;
 };
 

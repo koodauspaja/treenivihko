@@ -175,14 +175,15 @@ export function ExerciseForm({
     message: null,
     errors: {},
     values: initialValues,
+    ...(revision === undefined ? {} : { revision }),
   });
   return (
     <form action={action} className="mt-6 flex flex-col gap-3">
       {exerciseId === undefined ? null : (
         <>
           <input type="hidden" name="id" value={exerciseId} />
-          {/* The revision the fields' values belong to, which the page's may have passed. */}
-          <input type="hidden" name="revision" value={state.revision ?? revision} />
+          {/* The revision the fields' values belong to, which a refreshed page's may have passed. */}
+          <input type="hidden" name="revision" value={state.revision} />
         </>
       )}
       <Fields key={state.version} values={state.values} errors={state.errors} />
