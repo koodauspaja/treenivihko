@@ -64,9 +64,14 @@ export async function saveExercise(
   // An existing exercise's refusal keeps the revision its form was at, beside what was typed.
   const revision = revisionOf(form, "revision");
   const sent = existing ? { revision } : {};
+  // A refusal by a field or the name keeps a change already found, and `Tallenna silti` with it.
+  const kept =
+    existing && previous.changed !== undefined
+      ? { message: CHANGED_MEANWHILE, changed: previous.changed }
+      : {};
   const reading = readExercise(values);
   if (!reading.ok) {
-    return { version, message: null, errors: reading.errors, values, ...sent };
+    return { version, message: null, errors: reading.errors, values, ...sent, ...kept };
   }
   if (!existing) {
     const result = await createExercise(user.id, reading.exercise);
@@ -92,7 +97,14 @@ export async function saveExercise(
     };
   }
   if (result.kind === "nameInUse") {
-    return { version, message: null, errors: { name: REFUSAL.nameInUse }, values, ...sent };
+    return {
+      version,
+      message: null,
+      errors: { name: REFUSAL.nameInUse },
+      values,
+      ...sent,
+      ...kept,
+    };
   }
   if (result.kind === "missing") {
     return { version, message: NOT_FOUND, errors: {}, values, ...sent };
