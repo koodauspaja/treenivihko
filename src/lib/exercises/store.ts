@@ -23,16 +23,15 @@ import type { AmountKind, CheckedExercise, Exercise, Level } from "./rules";
 /** An exercise as stored: its revision is raised by every save. */
 export type StoredExercise = Exercise & { id: string; revision: number };
 
-export type SaveResult =
-  | { kind: "saved"; id: string }
-  | { kind: "nameInUse" }
-  | { kind: "missing" }
-  | { kind: "changed"; revision: number };
+/** An add: saved, or its name already in the library. */
+export type CreateResult = { kind: "saved"; id: string } | { kind: "nameInUse" };
 
 /** A save of an existing exercise: saved at the revision it reached, or why not. */
 export type UpdateResult =
   | { kind: "saved"; id: string; revision: number }
-  | Exclude<SaveResult, { kind: "saved" }>;
+  | { kind: "nameInUse" }
+  | { kind: "missing" }
+  | { kind: "changed"; revision: number };
 
 /** The revision a save's form was opened at, and whether it saves over a change on purpose. */
 export type SaveAt = { revision: number; over?: boolean };
@@ -158,7 +157,7 @@ export function createExercise(
   userId: string,
   values: CheckedExercise,
   report: Report = toStderr
-): Promise<SaveResult> {
+): Promise<CreateResult> {
   return logged("exercise created", `user ${userId}`, report, async () => {
     const result = await refusingNameInUse("exercise refused, name in use", userId, report, () =>
       getDatabase().transaction(
