@@ -119,6 +119,7 @@ describe("ExerciseForm", () => {
       message: "Tallennettu.",
       errors: {},
       values: STORED,
+      revision: 5,
     });
     render(<ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />);
     save();
@@ -155,6 +156,26 @@ describe("ExerciseForm", () => {
     expect((saveExercise.mock.calls[1] as [unknown, FormData])[1].get("revision")).toBe("5");
   });
 
+  it("before any save, sends the revision it opened at, not a later one a refreshed page passes", async () => {
+    saveExercise.mockResolvedValue({
+      version: 1,
+      message: "Tallennettu.",
+      errors: {},
+      values: STORED,
+      revision: 5,
+    });
+    const { rerender } = render(
+      <ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />
+    );
+    // decisions/f010-exercise-saved-meanwhile.md
+    rerender(<ExerciseForm exerciseId="e1" revision={6} initialValues={STORED} />);
+    save();
+    await waitFor(() => {
+      expect(saveExercise).toHaveBeenCalledOnce();
+    });
+    expect((saveExercise.mock.calls[0] as [unknown, FormData])[1].get("revision")).toBe("4");
+  });
+
   it("refused as changed meanwhile, keeps what was typed and offers the saved version and Tallenna silti", async () => {
     const typed = { ...STORED, name: "Uusi nimi" };
     saveExercise.mockResolvedValueOnce({
@@ -164,6 +185,7 @@ describe("ExerciseForm", () => {
       errors: {},
       values: typed,
       changed: { revision: 6 },
+      revision: 4,
     });
     render(<ExerciseForm exerciseId="e1" revision={4} initialValues={STORED} />);
     save();
@@ -182,6 +204,7 @@ describe("ExerciseForm", () => {
       message: "Tallennettu.",
       errors: {},
       values: typed,
+      revision: 7,
     });
     fireEvent.click(screen.getByRole("button", { name: "Tallenna silti" }));
     await waitFor(() => {
