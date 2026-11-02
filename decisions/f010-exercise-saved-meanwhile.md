@@ -37,7 +37,9 @@ raised on #52.
   first, then a change meanwhile, then a name in use.
 - **`Tallenna silti` saves from the revision the refusal found**, so it
   overwrites only the change the parent was told of; a further change is
-  refused the same way. Its save is logged `over a change`.
+  refused the same way. Its save is logged `over a change`. A refusal by a
+  field or the name after a change was told keeps the change told, and
+  `Tallenna silti` offered, from the revision found.
 - **What was typed is kept**: the action sends back what the form sent, as
   for any refusal.
 - **`Tallenna silti` comes after `Tallenna`** in the form, since Enter in a

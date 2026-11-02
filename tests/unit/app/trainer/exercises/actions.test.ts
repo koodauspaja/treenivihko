@@ -169,6 +169,37 @@ describe("saveExercise", () => {
   });
 
   it.each([
+    ["a wrong field", { name: "" }, { name: "Nimessä on oltava 1–40 merkkiä." }],
+    ["a name already in the library", {}, { name: "Samanniminen harjoite on jo kirjastossa." }],
+  ])(
+    "after Tallenna silti is refused for %s, still offers it, from the revision found",
+    async (_, fields, errors) => {
+      updateExercise.mockResolvedValue({ kind: "nameInUse" });
+      const refused = { ...START, changed: { revision: 5 }, revision: 4 };
+      const state = await saveExercise(
+        refused,
+        form({ ...VALID, id: "e1", revision: "4", over: "5", ...fields })
+      );
+      expect(state).toMatchObject({
+        message:
+          "Harjoitetta on muutettu muualla sen jälkeen, kun avasit sen. Tallennus ei korvannut muutosta.",
+        errors,
+        changed: { revision: 5 },
+        revision: 4,
+      });
+    }
+  );
+
+  it("offers no Tallenna silti on a new exercise's refusal, whatever the state before", async () => {
+    const state = await saveExercise(
+      { ...START, changed: { revision: 5 } },
+      form({ ...VALID, name: "" })
+    );
+    expect(state.changed).toBeUndefined();
+    expect(state.message).toBeNull();
+  });
+
+  it.each([
     ["no revision", {}],
     ["an empty one", { revision: "" }],
     ["zero", { revision: "0" }],

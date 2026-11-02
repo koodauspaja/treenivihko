@@ -71,7 +71,8 @@ Not used.
 | Case | Behaviour |
 |---|---|
 | The exercise was deleted meanwhile | Feature 002's `Sivua ei löytynyt.`, before any check of the revision |
-| Changed meanwhile, and the name typed is now another exercise's | The change meanwhile is told first; `Tallenna silti` then gets Feature 002's name refusal if it still applies |
+| Changed meanwhile, and the name typed is now another exercise's | The change meanwhile is told first; `Tallenna silti` then gets Feature 002's name refusal if it still applies, with the change still told and `Tallenna silti` still offered |
+| A field refused after a change meanwhile was told | Refused by Feature 002's rules, with the change still told and `Tallenna silti` still offered, from the revision found |
 | Changed again after the refusal, before `Tallenna silti` | `Tallenna silti` carries the revision the refusal found, so it is refused again in the same way, with the newer change not overwritten |
 | A field refused by Feature 002's rules | Refused as now, before the revision is checked; nothing saved |
 | A save sent again after its answer was lost | Refused as changed meanwhile, since the first raised the revision; `Tallenna silti` saves the same values again |
