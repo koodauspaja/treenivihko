@@ -7,6 +7,9 @@ const sonarExclusions = readPropertyList(
   "sonar.coverage.exclusions"
 );
 
+/** Every migration is SQL that only the integration tests run, against Postgres. */
+const migrations = "drizzle/migrations/**";
+
 /** Configuration no unit coverage measures: the root's `*.config.ts`, and Railway's. */
 const configs = [
   ...readdirSync(".").filter((file) => /\.config\.(ts|mts|cts)$/.test(file)),
@@ -23,12 +26,16 @@ describe("SonarCloud's coverage exclusions", () => {
     expect(sonarExclusions).toEqual(expect.arrayContaining(configs));
   });
 
+  it("include the migrations, which only the integration tests run", () => {
+    expect(sonarExclusions).toContain(migrations);
+  });
+
   it("name only files that exist", () => {
-    expect(sonarExclusions.filter((file) => !existsSync(file))).toEqual([]);
+    expect(sonarExclusions.filter((file) => file !== migrations && !existsSync(file))).toEqual([]);
   });
 
   it("name nothing else", () => {
-    const expected = new Set([...Object.keys(coverageExclusions), ...configs]);
+    const expected = new Set([...Object.keys(coverageExclusions), ...configs, migrations]);
     expect(sonarExclusions.filter((file) => !expected.has(file))).toEqual([]);
   });
 });
