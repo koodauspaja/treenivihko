@@ -7,7 +7,10 @@ const sonarExclusions = readPropertyList(
   "sonar.coverage.exclusions"
 );
 
-/** Every migration is SQL that only the integration tests run, against Postgres. */
+/**
+ * Every migration is SQL that only the integration tests run, against Postgres.
+ * decisions/075-sonar-skips-migrations.md
+ */
 const migrations = "drizzle/migrations/**";
 
 /** Configuration no unit coverage measures: the root's `*.config.ts`, and Railway's. */
