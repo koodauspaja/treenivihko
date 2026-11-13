@@ -53,7 +53,7 @@ export const WATCH_PATTERNS = [
   "tsconfig.json",
 ];
 
-/** 01:00 UTC, three or four in the morning in Finland, when nothing writes. */
+/** 01:00 UTC, the middle of the night for the app's users, when nothing writes. */
 export const BACKUP_SCHEDULE = "0 1 * * *";
 
 /** The backup image's own files; nothing else rebuilds it. */

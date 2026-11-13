@@ -73,18 +73,22 @@ s3() {
 }
 # The row counts logged straight before the named dump's upload line, or
 # nothing, so that a run without counts never borrows an earlier run's.
+# Railway keeps logs per deployment, and a redeploy starts a new one, so the
+# last 10 deployments' logs are read.
 logged() {
-  railway logs -s backup --lines 400 | awk -v up="uploaded: $1," '
-    /^row count: / { rows[++n] = substr($0, 12); next }
-    index($0, up) == 1 { for (i = 1; i <= n; i++) print rows[i] }
-    { n = 0 }'
+  railway deployment list -s backup --limit 10 --json | jq -r '.[].id' |
+    while read -r id; do railway logs -s backup --lines 400 "$id"; echo; done |
+    awk -v up="uploaded: $1," '
+      /^row count: / { rows[++n] = substr($0, 12); next }
+      index($0, up) == 1 { for (i = 1; i <= n; i++) print rows[i] }
+      { n = 0 }'
 }
 db() { docker compose exec -T postgres "$@"; }
 s3 s3 ls "s3://$bucket/"
 ```
 
 Pick a dump from the list, one of the last few nights so its run is still in
-the log, and restore it:
+Railway's logs, and restore it:
 
 ```bash
 key=treenivihko-<UTC time>.dump
@@ -128,6 +132,14 @@ rdb psql -q -U postgres -c 'create database restored' &&
     <(rdb psql -U postgres -d restored --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
       < docker/backup/row-counts.sql) &&
   echo 'every table matches'
+```
+
+Sign everyone out of the restored copy. It holds that night's sessions,
+those signed out since included, and deleting them deletes their trainer
+unlocks with them:
+
+```bash
+rdb psql -q -U postgres -d restored -v ON_ERROR_STOP=1 -c 'delete from session'
 ```
 
 Then swap the two in one transaction, so that it either renames both or
