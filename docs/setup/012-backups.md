@@ -96,16 +96,18 @@ db psql -q -U postgres -c 'drop database if exists restore_check' &&
   db psql -q -U postgres -c 'create database restore_check' &&
   s3 s3 cp "s3://$bucket/$key" - |
   db pg_restore -U postgres --no-owner --exit-on-error -d restore_check &&
-  diff <(logged "$key") \
-    <(db psql -U postgres -d restore_check --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
-      < docker/backup/row-counts.sql) &&
+  want=$(logged "$key") && [ -n "$want" ] &&
+  have=$(db psql -U postgres -d restore_check --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
+    < docker/backup/row-counts.sql) &&
+  diff <(printf '%s\n' "$want") <(printf '%s\n' "$have") &&
   echo 'every table matches'
 db psql -q -U postgres -c 'drop database restore_check'
 ```
 
-It prints `every table matches`. Anything else is a backup that does not
-restore, or a run whose log is gone; try a more recent dump before trusting
-any.
+It prints `every table matches`, and only when the run's logged counts were
+found and the restored copy's were counted. Anything else is a backup that
+does not restore, or a run whose log is gone; try a more recent dump before
+trusting any.
 
 ## Restoring
 
@@ -128,9 +130,10 @@ rdb() { railway ssh -s Postgres -- "$@"; }
 rdb psql -q -U postgres -c 'create database restored' &&
   s3 s3 cp "s3://$bucket/$key" - |
   rdb pg_restore -U postgres --no-owner --exit-on-error -d restored &&
-  diff <(logged "$key") \
-    <(rdb psql -U postgres -d restored --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
-      < docker/backup/row-counts.sql) &&
+  want=$(logged "$key") && [ -n "$want" ] &&
+  have=$(rdb psql -U postgres -d restored --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
+    < docker/backup/row-counts.sql) &&
+  diff <(printf '%s\n' "$want") <(printf '%s\n' "$have") &&
   echo 'every table matches'
 ```
 
@@ -143,21 +146,21 @@ rdb psql -q -U postgres -d restored -v ON_ERROR_STOP=1 -c 'delete from session'
 ```
 
 Then swap the two in one transaction, so that it either renames both or
-neither, and redeploy:
+neither, and redeploy only once it has:
 
 ```bash
-rdb psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+rdb psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL' &&
 begin;
 select pg_terminate_backend(pid) from pg_stat_activity where datname = 'railway';
 alter database railway rename to railway_before_restore;
 alter database restored rename to railway;
 commit;
 SQL
-railway redeploy -s treenivihko --yes
+  railway redeploy -s treenivihko --yes
 ```
 
 If a rename fails because something connected in between, nothing has been
-renamed: run the block again. Check `/api/health`, sign in, and look at the
+renamed and nothing redeploys: run the block again. Check `/api/health`, sign in, and look at the
 child's latest marks.
 The old database stays as `railway_before_restore`, with the same data and
 the same care, until you drop it:
