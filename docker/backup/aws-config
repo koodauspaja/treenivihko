@@ -1,0 +1,6 @@
+# Railway's buckets take virtual-hosted requests, the bucket in the host name.
+#
+# decisions/063-database-backups.md
+[default]
+s3 =
+  addressing_style = virtual
