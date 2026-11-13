@@ -47,6 +47,7 @@ $0.015 per GB-month.
 | Amsterdam | The bucket region nearest to `europe-west4`, which is in the Netherlands too |
 | Pruned by count, not by age | A night that takes no new dump removes none, so a fortnight of failures still leaves 14 good dumps |
 | Nothing removed before the upload completes | An object appears only once its upload is whole, and the script stops at the first failure |
+| A restored copy signs everyone out | It holds that night's sessions, those signed out since included, and a trainer unlock goes with its session |
 | The restore swaps in one transaction | An interrupted or refused rename renames neither database, so the app never finds `railway` missing |
 | No encryption on top | It would add a key that, lost, takes every backup with it; the bucket is already readable only by the workspace's members, and the workspace has one |
 | Not retried | A failed night shows as failed, and the next night runs as usual |
