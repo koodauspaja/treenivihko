@@ -46,7 +46,9 @@ railway logs -s backup --lines 40
 
 The log has a `row count:` line for each table, then
 `uploaded: treenivihko-<UTC time>.dump, <size> bytes`. A run that fails shows
-as failed in the service's deployments, and removes nothing from the bucket.
+as failed in the service's deployments. One whose dump, counts or upload fails
+removes nothing from the bucket; one that fails while removing old dumps may
+have removed some of them, never one of the newest 14.
 
 ## Step 3 — The restore drill
 
@@ -69,12 +71,13 @@ s3() {
   docker run --rm -i -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
     -e AWS_ENDPOINT_URL -e AWS_DEFAULT_REGION --entrypoint aws treenivihko-backup "$@"
 }
-# The row counts a run logged just before uploading the named dump.
+# The row counts logged straight before the named dump's upload line, or
+# nothing, so that a run without counts never borrows an earlier run's.
 logged() {
   railway logs -s backup --lines 400 | awk -v up="uploaded: $1," '
-    /^row count: / { if (!run) n = 0; run = 1; rows[++n] = substr($0, 12); next }
+    /^row count: / { rows[++n] = substr($0, 12); next }
     index($0, up) == 1 { for (i = 1; i <= n; i++) print rows[i] }
-    { run = 0 }'
+    { n = 0 }'
 }
 db() { docker compose exec -T postgres "$@"; }
 s3 s3 ls "s3://$bucket/"
@@ -90,7 +93,8 @@ db psql -q -U postgres -c 'drop database if exists restore_check' &&
   s3 s3 cp "s3://$bucket/$key" - |
   db pg_restore -U postgres --no-owner --exit-on-error -d restore_check &&
   diff <(logged "$key") \
-    <(db psql -U postgres -d restore_check --no-psqlrc -tA -F ' ' < docker/backup/row-counts.sql) &&
+    <(db psql -U postgres -d restore_check --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
+      < docker/backup/row-counts.sql) &&
   echo 'every table matches'
 db psql -q -U postgres -c 'drop database restore_check'
 ```
@@ -103,7 +107,14 @@ any.
 
 When the live database has to go back to a night's backup. Every row written
 since that night is lost, so first look at what the backup holds, in the
-drill's `restore_check`.
+drill's `restore_check`. Two things to know before starting:
+
+- **The redeploy at the end runs every migration newer than the backup.** If
+  one of them is why you are restoring, stop here: it would run again on the
+  restored data. It has to be dealt with on `main` first.
+- **Until the redeploy is up, the running version serves the restored data.**
+  A backup older than a migration can make its pages fail in between, so
+  restore when nobody is using the app.
 
 In the drill's shell, restore the dump into a new database on Railway's
 Postgres, beside the live one, and check it the same way:
@@ -114,24 +125,28 @@ rdb psql -q -U postgres -c 'create database restored' &&
   s3 s3 cp "s3://$bucket/$key" - |
   rdb pg_restore -U postgres --no-owner --exit-on-error -d restored &&
   diff <(logged "$key") \
-    <(rdb psql -U postgres -d restored --no-psqlrc -tA -F ' ' < docker/backup/row-counts.sql) &&
+    <(rdb psql -U postgres -d restored --no-psqlrc -v ON_ERROR_STOP=1 -tA -F ' ' \
+      < docker/backup/row-counts.sql) &&
   echo 'every table matches'
 ```
 
-Then swap the two, and redeploy, which runs any migration newer than the
-backup before the app takes traffic again:
+Then swap the two in one transaction, so that it either renames both or
+neither, and redeploy:
 
 ```bash
 rdb psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+begin;
 select pg_terminate_backend(pid) from pg_stat_activity where datname = 'railway';
 alter database railway rename to railway_before_restore;
 alter database restored rename to railway;
+commit;
 SQL
 railway redeploy -s treenivihko --yes
 ```
 
-If a rename fails because something connected in between, run the block
-again. Check `/api/health`, sign in, and look at the child's latest marks.
+If a rename fails because something connected in between, nothing has been
+renamed: run the block again. Check `/api/health`, sign in, and look at the
+child's latest marks.
 The old database stays as `railway_before_restore`, with the same data and
 the same care, until you drop it:
 
