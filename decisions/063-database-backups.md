@@ -1,11 +1,15 @@
 # 063 — Nightly backups to a Railway bucket
 
-Overrides two lines:
+Overrides three lines:
 
 - `decisions/031-database-dump.md`, *Decision*: "No backup infrastructure
   now." There is now.
 - `decisions/f006-session-marks.md`, *Why*: "No backups, for now". The manual
   dump it kept stays, beside the nightly backup.
+- `decisions/026-railway.md`, *Consequences*: "Every apply also redeploys the
+  service from `main`." The apply that created the backup and its bucket left
+  the web service's deployment as it was: an apply redeploys the services
+  whose settings it changes.
 
 ## Context
 
@@ -41,8 +45,9 @@ $0.015 per GB-month.
 |---|---|
 | A bucket on Railway | No new account or key, and the database never leaves Railway's network on the way to it |
 | Amsterdam | The bucket region nearest to `europe-west4`, which is in the Netherlands too |
-| Pruned by count, not by age | Nights that fail remove nothing, so a fortnight of failures still leaves 14 good dumps |
+| Pruned by count, not by age | A night that takes no new dump removes none, so a fortnight of failures still leaves 14 good dumps |
 | Nothing removed before the upload completes | An object appears only once its upload is whole, and the script stops at the first failure |
+| The restore swaps in one transaction | An interrupted or refused rename renames neither database, so the app never finds `railway` missing |
 | No encryption on top | It would add a key that, lost, takes every backup with it; the bucket is already readable only by the workspace's members, and the workspace has one |
 | Not retried | A failed night shows as failed, and the next night runs as usual |
 | Postgres's own image | `pg_dump` refuses a server newer than itself, so the image's major is never below Railway's; a unit test fails when it is |

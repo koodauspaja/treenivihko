@@ -121,7 +121,9 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
   then `railway config apply`. An apply removes whatever the file no longer
   declares, Postgres included, so a plan that destroys anything is stopped
   and read.
-- **Every apply redeploys the service from `main`.**
+- **An apply redeploys a service whose settings it changes**, from `main`.
+  One that changes nothing of the web service leaves it running as it is;
+  `railway redeploy -s treenivihko --yes` redeploys it.
 - **Trying a branch before it merges:** `railway up -s treenivihko` uploads
   the working tree. If the upload changes only files outside the watch paths,
   Railway skips it; redeploy it from the dashboard, which ignores them. The

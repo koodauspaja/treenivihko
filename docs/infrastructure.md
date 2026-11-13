@@ -66,7 +66,7 @@ database does not answer, and the reason on the service's log as one
 
 - **Railway never reads `.railway/railway.ts` during a deploy.** A merged
   change takes effect when it is applied (`docs/setup/010-railway.md`,
-  *Later*), and every apply redeploys from `main`.
+  *Later*), and redeploys from `main` the services whose settings it changes.
 - **A backup is up to a day old**, and lives in the same Railway project as
   the database: it covers a bad migration or a lost volume, not the loss of
   the Railway account. Before a risky migration, dump it by hand as well

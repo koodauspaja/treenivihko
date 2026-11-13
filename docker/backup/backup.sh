@@ -15,12 +15,13 @@ key="treenivihko-$(date -u +%Y-%m-%dT%H%M%SZ).dump"
 
 pg_dump --format=custom --dbname="$DATABASE_URL" --file="$dump"
 # What the restore drill compares with. Counted after the dump, not inside its
-# snapshot, which holds because nothing writes at night.
-psql --dbname="$DATABASE_URL" --no-psqlrc --tuples-only --no-align \
-  --field-separator=' ' --file="$here/row-counts.sql" | sed 's/^/row count: /'
+# snapshot: a write in between makes the drill fail, never pass, and nothing
+# writes at night.
+psql --dbname="$DATABASE_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --tuples-only \
+  --no-align --field-separator=' ' --file="$here/row-counts.sql" | sed 's/^/row count: /'
 
-# An object appears only once its upload completes, so a failed run leaves the
-# bucket as it was, and nothing is removed after one.
+# An object appears only once its upload completes, so a failed dump, count or
+# upload leaves the bucket as it was, and stops before anything is removed.
 aws s3 cp "$dump" "s3://$BUCKET/$key" --only-show-errors
 echo "uploaded: $key, $(wc -c < "$dump") bytes"
 
