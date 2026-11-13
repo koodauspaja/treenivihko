@@ -1,7 +1,13 @@
-import { existsSync } from "node:fs";
-import { createRailwayContext, project, type ResourceNode } from "railway/iac";
+import { existsSync, readFileSync } from "node:fs";
+import { createRailwayContext, type DatabaseNode, project, type ResourceNode } from "railway/iac";
 import { describe, expect, it } from "vitest";
-import program, { NPM_INSTALL, REGION, WATCH_PATTERNS } from "../../../.railway/railway";
+import program, {
+  BACKUP_SCHEDULE,
+  BACKUP_WATCH_PATTERNS,
+  NPM_INSTALL,
+  REGION,
+  WATCH_PATTERNS,
+} from "../../../.railway/railway";
 
 /**
  * `.railway/railway.ts` as it evaluates. Railway's CLI drops a key it does not
@@ -9,6 +15,7 @@ import program, { NPM_INSTALL, REGION, WATCH_PATTERNS } from "../../../.railway/
  * each resource is written out here in full, deliberately, not imported.
  *
  * decisions/026-railway.md
+ * decisions/063-database-backups.md
  */
 
 const definition = await program(
@@ -21,10 +28,12 @@ const named = (name: string) => resources.find((resource) => resource.name === n
 const IN_REGION = { "europe-west4-drams3a": { numReplicas: 1 } };
 
 describe(".railway/railway.ts", () => {
-  it("declares the project's Postgres and web service, and nothing else", () => {
+  it("declares the project's Postgres, web service, backup and bucket, and nothing else", () => {
     expect(definition.name).toBe("treenivihko");
     expect(resources.map((resource) => resource.address).sort()).toEqual([
+      "bucket.backups",
       "database.Postgres",
+      "service.backup",
       "service.treenivihko",
     ]);
   });
@@ -99,10 +108,67 @@ describe(".railway/railway.ts", () => {
     });
   });
 
+  it("keeps the backups' bucket declared, in Amsterdam, since an apply deletes an undeclared one", () => {
+    expect(named("backups")).toEqual({
+      address: "bucket.backups",
+      type: "bucket",
+      name: "backups",
+      config: { region: "ams" },
+    });
+  });
+
+  it("declares the backup exactly: its image from main after CI, nightly, never retried", () => {
+    const fromBucket = (output: string) => ({
+      type: "reference",
+      resource: "bucket.backups",
+      output,
+    });
+    expect(named("backup")).toEqual({
+      address: "service.backup",
+      type: "service",
+      kind: "github",
+      name: "backup",
+      source: {
+        type: "github",
+        repo: "koodauspaja/treenivihko",
+        branch: "main",
+        checkSuites: true,
+      },
+      build: {
+        builder: "DOCKERFILE",
+        dockerfilePath: "docker/backup/Dockerfile",
+        watchPatterns: ["docker/backup/**"],
+      },
+      deploy: {
+        cronSchedule: "0 1 * * *",
+        restartPolicyType: "NEVER",
+        multiRegionConfig: IN_REGION,
+      },
+      variables: {
+        DATABASE_URL: { type: "reference", resource: "database.Postgres", output: "DATABASE_URL" },
+        BUCKET: fromBucket("BUCKET"),
+        AWS_ACCESS_KEY_ID: fromBucket("ACCESS_KEY_ID"),
+        AWS_SECRET_ACCESS_KEY: fromBucket("SECRET_ACCESS_KEY"),
+        AWS_DEFAULT_REGION: fromBucket("REGION"),
+        AWS_ENDPOINT_URL: fromBucket("ENDPOINT"),
+      },
+    });
+  });
+
+  it("dumps with a pg_dump no older than Railway's Postgres, which pg_dump refuses", () => {
+    const base = readFileSync("docker/backup/Dockerfile", "utf8").match(
+      /^FROM postgres:(\d+)-alpine$/m
+    );
+    const server = (named("Postgres") as DatabaseNode).image.match(/:(\d+)$/);
+    expect(Number(base?.[1])).toBeGreaterThanOrEqual(Number(server?.[1]));
+  });
+
   it("exports the values the service uses", () => {
     expect(REGION).toBe("europe-west4-drams3a");
     expect(NPM_INSTALL).toBe("npx --yes npm@12.2.1 ci --ignore-scripts");
     expect(named("treenivihko")).toMatchObject({ build: { watchPatterns: WATCH_PATTERNS } });
+    expect(BACKUP_SCHEDULE).toBe("0 1 * * *");
+    expect(named("backup")).toMatchObject({ build: { watchPatterns: BACKUP_WATCH_PATTERNS } });
   });
 
   it.each(WATCH_PATTERNS.filter((pattern) => !pattern.includes("*")))(

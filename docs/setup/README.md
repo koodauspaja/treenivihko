@@ -28,6 +28,7 @@ between two others.
 | 9 | [009-database.md](009-database.md) | Postgres, Drizzle, named migrations and the integration tests |
 | 10 | [010-railway.md](010-railway.md) | The Railway project from `.railway/railway.ts`: Postgres, the web service and its health check |
 | 11 | [011-sign-in.md](011-sign-in.md) | Google sign-in: the Google Cloud client, the allowlist and their variables |
+| 12 | [012-backups.md](012-backups.md) | Nightly backups of Postgres to a bucket, the restore drill, and restoring |
 
 The steps after these are written as the infrastructure is stood up.
 

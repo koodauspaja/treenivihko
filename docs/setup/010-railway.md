@@ -40,13 +40,14 @@ set by hand in the dashboard. Why it is built this way:
 ```bash
 railway whoami --json      # your workspace's id, under "workspaces"
 railway init --name treenivihko --workspace <workspace id>
-railway config plan        # 2 to add: Postgres and treenivihko. Nothing else
+railway config plan        # 4 to add: Postgres, treenivihko, backups and backup. Nothing else
 railway config apply
 ```
 
 `railway init` links this directory to the new project's only environment,
 `production`. Read the plan before applying: on an empty project it adds
-exactly the two services, and nothing is changed or destroyed.
+exactly the two services, and setup 012's bucket and backup service, and
+nothing is changed or destroyed.
 
 The apply starts a deploy of `main` straight away.
 
@@ -84,8 +85,8 @@ railway tcp-proxy list -s Postgres   # "No TCP proxies found"
 
 ## Later
 
-- **A dump before a risky migration.** Railway's Postgres has no backups
-  (`decisions/031-database-dump.md`, `decisions/f006-session-marks.md`), so
+- **A dump before a risky migration.** The nightly backup is up to a day old
+  (`decisions/031-database-dump.md`, `decisions/063-database-backups.md`), so
   before a migration that drops, renames or rewrites anything, dump it to your
   machine. **The file holds personal data and live session tokens**: anyone
   who can read it can sign in as the parent until those sessions end. Only you

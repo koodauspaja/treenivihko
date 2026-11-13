@@ -1,15 +1,26 @@
 /**
  * The whole Railway project, as Infrastructure as Code: Postgres, the web
- * service, its variables and settings. Railway reads it only when it is
- * applied, and an apply deletes whatever the project holds that this file does
- * not declare, Postgres and its data included.
+ * service, the nightly backup and its bucket, their variables and settings.
+ * Railway reads it only when it is applied, and an apply deletes whatever the
+ * project holds that this file does not declare, Postgres and its data, and
+ * the bucket and its backups, included.
  *
  * decisions/023-database.md
  * decisions/026-railway.md
  * decisions/029-sign-in.md
  * decisions/f001-trainer-side.md
+ * decisions/063-database-backups.md
  */
-import { defineRailway, github, postgres, preserve, project, service } from "railway/iac";
+import {
+  bucket,
+  defineRailway,
+  github,
+  postgres,
+  preserve,
+  project,
+  ref,
+  service,
+} from "railway/iac";
 
 // Railway's stored name for europe-west4. With the short name, every later plan
 // shows a move, which the CLI counts as destructive.
@@ -42,8 +53,40 @@ export const WATCH_PATTERNS = [
   "tsconfig.json",
 ];
 
+/** 01:00 UTC, three or four in the morning in Finland, when nothing writes. */
+export const BACKUP_SCHEDULE = "0 1 * * *";
+
+/** The backup image's own files; nothing else rebuilds it. */
+export const BACKUP_WATCH_PATTERNS = ["docker/backup/**"];
+
 export default defineRailway(() => {
   const database = postgres("Postgres", { region: REGION });
+
+  // Amsterdam, the bucket region nearest to the database's.
+  const backups = bucket("backups", { region: "ams" });
+
+  const backup = service("backup", {
+    source: github("koodauspaja/treenivihko", { branch: "main", checkSuites: true }),
+    env: {
+      DATABASE_URL: database.env.DATABASE_URL,
+      BUCKET: ref(backups, "BUCKET"),
+      AWS_ACCESS_KEY_ID: ref(backups, "ACCESS_KEY_ID"),
+      AWS_SECRET_ACCESS_KEY: ref(backups, "SECRET_ACCESS_KEY"),
+      AWS_DEFAULT_REGION: ref(backups, "REGION"),
+      AWS_ENDPOINT_URL: ref(backups, "ENDPOINT"),
+    },
+    replicas: { [REGION]: 1 },
+    build: {
+      builder: "DOCKERFILE",
+      dockerfilePath: "docker/backup/Dockerfile",
+      watchPatterns: BACKUP_WATCH_PATTERNS,
+    },
+    deploy: {
+      cronSchedule: BACKUP_SCHEDULE,
+      // A failed night shows as failed, and the next night runs as usual.
+      restartPolicyType: "NEVER",
+    },
+  });
 
   const web = service("treenivihko", {
     // A red CI run on main leaves the previous version serving.
@@ -77,5 +120,5 @@ export default defineRailway(() => {
     },
   });
 
-  return project("treenivihko", { resources: [database, web] });
+  return project("treenivihko", { resources: [database, web, backups, backup] });
 });
