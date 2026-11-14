@@ -171,9 +171,11 @@ describe(".railway/railway.ts", () => {
     const deadline = readFileSync("docker/backup/entrypoint.sh", "utf8").match(
       /^timeout -k (\d+) (\d+) sh \/usr\/local\/lib\/backup\/backup\.sh$/m
     );
-    const seconds = Number(deadline?.[1]) + Number(deadline?.[2]);
-    expect(seconds).toBeGreaterThan(0);
-    expect(seconds).toBeLessThan(23 * 60 * 60);
+    const [kill, stop] = [Number(deadline?.[1]), Number(deadline?.[2])];
+    // timeout reads 0 as no deadline at all.
+    expect(stop).toBeGreaterThan(0);
+    expect(kill).toBeGreaterThan(0);
+    expect(stop + kill).toBeLessThan(23 * 60 * 60);
   });
 
   it("exports the values the service uses", () => {
