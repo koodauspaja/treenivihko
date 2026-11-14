@@ -101,19 +101,23 @@ db psql -q -U postgres -c 'drop database if exists restore_check' &&
     < docker/backup/row-counts.sql) &&
   diff <(printf '%s\n' "$want") <(printf '%s\n' "$have") &&
   echo 'every table matches'
+ok=$?
 db psql -q -U postgres -c 'drop database restore_check'
+[ "$ok" -eq 0 ]
 ```
 
 It prints `every table matches`, and only when the run's logged counts were
-found and the restored copy's were counted. Anything else is a backup that
-does not restore, or a run whose log is gone; try a more recent dump before
-trusting any.
+found and the restored copy's were counted; it then exits 0, and otherwise
+not, even when the scratch database's drop succeeds. Anything else is a
+backup that does not restore, or a run whose log is gone; try a more recent
+dump before trusting any.
 
 ## Restoring
 
 When the live database has to go back to a night's backup. Every row written
-since that night is lost, so first look at what the backup holds, in the
-drill's `restore_check`. Two things to know before starting:
+since that night is lost, so first look at what the backup holds: run the
+drill's block up to `ok=$?`, look in `restore_check`, then run the rest. Two
+things to know before starting:
 
 - **The redeploy at the end runs every migration newer than the backup.** If
   one of them is why you are restoring, stop here: it would run again on the
@@ -123,11 +127,13 @@ drill's `restore_check`. Two things to know before starting:
   restore when nobody is using the app.
 
 In the drill's shell, restore the dump into a new database on Railway's
-Postgres, beside the live one, and check it the same way:
+Postgres, beside the live one, and check it the same way. A `restored` left
+by a failed attempt is dropped first; after a swap, there is none:
 
 ```bash
 rdb() { railway ssh -s Postgres -- "$@"; }
-rdb psql -q -U postgres -c 'create database restored' &&
+rdb psql -q -U postgres -c 'drop database if exists restored' &&
+  rdb psql -q -U postgres -c 'create database restored' &&
   s3 s3 cp "s3://$bucket/$key" - |
   rdb pg_restore -U postgres --no-owner --exit-on-error -d restored &&
   want=$(logged "$key") && [ -n "$want" ] &&
@@ -146,7 +152,8 @@ rdb psql -q -U postgres -d restored -v ON_ERROR_STOP=1 -c 'delete from session'
 ```
 
 Then swap the two in one transaction, so that it either renames both or
-neither, and redeploy only once it has:
+neither, and redeploy only once it has. Postgres allows `alter database …
+rename` inside a transaction, unlike `create` and `drop database`:
 
 ```bash
 rdb psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL' &&
@@ -159,9 +166,11 @@ SQL
   railway redeploy -s treenivihko --yes
 ```
 
-If a rename fails because something connected in between, nothing has been
-renamed and nothing redeploys: run the block again. Check `/api/health`, sign in, and look at the
-child's latest marks.
+If a rename fails, nothing has been renamed and nothing redeploys. When
+something connected in between, run the block again. When
+`railway_before_restore` is still there from an earlier restore, decide about
+it first: drop it, or rename it, then run the block again. Once it has run,
+check `/api/health`, sign in, and look at the child's latest marks.
 The old database stays as `railway_before_restore`, with the same data and
 the same care, until you drop it:
 
