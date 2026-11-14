@@ -46,10 +46,13 @@ railway logs -s backup --lines 40
 
 The log has a `row count:` line for each table, then
 `uploaded: treenivihko-<UTC time>.dump, <size> bytes`. A run that fails shows
-as failed in the service's deployments, and so does one still running after
-an hour, which is stopped. One whose dump, counts or upload fails removes
-nothing from the bucket; one that fails while removing old dumps may have
-removed some of them, never one of the newest 14.
+as crashed in the service's deployments, and so does one still running after
+an hour, which is stopped. Railway then emails the workspace's members
+"Deploy Crashed" for the service `backup`: keep the deployment notifications
+on in Railway's account settings, where they are on by default. One whose
+dump, counts or upload fails removes nothing from the bucket; one that fails
+while removing old dumps may have removed some of them, never one of the
+newest 14.
 
 ## Step 3 — The restore drill
 
@@ -88,8 +91,10 @@ db() { docker compose exec -T postgres "$@"; }
 s3 s3 ls "s3://$bucket/"
 ```
 
-Pick a dump from the list, one of the last few nights so its run is still in
-Railway's logs, and restore it:
+The newest dump in the list should be from last night's run. An older one
+means the nights since did not run, and a night Railway never started sends no
+email: look at the service's deployments. Pick a dump from the list, one of
+the last few nights so its run is still in Railway's logs, and restore it:
 
 ```bash
 key=treenivihko-<UTC time>.dump
@@ -185,6 +190,7 @@ rdb psql -q -U postgres -c 'drop database railway_before_restore'
 
 - [ ] `railway config plan` reports the configuration up to date
 - [ ] A night's scheduled run logs `uploaded:` with its dump
+- [ ] Railway's deployment notifications are on, by email, in the account's settings
 - [ ] The restore drill prints `every table matches` for that dump
 - [ ] Without credentials, the bucket answers `403`:
       `curl -s -o /dev/null -w '%{http_code}' "https://$bucket.${AWS_ENDPOINT_URL#https://}/"`
