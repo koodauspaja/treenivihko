@@ -1,8 +1,16 @@
 # 079 — Railway's email when a backup fails
 
-Overrides one line of `decisions/063-database-backups.md`, *Consequences*:
-"Nothing announces a failed night: it shows only in the service's
-deployments." Railway's email does.
+Overrides two lines:
+
+- `decisions/063-database-backups.md`, *Consequences*: "Nothing announces a
+  failed night: it shows only in the service's deployments." Railway's email
+  does.
+- `decisions/080-backup-deadline.md`, *Consequences*: "Railway seems to match
+  its watch patterns against the last commit of a push only." The next merge
+  disproved it: its last commit changed only a test, and Railway built the
+  backup from `main`. Why the first merge's build was skipped is not known, so
+  a merge that changes `docker/backup/**` is followed by a look at the
+  service's deployments, and a skipped build is redeployed by hand.
 
 ## Context
 

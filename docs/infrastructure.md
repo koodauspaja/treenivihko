@@ -44,7 +44,7 @@ Project `treenivihko`, in the Koodauspaja workspace, with one environment,
 | Deadline | One hour, then a kill a minute later: a run that hangs fails, since Railway starts no cron run while one still runs |
 | Restarts | Never: a failed night shows as crashed, and the next runs as usual |
 | When a run fails | Railway emails the workspace's members "Deploy Crashed", by its default notifications; nothing is sent for a run Railway never starts (`decisions/079-backup-failure-email.md`) |
-| Redeploys on | `docker/backup/**`, in the last commit of a push: Railway skipped a build whose earlier commits changed it, and it is then redeployed by hand (`decisions/080-backup-deadline.md`) |
+| Redeploys on | `docker/backup/**`. Railway once skipped that build, for a reason not found, so after such a merge check the service's deployments, and `railway redeploy -s backup --yes` a skipped one (`decisions/079-backup-failure-email.md`) |
 | Variables | `DATABASE_URL`, a reference to Postgres's; `BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION` and `AWS_ENDPOINT_URL`, references to the bucket's |
 
 Restoring one, and the drill that checks one restores: `docs/setup/012-backups.md`
