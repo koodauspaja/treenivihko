@@ -46,9 +46,10 @@ railway logs -s backup --lines 40
 
 The log has a `row count:` line for each table, then
 `uploaded: treenivihko-<UTC time>.dump, <size> bytes`. A run that fails shows
-as failed in the service's deployments. One whose dump, counts or upload fails
-removes nothing from the bucket; one that fails while removing old dumps may
-have removed some of them, never one of the newest 14.
+as failed in the service's deployments, and so does one still running after
+an hour, which is stopped. One whose dump, counts or upload fails removes
+nothing from the bucket; one that fails while removing old dumps may have
+removed some of them, never one of the newest 14.
 
 ## Step 3 — The restore drill
 

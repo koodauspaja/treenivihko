@@ -163,6 +163,19 @@ describe(".railway/railway.ts", () => {
     expect(Number(base?.[1])).toBeGreaterThanOrEqual(Number(server?.[1]));
   });
 
+  it("ends a backup that runs past its deadline, well before the next night's", () => {
+    const entrypoint = readFileSync("docker/backup/Dockerfile", "utf8").match(
+      /^ENTRYPOINT \["sh", "\/usr\/local\/lib\/backup\/(.+)"\]$/m
+    );
+    expect(entrypoint?.[1]).toBe("entrypoint.sh");
+    const deadline = readFileSync("docker/backup/entrypoint.sh", "utf8").match(
+      /^timeout -k (\d+) (\d+) sh \/usr\/local\/lib\/backup\/backup\.sh$/m
+    );
+    const seconds = Number(deadline?.[1]) + Number(deadline?.[2]);
+    expect(seconds).toBeGreaterThan(0);
+    expect(seconds).toBeLessThan(23 * 60 * 60);
+  });
+
   it("exports the values the service uses", () => {
     expect(REGION).toBe("europe-west4-drams3a");
     expect(NPM_INSTALL).toBe("npx --yes npm@12.2.1 ci --ignore-scripts");
