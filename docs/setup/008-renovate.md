@@ -54,8 +54,9 @@ npm exec --yes --ignore-scripts --package=renovate@<version> -- \
 
 CI's actor check lets `renovate[bot]` through, beside setup 001's two
 usernames, so its pull requests run every check. They have no issue, which
-`CLAUDE.md` names as the one exception to its rule. Renovate also opens a
-**Dependency Dashboard** issue listing what is pending, held back or failing,
+`CLAUDE.md` names as the exception to its rule, and neither does a fix pushed
+to one of them (`decisions/092-renovate-fix-on-its-branch.md`). Renovate also
+opens a **Dependency Dashboard** issue listing what is pending, held back or failing,
 labelled `chore`; the board's auto-add puts it in `Backlog`, where it stays.
 Renovate cannot set an Issue Type, so set it to Task once, when the issue
 first appears:
