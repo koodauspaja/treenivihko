@@ -150,8 +150,8 @@ One number per piece of work, so any one of its files leads to the others
 
 A new feature's number is one more than the highest `Feature NNN` title among
 all issues, open or closed. The `f` keeps feature records apart from those
-numbered by issue. Whatever the number, a pull request links its issue with
-`Closes #N`.
+numbered by issue. Whatever the number, a pull request with an issue links
+it with `Closes #N`.
 
 ## Reference
 

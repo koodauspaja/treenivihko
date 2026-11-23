@@ -82,11 +82,13 @@ apply, and step 5 is the push alone:
 
 3. Rate the fix by the table under *Does a fix need a fresh review?*, and say
    the level and why in a pull request comment. A **low**-risk fix, such as a
-   test or a config value, goes to step 8 without the gate: Renovate's own
-   update has no Sourcery review either. A **high**-risk fix, such as code
-   adapting to a breaking update, passes the gate first with a full review,
-   since Renovate's commit had no review of code of ours. Either way, the
-   handoff waits until every CI check on the head has passed.
+   test or a config value, is handed off without the gate, in step 7 or in
+   step 8: no full review is requested for it, as none is for Renovate's own
+   update, and Sourcery's automatic check on the push is all it gets. A
+   **high**-risk fix, such as code adapting to a breaking update, passes the
+   gate in steps 7 and 8 with a full review, since Renovate's commit had no
+   review of code of ours. Either way, the handoff waits until every CI check
+   on the head has passed.
 
 ## A branch behind `main`
 

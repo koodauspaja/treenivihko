@@ -24,10 +24,12 @@ merged before Renovate's could pass.
 - **Its checks are those of any change of ours**, by `/open-pr`: `/self-review`,
   the `code-review` skill and `npm run verify` before the push, then the pull
   request's CI.
-- **Sourcery reviews a high-risk fix only**, rated by `/open-pr`'s risk table:
-  code adapting to a breaking update gets a full review before the handoff; a
-  low-risk fix, such as a test or a config value, gets none, as Renovate's
-  update itself gets none.
+- **Only a high-risk fix gets a full Sourcery review**, rated by `/open-pr`'s
+  risk table: code adapting to a breaking update gets one before the handoff.
+  A low-risk fix, such as a test or a config value, gets Sourcery's automatic
+  check on the push, as every Renovate update does under
+  `decisions/020-renovate.md`, and no full review is requested for it, as
+  none is for the update.
 - **A decision record, when one is due, takes the pull request's number**,
   as a chore's takes its issue's.
 
