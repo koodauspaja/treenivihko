@@ -23,7 +23,11 @@ merged before Renovate's could pass.
   own issue.
 - **Its checks are those of any change of ours**, by `/open-pr`: `/self-review`,
   the `code-review` skill and `npm run verify` before the push, then the pull
-  request's CI and the Sourcery gate on the new head before the handoff.
+  request's CI.
+- **Sourcery reviews a high-risk fix only**, rated by `/open-pr`'s risk table:
+  code adapting to a breaking update gets a full review before the handoff; a
+  low-risk fix, such as a test or a config value, gets none, as Renovate's
+  update itself gets none.
 - **A decision record, when one is due, takes the pull request's number**,
   as a chore's takes its issue's.
 
@@ -34,6 +38,7 @@ merged before Renovate's could pass.
 | On Renovate's branch | The update and what it needs arrive in one pull request, and one merge, instead of two that must land in order |
 | No issue | The pull request already says what changes and why; an issue for its fix would repeat it, as `decisions/020-renovate.md` found for the update itself |
 | The request is the go and the start | There is nothing else to agree: the update is Renovate's, and the fix is whatever makes it pass |
+| Sourcery for a high-risk fix only | A low-risk fix is a few lines that Claude's own reviews, CI and the human's merge already read, and a review round would hold up a weekly update for them; code that adapts the app to a breaking update is code like any other |
 | Only what the update needs | A fix with no issue has no criteria to hold it, so it stays small enough to read in the pull request |
 
 ## Consequences

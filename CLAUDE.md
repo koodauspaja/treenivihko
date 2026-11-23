@@ -130,8 +130,8 @@ A fix that a Renovate pull request needs in order to pass skips steps 1 to 3,
 and gets no card. Once a human has asked for it, Claude makes it as in step 4,
 with the update as its scope in place of an issue: only what the update needs,
 and anything more is a chore with its own issue. Step 5 is `/open-pr`'s steps
-for a Renovate fix, which push to Renovate's branch and pass the Sourcery gate
-on the new head; a human merges, as in step 6.
+for a Renovate fix, which push to Renovate's branch and, for a high-risk fix,
+pass the Sourcery gate on the new head; a human merges, as in step 6.
 
 If a chore or a bug turns out to need product decisions, it stops and becomes
 a feature with a spec.

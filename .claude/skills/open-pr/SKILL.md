@@ -71,15 +71,22 @@ The pull request already exists, with no issue and no card
 apply, and step 5 is the push alone:
 
 1. Steps 1, 2 and 4, as written.
-2. Push a new commit on the pull request's current head, from a checkout of
-   it, never an amendment of Renovate's commit:
+2. Push a new commit on the pull request's current head, never an amendment
+   of Renovate's commit, and only from a checkout of its branch:
 
    ```bash
-   git push origin "HEAD:$(gh pr view <PR> --json headRefName -q .headRefName)"
+   branch=$(gh pr view <PR> --json headRefName -q .headRefName)
+   [ "$branch" = "$(git branch --show-current)" ] &&
+     git push origin "HEAD:$branch"
    ```
 
-3. Steps 7 and 8. Renovate's own commit had no review of code of ours, so the
-   gate reads the fix's head as having no earlier full review.
+3. Rate the fix by the table under *Does a fix need a fresh review?*, and say
+   the level and why in a pull request comment. A **low**-risk fix, such as a
+   test or a config value, goes to step 8 without the gate: Renovate's own
+   update has no Sourcery review either. A **high**-risk fix, such as code
+   adapting to a breaking update, passes the gate first with a full review,
+   since Renovate's commit had no review of code of ours. Either way, the
+   handoff waits until every CI check on the head has passed.
 
 ## A branch behind `main`
 
