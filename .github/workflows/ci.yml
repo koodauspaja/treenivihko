@@ -44,7 +44,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       # Node 24 ships an older npm, which .npmrc's engine-strict refuses.
-      - run: npm install --global --ignore-scripts npm@12.2.1
+      - run: npm install --global --ignore-scripts npm@12.2.2
       # A dependency's install script is how a compromised package runs code on
       # a runner holding the repository's tokens.
       - run: npm ci --ignore-scripts
@@ -105,7 +105,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm install --global --ignore-scripts npm@12.2.1
+      - run: npm install --global --ignore-scripts npm@12.2.2
       - run: npm ci --ignore-scripts
       - run: npm run test:integration
 
@@ -148,7 +148,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm install --global --ignore-scripts npm@12.2.1
+      - run: npm install --global --ignore-scripts npm@12.2.2
       - run: npm ci --ignore-scripts
       - run: npm run test:e2e:browser -- --with-deps
       - run: npm run test:e2e

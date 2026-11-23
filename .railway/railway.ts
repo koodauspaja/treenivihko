@@ -31,7 +31,7 @@ export const REGION = "europe-west4-drams3a";
  * accepts, so npm 12 runs the install through npx; a global install lands off
  * Railpack's path. Install scripts are skipped, as in CI.
  */
-export const NPM_INSTALL = "npx --yes npm@12.2.1 ci --ignore-scripts";
+export const NPM_INSTALL = "npx --yes npm@12.2.2 ci --ignore-scripts";
 
 /**
  * What redeploys the site: application code, the scripts run on the service
