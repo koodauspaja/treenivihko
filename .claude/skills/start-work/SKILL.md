@@ -75,6 +75,10 @@ Nothing below happens until both are true:
 If either is missing, ask, and wait. A question about what comes next,
 permission to reshape the work, and silence are not a start.
 
+A fix on a Renovate pull request does not use this skill: it has no issue and
+no card, and goes on Renovate's own branch once a human has asked for it
+(`CLAUDE.md`, *Workflow*).
+
 ## Starting
 
 1. **Move the card to `Ready`**, unless a human already has. Quote, in the same

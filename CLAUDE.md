@@ -30,6 +30,8 @@ Two things hold for every feature:
   - **Starting** is a human moving the card to `Ready`, or telling Claude to
     start, in any words. One message can do both: "sounds good, go ahead" is a
     go and a start.
+  - **A fix on a Renovate pull request** has no issue to say go on: a human
+    asking Claude to fix that pull request agrees the work and starts it.
   - **Engagement is not agreement.** "What's next?", "do you have what you
     need?", "splitting it is fine", and silence are not a go. Neither is
     Claude's own summary saying the checklist is confirmed.
@@ -38,9 +40,11 @@ Two things hold for every feature:
   sentence it is acting on, in the same message. The quote is evidence, not a
   password: it has to read plainly as an instruction.
 - **Every change goes through an issue, a branch and a pull request.** Nothing
-  is committed to `main` directly, setup documents included. The one exception
+  is committed to `main` directly, setup documents included. The exception
   is Renovate's dependency pull requests, which have no issue: they pass the
-  same checks, and a human merges them.
+  same checks, and a human merges them. A fix that one needs in order to pass
+  is a commit on that pull request's own branch, with no issue either
+  (`decisions/092-renovate-fix-on-its-branch.md`).
 - **Every issue has its kind label and the Issue Type that pairs with it**:
   `enhancement` → Feature, `chore` → Task, `bug` → Bug. `gh issue create` cannot
   set the type, so it is set right after: `gh api
@@ -122,6 +126,12 @@ One path for features, chores and bugs. The differences:
    findings answered afterwards.
 6. **A human merges**, or tells Claude to. However green it is.
 
+A Renovate pull request that needs a fix to pass skips steps 1 to 3 and 5,
+and gets no card: once a human has asked for the fix, Claude commits it on
+Renovate's branch, after `/self-review` and `npm run verify`, and the human
+merges as in step 6. The fix holds only what the update needs; anything more
+is a chore with its own issue.
+
 If a chore or a bug turns out to need product decisions, it stops and becomes
 a feature with a spec.
 
@@ -135,6 +145,7 @@ One number per piece of work, so any one of its files leads to the others
 | A feature | its own, from 001 | `Feature 007: <what>` | `specs/007-…` | `decisions/f007-…` | `feature/007-…` |
 | A chore or a bug, issue 42 | its issue's | a plain imperative sentence | — | `decisions/042-…` | `chore/42-…`, `bug/42-…` |
 | A setup step | its `docs/setup/` document's | `Setup 010: <what>` | — | as a chore | as a chore |
+| A fix on Renovate's pull request 88 | the pull request's | — | — | `decisions/088-…` | Renovate's own |
 
 A new feature's number is one more than the highest `Feature NNN` title among
 all issues, open or closed. The `f` keeps feature records apart from those
