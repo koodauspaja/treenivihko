@@ -27,6 +27,13 @@ const named = (name: string) => resources.find((resource) => resource.name === n
 
 const IN_REGION = { "europe-west4-drams3a": { numReplicas: 1 } };
 
+/**
+ * The npm version CI pins. Renovate moves it in `ci.yml` and `.railway/railway.ts`,
+ * never here, and `renovate.test.ts` checks the two files agree.
+ */
+const CI_NPM = readFileSync(".github/workflows/ci.yml", "utf8").match(/npm@(\d+\.\d+\.\d+)/)?.[1];
+const NPM_INSTALL_COMMAND = `npx --yes npm@${CI_NPM} ci --ignore-scripts`;
+
 describe(".railway/railway.ts", () => {
   it("declares the project's Postgres, web service, backup and bucket, and nothing else", () => {
     expect(definition.name).toBe("treenivihko");
@@ -95,7 +102,7 @@ describe(".railway/railway.ts", () => {
         DATABASE_URL: { type: "reference", resource: "database.Postgres", output: "DATABASE_URL" },
         RAILPACK_NODE_NPM_INSTALL: {
           type: "literal",
-          value: "npx --yes npm@12.2.1 ci --ignore-scripts",
+          value: NPM_INSTALL_COMMAND,
         },
         // biome-ignore lint/suspicious/noTemplateCurlyInString: Railway's reference syntax.
         BETTER_AUTH_URL: { type: "literal", value: "https://${{RAILWAY_PUBLIC_DOMAIN}}" },
@@ -180,7 +187,8 @@ describe(".railway/railway.ts", () => {
 
   it("exports the values the service uses", () => {
     expect(REGION).toBe("europe-west4-drams3a");
-    expect(NPM_INSTALL).toBe("npx --yes npm@12.2.1 ci --ignore-scripts");
+    expect(CI_NPM).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(NPM_INSTALL).toBe(NPM_INSTALL_COMMAND);
     expect(named("treenivihko")).toMatchObject({ build: { watchPatterns: WATCH_PATTERNS } });
     expect(BACKUP_SCHEDULE).toBe("0 1 * * *");
     expect(named("backup")).toMatchObject({ build: { watchPatterns: BACKUP_WATCH_PATTERNS } });
