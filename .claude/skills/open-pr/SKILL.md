@@ -1,6 +1,6 @@
 ---
 name: open-pr
-description: Review your own diff, then open the pull request and hand it to a human. Use when the work on a branch is done and its tests pass.
+description: Review your own diff, then open the pull request and hand it to a human. Use when the work on a branch is done and its tests pass, and for a fix pushed to a Renovate pull request.
 ---
 
 # Opening a pull request
@@ -63,6 +63,23 @@ description: Review your own diff, then open the pull request and hand it to a h
 
    `main` takes no merge commits. Squash (`--squash`) only when a human asks
    for it.
+
+## A fix on a Renovate pull request
+
+The pull request already exists, with no issue and no card
+(`decisions/092-renovate-fix-on-its-branch.md`), so steps 3 and 6 do not
+apply, and step 5 is the push alone:
+
+1. Steps 1, 2 and 4, as written.
+2. Push a new commit on the pull request's current head, from a checkout of
+   it, never an amendment of Renovate's commit:
+
+   ```bash
+   git push origin "HEAD:$(gh pr view <PR> --json headRefName -q .headRefName)"
+   ```
+
+3. Steps 7 and 8. Renovate's own commit had no review of code of ours, so the
+   gate reads the fix's head as having no earlier full review.
 
 ## A branch behind `main`
 
