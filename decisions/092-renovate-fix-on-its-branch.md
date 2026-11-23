@@ -21,8 +21,9 @@ merged before Renovate's could pass.
 - **The fix holds only what the update needs to pass.** Anything beyond it,
   such as a change worth having apart from this update, is a chore with its
   own issue.
-- **Its checks are those of any change**: `/self-review` and `npm run verify`
-  before the push, and the pull request's CI.
+- **Its checks are those of any change of ours**, by `/open-pr`: `/self-review`,
+  the `code-review` skill and `npm run verify` before the push, then the pull
+  request's CI and the Sourcery gate on the new head before the handoff.
 - **A decision record, when one is due, takes the pull request's number**,
   as a chore's takes its issue's.
 

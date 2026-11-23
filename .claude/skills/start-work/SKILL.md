@@ -1,6 +1,6 @@
 ---
 name: start-work
-description: Open an issue for a feature, chore or bug, and take an agreed one from the board to a branch. Use when work is being filed, or when a human has said to start.
+description: Open an issue for a feature, chore or bug, and take an agreed one from the board to a branch. Use when work is being filed, or when a human has said to start. Not for a fix on a Renovate pull request, which has no issue or card.
 ---
 
 # Starting work
